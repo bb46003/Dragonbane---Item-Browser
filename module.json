@@ -38,5 +38,7 @@
       "name": "Polski",
       "path": "lang/pl.json"
     }
-  ]
+  ],
+  "manifest":"https://raw.githubusercontent.com/bb46003/Dragonbane---Item-Browser/refs/heads/main/module.json",
+  "download": "https://github.com/bb46003/Dragonbane---Item-Browser/archive/refs/heads/main.zip"
 }
