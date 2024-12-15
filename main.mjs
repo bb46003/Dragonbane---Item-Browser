@@ -82,17 +82,19 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   headers.forEach(header => {
     if (header.textContent.trim() === magicTrick) {
       targetHeader = header;
+      targetHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);
     }
   });
-  targetHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);   
+   
   
   targetHeader = null;
   headers.forEach(header => {
     if (header.textContent.trim() === spell) {
       targetHeader = header;
+      targetHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);   
     }
   });
-  targetHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);   
+
   
   creatItemButton.forEach(button => {
     const dataType = button.getAttribute("data-type"); 
