@@ -1,0 +1,11 @@
+{
+    
+    "DB-IB":{
+        "Any":"Dowolny",
+        "addItem": "<strong>{actor}</strong>dodał/dodała do kary postaci <strong>{type}</strong> <strong>{item}</strong>",
+        "rollForPrice":"Rzut ${formula} aby określić cemę ${item} w ${currency}",
+        "notEnoughMoney":"<strong>{actor}</strong> nie ma wystarczającej ilości monet aby kupić <strong>{item}</strong>.",
+        "spendMoney":"<strong>{actor}</strong> wydał/wydała <strong>{itemPrice}</strong> aby kupić <strong>{item}</strong>",
+        "manualMonyRemoval": "Określ z osobą mistrzującą cenę <strong>{item}</strong> zefiniowaną jako <strong>{itemPrice}</strong> i odejmnij monety ręcznie."
+    }
+}

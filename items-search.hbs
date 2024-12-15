@@ -1,0 +1,100 @@
+<div class="item-browser" autocomplete="off">
+    <div class="searching-dialog">
+        <div class="left-side">
+            <div class="filter-element">
+                <label class="filter-label">{{localize "DoD.skill.type"}}</label>
+            <select class="filter type">
+                {{selectOptions data.types selected=data.chosenType localize=true}}
+            </select>
+            </div>
+            {{#if (eq data.chosenType  "weapon")}}
+            <div class="filter-element">
+                <label class="filter-label">{{localize "DoD.weapon.grip"}}</label>
+                <select class="filter grip">
+                    {{selectOptions data.grip selected=data.filters.grip localize=true}}
+                </select>
+            </div>
+            <div class="filter-element">
+                <label class="filter-label">{{localize "DoD.weapon.skill"}}</label>
+                <select class="filter weaponSkill">
+                    {{selectOptions data.weaponSkills selected=data.filters.weaponSkill localize=true}}
+                </select>
+            </div>
+            <div class="filter-element">
+                <label class="filter-label">{{localize "DoD.weapon.features"}}</label>
+                <select class="filter weaponFeature">
+                    {{selectOptions data.weaponFeature selected=data.filters.weaponFeature localize=true}}
+                </select>
+            </div>
+            <div class="filter-element">
+                <label class="filter-label">{{localize "DoD.gear.supply"}}</label>
+                <select class="filter supply">
+                    {{selectOptions data.supply selected=data.filters.supply localize=true}}
+                </select>
+            </div>
+            {{/if}}
+            {{#if (eq data.chosenType  "spell")}}
+                <div class="filter-element">
+                    <label class="filter-label">{{localize "DoD.spell.school"}}</label>
+                    <select class="filter school">
+                        {{selectOptions data.magicSchool selected=data.filters.school localize=true}}
+                    </select>
+                </div>
+                <div class="filter-element">
+                    <label class="filter-label">{{localize "DoD.spell.duration"}}</label>
+                    <select class="filter duration">
+                        {{selectOptions data.duration selected=data.filters.duration localize=true}}
+                    </select>
+                </div>
+                <div class="filter-element">
+                    <label class="filter-label">{{localize "DoD.spell.castingTime"}}</label>
+                    <select class="filter castingTime">
+                        {{selectOptions data.castingTime selected=data.filters.castingTime localize=true}}
+                    </select>
+                </div>
+                <div class="filter-element">
+                    <label class="filter-label">{{localize "DoD.spell.range"}}</label>
+                        <select class="filter range">
+                        {{selectOptions data.range selected=data.filters.range localize=true}}
+                    </select>
+                </div>
+                <div class="filter-element">
+                    <label class="filter-label">{{localize "DoD.spell.rank"}}</label>
+                        <select class="filter rank" >
+                            <option value="0" {{#if (eq data.filters.rank  "0")}} selected{{/if}}>0</option>
+                            <option value="1" {{#if (eq data.filters.rank  "1")}} selected{{/if}}>1</option>
+                            <option value="2" {{#if (eq data.filters.rank  "2")}} selected{{/if}}>2</option>
+                            <option value="3" {{#if (eq data.filters.rank  "3")}} selected{{/if}}>3</option>
+                            <option value="4" {{#if (eq data.filters.rank  "4")}} selected{{/if}}>4</option>
+                            <option value="any" {{#if (eq data.filters.rank  "any")}} selected{{/if}}>{{localize "DB-IB.Any"}}</option>
+                    </select>
+                </div>
+
+            {{/if}}  
+            {{#if (eq data.chosenType  "item") }}
+            <div class="filter-element">
+                <label class="filter-label">{{localize "DoD.gear.supply"}}</label>
+                <select class="filter supply">
+                    {{selectOptions data.supply selected=data.filters.supply localize=true}}
+                </select>
+            </div>
+            {{/if}}    
+
+
+            
+        </div>
+        <div class="right-side">
+                {{#each data.chosenItems as |item |}}
+                <div class="item-in-browser {{item.type}}" id='{{item.id}}'>
+                    <img class="borderless-item" src="{{item.img}}" height="20" width="20">
+                    <a class="item-name-browser" data-tooltip='{{removeUUID item.system.description}}' id="{{item.id}}">{{item.name}}</a>
+                    {{#havePrice item}}
+                    {{/havePrice}}
+                </div>
+                
+                {{/each}}
+
+            </div>
+    </div>
+    
+</div>

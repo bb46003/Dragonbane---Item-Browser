@@ -1,0 +1,79 @@
+.fa-magnifying-glass:before, .fa-search:before {
+    content: "\f002";
+    color: white;
+    position: relative;
+    top: 3px;
+}
+.fa-magnifying-glass.eq:before, .fa-search.eq:before {
+    content: "\f002";
+    color: white;
+    position: relative;
+    top: 3px;
+    right: -15px;
+}
+.hidden-button{
+    height: 0px;
+    max-height: 0px;
+    min-height: 0px;
+}
+.searching-dialog {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr;
+    overflow: hidden;
+    column-gap: 10px;
+}
+.item-in-browser.weapon, .item-in-browser.item , .item-in-browser.helmet, .item-in-browser.armor{
+    display: grid;
+    grid-template-columns: 0.3fr 2fr 1fr 0.5fr;
+    /* flex-wrap: nowrap; */
+    justify-content: space-between;
+    align-items: baseline;
+}
+.item-in-browser.spell, .item-in-browser.ability{
+    display: grid;
+    grid-template-columns: 0.3fr 2fr 0.5fr;
+    /* flex-wrap: nowrap; */
+    justify-content: space-between;
+    align-items: baseline;
+}
+.fa-coins, i.cost, .fa-plus {
+    justify-self: right;
+}
+a.item-name-browser {
+    justify-self: left;
+    margin-left: 2px;
+}
+
+.left-side {
+    overflow: hidden; /* Prevent scrolling */
+    height: 100%;
+    flex: 0 0 25%;           /* Fixed width for the left side (adjust as needed) */
+    position: sticky;        /* Make it sticky so it remains in place while scrolling */
+    top: 0;   
+    
+}
+
+.right-side {
+    flex: 1;  
+    overflow-y: auto; /* Allow vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    max-height: 100%; /* Ensure it respects the container height */
+}
+.form-container .item-browser{
+    height: 100%; /* Allow form to inherit the full height */
+    overflow: hidden; /* Prevent unwanted scrolling of the entire form */
+}
+.filter-element {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr;
+    align-items: center;
+}
+select.filter {
+    width: 100%;
+}
+button.item-browser {
+    width: 0px;
+    border: none;
+    background: transparent;
+    /* visibility: hidden; */
+}

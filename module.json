@@ -1,0 +1,42 @@
+{
+  "id": "dragonbane-item-browser",
+  "title": "Dragonbane - Item Browser",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "12"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dragonbane",
+        "type": "system",
+        "compatibility": {}
+      }
+    ]
+  },
+  "esmodules": [
+    "main.mjs"
+  ],
+  "styles":[ "items-browser.css"],
+
+  "authors": [
+    {
+      "name": "Bartek",
+      "discord": "bartek6199",
+      "flags": {}
+    }
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    },
+    {
+      "lang": "pl",
+      "name": "Polski",
+      "path": "lang/pl.json"
+    }
+  ]
+}
