@@ -1,7 +1,10 @@
 {
   "id": "dragonbane-item-browser",
   "title": "Dragonbane - Item Browser",
-  "version": "1.0.2",
+  "version": "vDev",
+  "url": "Filled in by the release workflow",
+  "manifest":"Filled in by the release workflow",
+  "download": "Filled in by the release workflow",
   "compatibility": {
     "minimum": "12",
     "verified": "12"
@@ -43,7 +46,5 @@
       "name": "Polski",
       "path": "lang/pl.json"
     }
-  ],
-  "manifest":"https://raw.githubusercontent.com/bb46003/Dragonbane---Item-Browser/refs/heads/main/module.json",
-  "download": "https://github.com/bb46003/Dragonbane---Item-Browser/archive/refs/heads/main.zip"
+  ]
 }
