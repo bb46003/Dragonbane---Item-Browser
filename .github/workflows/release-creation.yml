@@ -69,8 +69,6 @@ jobs:
           download: https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.zip
 
       # This workflow step creates the module.zip for the release.
-      # I've set it so each item is on a separate line. It makes it easier to find, add, 
-      # or remove items from the archive. It's just a command line for running zip.
       # 
       # If you ever add or remove a file from the project, and it needs to be part of the release,
       # then this section will need to be updated.
@@ -81,13 +79,8 @@ jobs:
           # Note that `zip` will only emit warnings when a file or directory
           # doesn't exist, it will not fail.
           zip --recurse-paths ./module.zip \
-            item-searching.mjs \
-            items-browser.css \
-            items-search.hbs \
-            main.mjs \
-            module.json \ 
-            art/ \
-            lang/
+            item-searching.mjs items-browser.css items-search.hbs main.mjs module.json \ 
+            art/ lang/
 
       # This workflow step creates the release on the GitHub project, using values entered into the GitHub release 
       # form that triggered the workflow. It then adds the module.json and module.zip to the release.
