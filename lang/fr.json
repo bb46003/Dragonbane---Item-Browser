@@ -1,0 +1,11 @@
+{
+    "DB-IB":{
+        "Any":"Tous",
+        "addItem": "<strong>{actor}</strong> a ajouté <strong>{type}</strong> <strong>{item}</strong> à sa feuille de personnage",
+        "rollForPrice":"Lancer {formula} pour définir le prix de {item} en {currency}",
+        "notEnoughMoney":"<strong>{actor}</strong> n'a pas assez d'argent pour acheter : <strong>{item}</strong>.",
+        "spendMoney":"<strong>{actor}</strong> dépense <strong>{itemPrice}</strong> pour acheter <strong>{item}</strong>",
+        "manualMonyRemoval": "Le prix défini par le MJ pour <strong>{item}</strong> est de <strong>{itemPrice}</strong>. <strong><em>Les Augmentations/Diminutions se font manuellement</em></strong>."
+    }
+
+}
