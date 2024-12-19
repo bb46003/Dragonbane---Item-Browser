@@ -2,9 +2,7 @@
   "id": "dragonbane-item-browser",
   "title": "Dragonbane - Item Browser",
   "version": "vDev",
-  "url": "Filled in by the release workflow",
-  "manifest":"Filled in by the release workflow",
-  "download": "Filled in by the release workflow",
+ 
   "compatibility": {
     "minimum": "12",
     "verified": "12"
@@ -46,5 +44,8 @@
       "name": "Polski",
       "path": "lang/pl.json"
     }
-  ]
+  ],
+  "url": "Filled in by the release workflow",
+  "manifest":"Filled in by the release workflow",
+  "download": "Filled in by the release workflow",
 }

@@ -1,11 +1,24 @@
 {
-    
     "DB-IB":{
         "Any":"Dowolny",
         "addItem": "<strong>{actor}</strong>dodał/dodała do kary postaci <strong>{type}</strong> <strong>{item}</strong>",
         "rollForPrice":"Rzut ${formula} aby określić cemę ${item} w ${currency}",
         "notEnoughMoney":"<strong>{actor}</strong> nie ma wystarczającej ilości monet aby kupić <strong>{item}</strong>.",
         "spendMoney":"<strong>{actor}</strong> wydał/wydała <strong>{itemPrice}</strong> aby kupić <strong>{item}</strong>",
-        "manualMonyRemoval": "Określ z osobą mistrzującą cenę <strong>{item}</strong> zefiniowaną jako <strong>{itemPrice}</strong> i odejmnij monety ręcznie."
+        "manualMonyRemoval": "Określ z osobą mistrzującą cenę <strong>{item}</strong> zefiniowaną jako <strong>{itemPrice}</strong> i odejmnij monety ręcznie.",
+        "settings": {
+            "rollForBarter": "Rzut na targowanie podczas zakupu przedmiotu",
+            "hintRollForBarter": "Kiedy kupujesz przedmiot z okna przeglądarki przedmiotów, pojawi się okno, w którym gracz zostanie zapytany, czy chce wykonać rzut na TARGOWANIE, aby dostosować cenę zgodnie z zasadami określonymi w Podręczniku.",
+            "nonCoreSkill": "Wprowadź nazwę umiejętności dodatkowej dla TARGOWANIA",
+            "hintSkillBarter": "Wprowadzona tutaj nazwa umiejętności zostanie wyszukana na karcie postaci w celu użycia jej do rzutu na Targowanie."
+        },
+        "Chat": {
+            "buyItem": "Kup przedmiot",
+            "reducePrice": "Obniżasz cenę {item} o 20%!",
+            "cannotBuy": "Obrażasz sprzedawcę, co skutkuje niemożliwością zakupu {item}",
+            "reducePriceDragon": "Obniżasz cenę {item} o 50%!",
+        "nochangeInPrice": "Możesz kupić {item} w regularnej cenie."
+        },
+        "itemName": "Nazwa przedmiotu"
     }
 }
