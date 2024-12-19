@@ -49,7 +49,8 @@ a.item-name-browser {
     height: 100%;
     flex: 0 0 25%;           /* Fixed width for the left side (adjust as needed) */
     position: sticky;        /* Make it sticky so it remains in place while scrolling */
-    top: 0;   
+    top: 0; 
+    width: 16em;  
     
 }
 
@@ -67,6 +68,7 @@ a.item-name-browser {
     display: grid;
     grid-template-columns: 0.5fr 1fr;
     align-items: center;
+    margin-bottom: 5px;
 }
 select.filter {
     width: 100%;
@@ -76,4 +78,7 @@ button.item-browser {
     border: none;
     background: transparent;
     /* visibility: hidden; */
+}
+input.input-item-name {
+    width: 100%;
 }

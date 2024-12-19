@@ -1,11 +1,28 @@
 {
-    "DB-IB":{
-        "Any":"Any",
-        "addItem": "<strong>{actor}</strong> add to character sheet <strong>{type}</strong> <strong>{item}</strong>",
-        "rollForPrice":"Roll {formula} to Define cost of {item} in {currency}",
-        "notEnoughMoney":"<strong>{actor}</strong> do not have enough coins to buy <strong>{item}</strong>.",
-        "spendMoney":"<strong>{actor}</strong> spend <strong>{itemPrice}</strong> to buy <strong>{item}</strong>",
-        "manualMonyRemoval": "Define with GM price of <strong>{item}</strong> Define as <strong>{itemPrice}</strong> and reduce price manually."
-    }
-
+  "DB-IB": {
+    "Any": "Any",
+    "addItem": "<strong>{actor}</strong> add to character sheet <strong>{type}</strong> <strong>{item}</strong>",
+    "rollForPrice": "Roll {formula} to Define cost of {item} in {currency}",
+    "notEnoughMoney": "<strong>{actor}</strong> do not have enough coins to buy <strong>{item}</strong>.",
+    "spendMoney": "<strong>{actor}</strong> spend <strong>{itemPrice}</strong> to buy <strong>{item}</strong>",
+    "manualMonyRemoval": "Define with GM price of <strong>{item}</strong> Define as <strong>{itemPrice}</strong> and reduce price manually.",
+    "settings": {
+      "rollForBarter": "Barter roll when purchasing an item",
+      "hintRollForBarter": "When you purchase an item from the item browser dialog, a window will pop up asking the player if they want to roll for BARTER to adjust the price according to the rules defined in the RuleBook.",
+      "nonCoreSkill": "Insert non-core skill name for BARTER",
+      "hintSkillBarter": "The skill name entered here will be searched on the character sheet to use for the Barter roll."
+    },
+    "Chat": {
+      "buyItem": "Buy Item",
+      "reducePrice": "You reduce price of {item} by 20%!",
+      "cannotBuy": "You offend the seller, which ends up with no possibility to buy {item}",
+      "reducePriceDragon": "You reduce price of {item} by 50%!",
+      "nochangeInPrice": "You can buy {item} in regular price."
+    },
+    "itemName": "Item name",
+    "wannaBarter": "Did you want to barter?",
+    "pickIfYouWantToRollForBartering": "Pick if You want to roll for Bartering or not.",
+    "rollForBarter": "Roll for Bartering",
+    "BuyWithoutRoll": "Buy without Roll."
+  }
 }
