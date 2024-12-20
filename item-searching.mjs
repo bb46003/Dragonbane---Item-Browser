@@ -432,7 +432,6 @@ export class itemsSearch extends Dialog {
         // Render the Dialog
         d.render(true);
     }
-    
     async itemFilter(event){
         const filterData = this.filterData;
         const inputString =  event.target.value.toLowerCase();
@@ -466,7 +465,8 @@ export class itemsSearch extends Dialog {
 export async function addChatListeners(_app, html, _data) { 
     html.on("click", ".chat-button.buy-item", buyFromChat);
     html.on("click", ".barter-push-roll", barterPushRoll);
-    
+  
+
 
 }
 async function buyFromChat(event) {
@@ -559,13 +559,10 @@ async function spendMoneyWithBarter(item,actor,rollResults, isDragon){
             if (copperPart > 10){
                 silverPart =  Math.floor(copperPart/10);
                 copperPart = copperPart - (silverPart*10);
-
-
             }
             break; 
         }
     }
-    console.log(goldPart, silverPart, copperPart)
     if (copperPart !== 0){
         
         while (copperPart > actorCC) {
@@ -777,3 +774,230 @@ async function creatConditionMagade(actor, choice){
         speaker: ChatMessage.getSpeaker({ actor: actor })
     });   
 }
+export class sellingItem {
+    constructor({ itemID, actorID}) {     
+        this.itemID = itemID; 
+        this.actorID = actorID;
+    }
+    async  addChatListeners(_app, html, _data) { 
+        html.on("click", ".sell-push-roll",  this.sellPushRoll.bind(this));
+        html.on("click", ".chat-button.sell-item",  this.sellFromChat.bind(this));
+
+    }
+    async selling(itemID, actorID){
+        const actor = game.actors.get(actorID);
+        const item = actor.items.filter(item => item.id === itemID)[0];
+        const rollForBarter =  game.settings.get("dragonbane-item-browser", "barter-roll-when-buys")
+        if(rollForBarter){      
+            let skillName = game.settings.get("dragonbane-item-browser", "custom-barter-skill");
+            if (skillName === "") {
+                skillName = "Bartering";
+            }
+            let skill = actor.findSkill(skillName);
+            if (skill === undefined && skillName !== "Bartering") {
+                skill = actor.findSkill("Bartering");
+            }
+            const options = {};
+            const test = new DoDSkillTest(actor, skill, options);
+            const d = new Dialog({
+                title: game.i18n.localize("DB-IB.wannaBarter"),
+                content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
+                buttons: {
+                    sellWithRoll: {
+                        label: game.i18n.localize("DB-IB.rollForBarter"),
+                        callback: async () => {
+                            const barterSkillRoll = await test.roll();
+                            if (barterSkillRoll !== undefined) {
+                                const success = barterSkillRoll.postRollData.success;
+                                const isDemon = barterSkillRoll.postRollData.isDemon;
+                                const isDragon = barterSkillRoll.postRollData.isDragon;
+                                const canPush = barterSkillRoll.postRollData.canPush;
+                                const ChatMessage = barterSkillRoll.rollMessage._id;
+                                let existingMessage = game.messages.get(ChatMessage);
+                                
+                                if (canPush) {
+                                    await this.barterSellPushButton(existingMessage);
+                                    existingMessage = game.messages.get(ChatMessage);
+                                }
+                                await this.addSellButton(item, actor, success, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll);
+                            }
+                        },
+                    },
+                    sellWithoutRoll: {
+                        label: game.i18n.localize("DB-IB.BuyWithoutRoll"),
+                        callback: async () => {
+                           await this.sellItem(item,actor);
+                        },
+                    },
+                },
+                default: "sellWithRoll", // Default button when hitting Enter
+            });
+        
+            // Render the Dialog
+            d.render(true);
+
+        }
+        else{
+            await this.sellItem(item,actor);
+        }
+
+    }
+
+    async sellItem(item,actor) {
+        const itemPrice = item.system.cost;
+        let actorGC= actor.system.currency.gc;
+        let actorSC = actor.system.currency.sc;
+        let actorCC = actor.system.currency.cc;
+        const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
+        const itemPriceNoSpace = itemPrice.replace(/\s+/g, "");
+        const regex = /^(\d+D\d+)x(\d+)([a-zA-Z]+)$/;
+        const isMatch = regex.test(itemPriceNoSpace);
+        if(isMatch){
+            const dice = itemPriceNoSpace.match(regex)[1];
+            const multiplyer = itemPriceNoSpace.match(regex)[2];
+            const currency = itemPriceNoSpace.match(regex)[3]
+            const formula = `${dice}*${multiplyer}`
+            const costRoll =await new Roll(formula).evaluate()
+            const content = game.i18n.format("DB-IB.rollForPrice",{formula:formula,item:item.name,currency:currency})
+            costRoll.toMessage({
+                user: game.user.id,
+                speaker: ChatMessage.getSpeaker({ actor }),
+                flavor: content,
+            });
+            itemPrice = String(costRoll.total)+" "+currency;          
+        }
+        let cost = Number(itemPrice.split(" ")[0]);
+        const currency2 = itemPrice.split(" ")[1];
+        let currencyType; 
+        let index = 0; // Initialize the index variable
+        for (const coin of coinsType) {
+            if (currency2.toLowerCase() === coin) {
+                currencyType = index;
+                break;
+            }
+            index++; // Increment the index in each iteration
+        }
+        switch(currencyType){
+            case 0:
+            case 1:
+                actorGC = actorGC + cost;
+                break;
+            case 2:
+            case 3:
+                actorSC = actorSC + cost;
+                break;
+            case 3:
+            case 4:
+                actorCC = actorCC + cost;
+                break;
+
+        } 
+        await actor.update({
+            ["system.currency.gc"]: actorGC,
+            ["system.currency.sc"]: actorSC,
+            ["system.currency.cc"]: actorCC,
+
+        })
+        actor.deleteEmbeddedDocuments("Item", [item.id])
+        ChatMessage.create({
+            content: game.i18n.format("DB-IB.Chat.sellItem",{cost:cost, item:item.name, actor:actor.name, currency:currency2}),
+            speaker: ChatMessage.getSpeaker({ actor })
+        });
+
+    }
+    async barterSellPushButton(existingMessage) {
+        let tempDiv = document.createElement('div');
+        tempDiv.innerHTML = existingMessage.content;
+        let button = tempDiv.querySelector("button.push-roll");
+        if (button) {
+            button.classList.remove("push-roll");
+            button.classList.add("sell-push-roll");
+        }
+        let updatedContent = tempDiv.innerHTML;
+        existingMessage.content = updatedContent; 
+        existingMessage.update({ content: updatedContent });
+    }
+    async sellPushRoll(event) {
+        const ChatMessageID = event.target.closest('[data-message-id]')?.getAttribute('data-message-id');
+        const currentMessage =  game.messages.get(ChatMessageID);
+        const formula = currentMessage.rolls[0]._formula;
+        const actor = game.actors.get(currentMessage.system.actor._id);
+        const item = currentMessage.system.item;
+        const element = event.currentTarget;
+            const parent = element.parentElement;
+            const pushChoices = parent.getElementsByTagName("input");
+            const choice = Array.from(pushChoices).find(e => e.name==="pushRollChoice" && e.checked);
+            if (!actor.hasCondition(choice.value)) {
+               actor.updateCondition(choice.value, true);
+               await creatConditionMagade(actor,choice)
+            } else {
+                DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+                return;
+            }
+            let skillName =  game.settings.get("dragonbane-item-browser","custom-barter-skill")
+            if (skillName === ""){
+                skillName = "Bartering"
+            }
+            let skill = actor.findSkill(skillName)
+            if (skill === undefined && skill !== "Bartering"){
+                skill = actor.findSkill("Bartering")
+            }
+           
+            let options = {canPush:false,skipDialog: true, formula:formula};
+            const test = new DoDSkillTest(actor, skill, options);
+            const barterSkillRoll = await test.roll();
+            const sucess = barterSkillRoll.postRollData.success;
+            const isDemon = barterSkillRoll.postRollData.isDemon;
+            const isDragon = barterSkillRoll.postRollData.isDragon;
+            const ChatMessage = barterSkillRoll.rollMessage._id;
+            let existingMessage = game.messages.get(ChatMessage);
+            await this.addSellButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll)
+        
+    }
+    async addSellButton(item, actor, success, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll){
+        let flavor = existingMessage.flavor;
+        let newFlavor = "";
+        if(success){
+            const tekst = game.i18n.format("DB-IB.Chat.increasPrice",{item:item.name});
+            const reducePrice =`<br><p> ${tekst}</p>`
+            newFlavor = flavor + reducePrice  
+            
+    
+        }   
+        else if(isDemon)  {
+            const tekst = game.i18n.format("DB-IB.Chat.cannotSell",{item:item.name});
+            const cannotBuy =`<br><p> ${tekst}</p>`
+            newFlavor = flavor +cannotBuy   
+                    
+            }
+        else if(isDragon)  {
+                const tekst = game.i18n.format("DB-IB.Chat.increasePriceDragon",{item:item.name});
+                const reducePriceDragon =`<br><p> ${tekst}</p>`
+                newFlavor = flavor +reducePriceDragon    // Keep </span> and add reducePrice after it
+                  
+            }
+        else{
+            const tekst = game.i18n.format("DB-IB.Chat.nochangeInPriceSell",{item:item.name});
+            const regularPrice =`<br><p> ${tekst}</p>`
+            newFlavor = flavor +regularPrice
+        }
+        if (isDemon === false){
+            const newButton = `
+            <button type="button" class="chat-button sell-item" data-message-id="${ChatMessage}">
+            ${game.i18n.format("DB-IB.Chat.sellItemButton")}
+             </button>
+            `;
+            let updatedContent = `${existingMessage.content} <div>${newButton}</div>`;
+            existingMessage.update({ content: updatedContent,flavor:newFlavor, system: {actor,item,barterSkillRoll}} );
+          
+        }
+        else{
+            existingMessage.update({ flavor:newFlavor, system: {actor,item,barterSkillRoll}} );
+    
+        }
+    }
+    async sellFromChat(event){
+        console.log(event)
+    }
+}
+
