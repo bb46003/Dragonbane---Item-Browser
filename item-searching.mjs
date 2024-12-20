@@ -964,19 +964,19 @@ export class sellingItem {
             
     
         }   
-        else if(isDemon)  {
+        if(isDemon)  {
             const tekst = game.i18n.format("DB-IB.Chat.cannotSell",{item:item.name});
             const cannotBuy =`<br><p> ${tekst}</p>`
             newFlavor = flavor +cannotBuy   
                     
             }
-        else if(isDragon)  {
+        if(isDragon)  {
                 const tekst = game.i18n.format("DB-IB.Chat.increasePriceDragon",{item:item.name});
                 const reducePriceDragon =`<br><p> ${tekst}</p>`
                 newFlavor = flavor +reducePriceDragon    // Keep </span> and add reducePrice after it
                   
             }
-        else{
+        if(!success && isDemon === false){
             const tekst = game.i18n.format("DB-IB.Chat.nochangeInPriceSell",{item:item.name});
             const regularPrice =`<br><p> ${tekst}</p>`
             newFlavor = flavor +regularPrice
@@ -997,7 +997,24 @@ export class sellingItem {
         }
     }
     async sellFromChat(event){
-        console.log(event)
+        const mesageID = event.target.dataset.messageId
+        const data = game.messages.get(mesageID).system;
+        const roll = data.barterSkillRoll;
+        const actor = data.actor;
+        const item = data.item;
+        const sucess = roll.postRollData.success;
+        const isDemon = roll.postRollData.isDemon;
+        const isDragon = roll.postRollData.isDragon;
+        const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
+        const itemPriceNoSpace = itemPrice.replace(/\s+/g, "");
+        const regex = /^(\d+D\d+)x(\d+)([a-zA-Z]+)$/;
+        const isMatch = regex.test(itemPriceNoSpace);
+        let sellPrice;
+        if(sucess){
+            sellPrice = item.system.cost 
+        }
+
+
     }
 }
 
