@@ -82,3 +82,8 @@ button.item-browser {
 input.input-item-name {
     width: 100%;
 }
+.fa-solid.fa-piggy-bank {
+    position: relative;
+    top: -3px;
+    right: 3px;
+}

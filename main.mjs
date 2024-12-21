@@ -1,5 +1,5 @@
 
-import {itemsSearch} from  "./item-searching.mjs"
+import {itemsSearch, sellingItem} from  "./item-searching.mjs"
 import * as DBIBChat from "./item-searching.mjs"
 
 Hooks.once("init", function () {
@@ -25,9 +25,17 @@ Hooks.once("init", function () {
       config: true, 
   });
 
-  registerHandlebarsHelpers()
+  game.settings.register("dragonbane-item-browser", "sell-items", {
+    name: game.i18n.localize("DB-IB.settings.selling"),
+    hint: game.i18n.localize("DB-IB.settings.hintSelling"),
+    scope: "world",
+    type: Boolean,
+    default: "",
+    config: true, 
 });
 
+  registerHandlebarsHelpers()
+});
 
 Hooks.on("renderSettingsConfig", (app, html, data) => {
   const barterRollEnabled = game.settings.get("dragonbane-item-browser", "barter-roll-when-buys");
@@ -50,19 +58,13 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
 Hooks.on("renderDoDCharacterSheet", (html) => {
   const actorID = html.object._id;
   const buttonAbilitiesHTML = `
-   <button class="item-browser" id="${actorID}">
-    <i id="custom-search-button" for="item-browser"
-        class="fa-solid fa-magnifying-glass" 
-        data-type="ability" 
-        title="Items Browser"></i>
-        </button<
-      `;  
-      const buttonSpellHTML = `  <button class="item-browser" id="${actorID}">
-    <i id="custom-search-button" for="item-browser"
-        class="fa-solid fa-magnifying-glass" 
-        data-type="spell" 
-        title="Items Browser"></i>  </button>
-      `;  
+    <button class="item-browser" id="${actorID}">
+      <i id="custom-search-button" for="item-browser" class="fa-solid fa-magnifying-glass" data-type="ability" title="Items Browser"></i>
+    </button>`;  
+  const buttonSpellHTML = `  
+    <button class="item-browser" id="${actorID}">
+      <i id="custom-search-button" for="item-browser" class="fa-solid fa-magnifying-glass" data-type="spell" title="Items Browser"></i>
+    </button>`;  
   const heroic = game.i18n.translations.DoD.ui["character-sheet"].heroicAbilities;
   const magicTrick = game.i18n.translations.DoD.ui["character-sheet"].trick;
   const spell =  game.i18n.translations.DoD.ui["character-sheet"].spell;
@@ -99,13 +101,14 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   creatItemButton.forEach(button => {
     const dataType = button.getAttribute("data-type"); 
     const existingButton = button.nextElementSibling?.classList.contains("item-browser");
+    const title = game.i18n.localize("DB-IB.openItemBrowser")
     if (!existingButton) {
         const buttonHTML = `
           <button class="item-browser" id="${actorID}">
             <i id="custom-search-button" for="item-browser"
                class="fa-solid fa-magnifying-glass eq" 
                data-type="${dataType}" 
-               title="Items Browser"></i>
+               title="${title}"></i>
           </button>
         `;
         button.insertAdjacentHTML("afterend", buttonHTML);
@@ -122,21 +125,66 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
         button.dataset.eventAttached = "true";
     }
 });
+const sellsSetting = game.settings.get("dragonbane-item-browser", "sell-items")
+if(sellsSetting){
+const items = document.querySelectorAll(".sheet-table-data.item.draggable-item");
+
+items.forEach(item =>{
+  const dataType = item.getAttribute("data-item-id"); 
+  const binIcon = item.querySelector(".item-delete");
+  const iconData = item.querySelector(".icon-data");
+  const title = game.i18n.localize("DB-IB.sellItem");
+  const actor = game.actors.get(actorID);
+  const singleItem = actor.items.filter(element => element.id === dataType)[0];
+  const singleItemHaveCost = /\d/.test(singleItem.system.cost);
+  if(singleItemHaveCost){  
+    const addSellingIcon = `<button class="item-browser-sold" id="${actorID}">
+      <i id="${dataType}" for="item-browser-sold" class="fa-solid fa-piggy-bank" title="${title}"></i>
+      </button>`; 
+    const hasSellingButton = iconData.querySelector(".item-browser-sold") === null;
+    if (hasSellingButton) {
+      binIcon.insertAdjacentHTML("beforebegin", addSellingIcon);
+    }
+  }
+})
+const buttonsSell = document.querySelectorAll(".fa-solid.fa-piggy-bank");
+
+buttonsSell.forEach(button => {
+    if (!button.dataset.eventAttached) {
+        button.addEventListener("click", (event) => {
+          selliItem(event, actorID);
+        });
+        button.dataset.eventAttached = "true";
+    }
+});
+}
+
+
+ 
 })
 Hooks.on("renderChatLog", DBIBChat.addChatListeners)
+
+
+Hooks.on("renderChatLog", (app, html, data) => {
+  const sellingInstance = new sellingItem({ itemID: null, actorID: null });
+    sellingInstance.addChatListeners(app, html, data);
+});
 
 
 async function openItemsBrowser(event,actorID){
   event.preventDefault();
   const element = event.currentTarget;
-  const type = element.dataset.type
+  const type = element.dataset.type;
   const filterData ={chosenType:type};
-  if (actorID === undefined){
-    console.log(event)
-  }
-  const browser = new itemsSearch(filterData,actorID)
-  console.log(actorID)
-  browser.openBrowser(filterData,actorID)
+  const browser = new itemsSearch(filterData,actorID);
+  browser.openBrowser(filterData,actorID);
+}
+
+async function  selliItem(event,actorID) {
+  event.preventDefault()
+  const itemID = event.target.id;
+  const sell = new sellingItem(itemID,actorID);
+  sell.selling(itemID,actorID) 
 }
 
 function registerHandlebarsHelpers() {
@@ -181,5 +229,5 @@ function registerHandlebarsHelpers() {
       return descriptionWithoutHTML
   
     })
-  }
+}
 

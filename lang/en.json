@@ -7,22 +7,34 @@
     "spendMoney": "<strong>{actor}</strong> spend <strong>{itemPrice}</strong> to buy <strong>{item}</strong>",
     "manualMonyRemoval": "Define with GM price of <strong>{item}</strong> Define as <strong>{itemPrice}</strong> and reduce price manually.",
     "settings": {
-      "rollForBarter": "Barter roll when purchasing an item",
-      "hintRollForBarter": "When you purchase an item from the item browser dialog, a window will pop up asking the player if they want to roll for BARTER to adjust the price according to the rules defined in the RuleBook.",
+      "rollForBarter": "Barter roll when purchasing or selling an item",
+      "hintRollForBarter": "When you purchase or selling an item from the item browser dialog, a window will pop up asking the player if they want to roll for BARTER to adjust the price according to the rules defined in the RuleBook.",
       "nonCoreSkill": "Insert non-core skill name for BARTER",
-      "hintSkillBarter": "The skill name entered here will be searched on the character sheet to use for the Barter roll."
+      "hintSkillBarter": "The skill name entered here will be searched on the character sheet to use for the Barter roll.",
+      "stashItems": "Add tabel for stashed items to Character Sheets.",
+      "hintStashItems": "This items are own by Character, but are lest in some save space and are not couted toward encumbarace limit.",
+      "selling": "Add pigi bank icon to item with cost allowing to sell it.",
+      "hintSelling": "Allow to sell items defoult by 50% of cost, if Bartering option is on it allow to roll for selling as well. "
     },
     "Chat": {
       "buyItem": "Buy Item",
       "reducePrice": "You reduce price of {item} by 20%!",
       "cannotBuy": "You offend the seller, which ends up with no possibility to buy {item}",
+      "cannotSell": "You offend the seller, which ends up with no possibility to sell {item}",
       "reducePriceDragon": "You reduce price of {item} by 50%!",
-      "nochangeInPrice": "You can buy {item} in regular price."
+      "nochangeInPrice": "You can buy {item} in regular price.",
+      "sellItem": "<b>{actor}</b> sells <b>{item}</b> for <b>{cost} {currency}</b>.",
+      "increasPrice": "You sell {item} for 20% more.",
+      "increasePriceDragon": "You sell {item} for 50% more!",
+      "nochangeInPriceSell": "You can sell {item} in regular price.",
+      "sellItemButton": "Sell Item"
     },
     "itemName": "Item name",
     "wannaBarter": "Did you want to barter?",
     "pickIfYouWantToRollForBartering": "Pick if You want to roll for Bartering or not.",
     "rollForBarter": "Roll for Bartering",
-    "BuyWithoutRoll": "Buy without Roll."
+    "BuyWithoutRoll": "Buy without Roll.",
+    "openItemBrowser": "Open Item Browser",
+    "sellItem": "Sell Item"
   }
 }
