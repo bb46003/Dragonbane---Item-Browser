@@ -866,8 +866,9 @@ export class sellingItem {
             });
             itemPrice = String(costRoll.total)+" "+currency;          
         }
-        let cost = Number(itemPrice.split(" ")[0]);
+        let cost = Number(itemPrice.split(" ")[0])/2;
         const currency2 = itemPrice.split(" ")[1];
+        const finalPrice = cost;
         let currencyType; 
         let index = 0; // Initialize the index variable
         for (const coin of coinsType) {
@@ -877,30 +878,36 @@ export class sellingItem {
             }
             index++; // Increment the index in each iteration
         }
+        let copperPart = 0, silverPart = 0, goldPart = 0;
         switch(currencyType){
             case 0:
             case 1:
-                actorGC = actorGC + cost;
+                cost = cost * 100
                 break;
             case 2:
             case 3:
-                actorSC = actorSC + cost;
+                cost = cost * 10
                 break;
             case 3:
             case 4:
-                actorCC = actorCC + cost;
+                cost = cost
                 break;
 
         } 
+
+        goldPart = Math.floor(cost / 100); 
+        silverPart = Math.floor((cost % 100) / 10); 
+        copperPart = cost % 10; 
+
         await actor.update({
-            ["system.currency.gc"]: actorGC,
-            ["system.currency.sc"]: actorSC,
-            ["system.currency.cc"]: actorCC,
+            ["system.currency.gc"]: actorGC + goldPart,
+            ["system.currency.sc"]: actorSC + silverPart,
+            ["system.currency.cc"]: actorCC + copperPart,
 
         })
         actor.deleteEmbeddedDocuments("Item", [item.id])
         ChatMessage.create({
-            content: game.i18n.format("DB-IB.Chat.sellItem",{cost:cost, item:item.name, actor:actor.name, currency:currency2}),
+            content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
             speaker: ChatMessage.getSpeaker({ actor })
         });
 
@@ -1000,19 +1007,88 @@ export class sellingItem {
         const mesageID = event.target.dataset.messageId
         const data = game.messages.get(mesageID).system;
         const roll = data.barterSkillRoll;
-        const actor = data.actor;
+        const actor = game.actors.get(data.actor._id);
         const item = data.item;
+        let actorGC= actor.system.currency.gc;
+        let actorSC = actor.system.currency.sc;
+        let actorCC = actor.system.currency.cc;
         const sucess = roll.postRollData.success;
-        const isDemon = roll.postRollData.isDemon;
         const isDragon = roll.postRollData.isDragon;
+        const itemPrice = item.system.cost;
         const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
         const itemPriceNoSpace = itemPrice.replace(/\s+/g, "");
         const regex = /^(\d+D\d+)x(\d+)([a-zA-Z]+)$/;
         const isMatch = regex.test(itemPriceNoSpace);
-        let sellPrice;
-        if(sucess){
-            sellPrice = item.system.cost 
+        if(isMatch){
+            const dice = itemPriceNoSpace.match(regex)[1];
+            const multiplyer = itemPriceNoSpace.match(regex)[2];
+            const currency = itemPriceNoSpace.match(regex)[3]
+            const formula = `${dice}*${multiplyer}`
+            const costRoll =await new Roll(formula).evaluate()
+            const content = game.i18n.format("DB-IB.rollForPrice",{formula:formula,item:item.name,currency:currency})
+            costRoll.toMessage({
+                user: game.user.id,
+                speaker: ChatMessage.getSpeaker({ actor }),
+                flavor: content,
+            });
+            itemPrice = String(costRoll.total)+" "+currency;          
         }
+        let cost = Number(itemPrice.split(" ")[0])/2;
+        const currency2 = itemPrice.split(" ")[1];
+        if(sucess === false){
+            cost = cost; 
+        } 
+        else if (sucess){
+            cost = (cost)*1.2;
+            cost = Math.round(cost * 100) / 100;
+        }
+        else if(isDragon){
+            cost = (cost)*1.5;
+            cost = Math.round(cost * 100) / 100;
+        }
+        let currencyType;
+        let index = 0;
+        const finalPrice = cost;
+        for (const coin of coinsType) {
+            if (currency2.toLowerCase() === coin) {
+                currencyType = index;
+                break;
+            }
+            index++; // Increment the index in each iteration
+        }
+        let copperPart = 0, silverPart = 0, goldPart = 0;
+        switch(currencyType){
+            case 0:
+            case 1:
+                cost = cost * 100
+                break;
+            case 2:
+            case 3:
+                cost = cost * 10
+                break;
+            case 3:
+            case 4:
+                cost = cost
+                break;
+
+        } 
+
+        goldPart = Math.floor(cost / 100); 
+        silverPart = Math.floor((cost % 100) / 10); 
+        copperPart = cost % 10; 
+
+        await actor.update({
+            ["system.currency.gc"]: actorGC + goldPart,
+            ["system.currency.sc"]: actorSC + silverPart,
+            ["system.currency.cc"]: actorCC + copperPart,
+
+        })
+        actor.deleteEmbeddedDocuments("Item", [item._id])
+        ChatMessage.create({
+            content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
+            speaker: ChatMessage.getSpeaker({ actor })
+        });
+
 
 
     }

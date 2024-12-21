@@ -25,9 +25,9 @@ Hooks.once("init", function () {
       config: true, 
   });
 
-  game.settings.register("dragonbane-item-browser", "stash-items", {
-    name: game.i18n.localize("DB-IB.settings.stashItems"),
-    hint: game.i18n.localize("DB-IB.settings.hintStashItems"),
+  game.settings.register("dragonbane-item-browser", "sell-items", {
+    name: game.i18n.localize("DB-IB.settings.selling"),
+    hint: game.i18n.localize("DB-IB.settings.hintSelling"),
     scope: "world",
     type: Boolean,
     default: "",
@@ -125,6 +125,8 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
         button.dataset.eventAttached = "true";
     }
 });
+const sellsSetting = game.settings.get("dragonbane-item-browser", "sell-items")
+if(sellsSetting){
 const items = document.querySelectorAll(".sheet-table-data.item.draggable-item");
 
 items.forEach(item =>{
@@ -155,6 +157,7 @@ buttonsSell.forEach(button => {
         button.dataset.eventAttached = "true";
     }
 });
+}
 
 
  

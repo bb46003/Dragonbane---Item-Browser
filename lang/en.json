@@ -12,7 +12,9 @@
       "nonCoreSkill": "Insert non-core skill name for BARTER",
       "hintSkillBarter": "The skill name entered here will be searched on the character sheet to use for the Barter roll.",
       "stashItems": "Add tabel for stashed items to Character Sheets.",
-      "hintStashItems": "This items are own by Character, but are lest in some save space and are not couted toward encumbarace limit."
+      "hintStashItems": "This items are own by Character, but are lest in some save space and are not couted toward encumbarace limit.",
+      "selling": "Add pigi bank icon to item with cost allowing to sell it.",
+      "hintSelling": "Allow to sell items defoult by 50% of cost, if Bartering option is on it allow to roll for selling as well. "
     },
     "Chat": {
       "buyItem": "Buy Item",
