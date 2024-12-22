@@ -5,7 +5,37 @@
         "rollForPrice":"Lancer {formula} pour définir le prix de {item} en {currency}",
         "notEnoughMoney":"<strong>{actor}</strong> n'a pas assez d'argent pour acheter : <strong>{item}</strong>.",
         "spendMoney":"<strong>{actor}</strong> dépense <strong>{itemPrice}</strong> pour acheter <strong>{item}</strong>",
-        "manualMonyRemoval": "Le prix défini par le MJ pour <strong>{item}</strong> est de <strong>{itemPrice}</strong>. <strong><em>Les Augmentations/Diminutions se font manuellement</em></strong>."
-    }
+        "manualMonyRemoval": "Le prix défini par le MJ pour <strong>{item}</strong> est de <strong>{itemPrice}</strong>. <strong><em>Les réductions se font manuellement</em></strong>.",
+        "settings": {
+            "rollForBarter" : "Jet de Marchandage lors de l'achat ou de la vente d'un objet",
+            "hintRollForBarter" : "Lorsque vous achetez ou vendez un objet à partir de la boîte de dialogue du navigateur d'objets, une fenêtre s'ouvre pour demander au joueur s'il souhaite effectuer un jet de MARCHANDAGE afin d'ajuster le prix selon les règles définies dans le livre de règles",
+            "nonCoreSkill" : "Insérer le nom de la compétence secondaire : Marchandage",
+            "hintSkillBarter" : "Le nom de la compétence saisie ici sera recherché sur la feuille de personnage afin d'être utilisé pour le jet de Marchandage",
+            "stashItems" : "Ajouter un onglet pour les objets cachés sur les feuilles de personnage",
+            "hintStashItems" : "Ces objets appartiennent au personnage, mais sont rangés dans un emplacement équipé et ne sont pas pris en compte dans la limite d'encombrement",
+            "selling" : "Ajouter l'icône de la Tirelire à l'objet dont le coût permet de le vendre",
+            "hintSelling" : "Permet de vendre des objets à 50% de leur coût, si l'option de commerce est activée, il est également possible de faire un jet de dé pour la vente."
+          },
+          "Chat" : {
+            "buyItem" : "Acheter un objet",
+            "reducePrice" : "Vous réduisez le prix de <strong>{item}</strong> de 20% !",
+            "cannotBuy" : "Vous venez de vexer le Marchand, vous vous retrouvez dans l'impossibilité d'acheter <strong>{item}</strong>",
+            "cannotSell" : "Vous venez de vexer le Marchand, vous vous retrouvez dans l'impossibilité de vendre <strong>{item}</strong>",
+            "reducePriceDragon" : "Le prix de <strong>{item}</strong> baisse de 50 % !",
+            "nochangeInPrice" : "Vous achetez <strong>{item}</strong> au prix normal",
+            "sellItem" : "<b>{actor}</b> vend <b>{item}</b> pour <b>{cost} {currency}</b>.",
+            "increasPrice" : "Vous vendez <strong>{item}</strong> à 20% de plus",
+            "increasePriceDragon" : "Vous vendez <strong>{item}</strong> à 50 % de plus !",
+            "nochangeInPriceSell" : "Vous vendez <strong>{item}</strong> au prix normal",
+            "sellItemButton" : "Vendre un objet"
+          },
+          "itemName" : "Nom",
+          "wannaBarter" : "Voulez-vous marchander ?",
+          "pickIfYouWantToRollForBartering" : "Souhaitez vous négocier le prix de l'objet avec un jet de Marchandage ?",
+          "rollForBarter" : "Jet de Marchandage",
+          "BuyWithoutRoll" : "Acheter sans faire de jet",
+          "openItemBrowser" :"Ouvrir le Navigateur d'objets",
+          "sellItem" : "Vendre l'objet"
+      }
 
 }
