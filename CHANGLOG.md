@@ -1,9 +1,18 @@
+
 # Version 1.0.7
 <h3>New Features</h3>
 <ul>
     <li>Add new option to inventory for stashing items. This allow to keep items in character sheet with out modification wile in fiction those items are store somewhere.
     </li>
     <li> Add full French translation thanks to Sasmira</li>
+ </ul>
+
+# Version 1.0.6
+<h3>New Features</h3>
+<ul>
+   <li>Add a setting to include a piggy bank icon for selling items from the character sheet, combined with a Bartering roll, similar to buying. The selling price is set to 50% and modified by the roll according to the rules.</li>
+
+
 </ul>
 
 # Version 1.0.3
