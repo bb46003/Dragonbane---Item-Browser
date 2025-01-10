@@ -1,3 +1,11 @@
+# Version 1.0.7
+<h3>New Features</h3>
+<ul>
+    <li>Add new option to inventory for stashing items. This allow to keep items in character sheet with out modification wile in fiction those items are store somewhere.
+    </li>
+    <li> Add full French translation thanks to Sasmira</li>
+</ul>
+
 # Version 1.0.3
 <h3>Bug Fix</h3>
 <ul>

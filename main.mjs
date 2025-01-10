@@ -34,7 +34,67 @@ Hooks.once("init", function () {
     config: true, 
 });
 
+game.settings.register("dragonbane-item-browser", "stash-items", {
+  name: game.i18n.localize("DB-IB.settings.stash"),
+  hint: game.i18n.localize("DB-IB.settings.hintStash"),
+  scope: "world",
+  type: Boolean,
+  default: "",
+  config: true, 
+});
+
   registerHandlebarsHelpers()
+
+
+
+  // Check if the class DoDItem exists
+  const DoDItemClass = CONFIG.Item.documentClass;
+  if (!DoDItemClass) {
+    console.error("DoDItem class not found.");
+    return;
+  }
+
+  // Get the original getter
+  const originalTotalWeightGetter = Object.getOwnPropertyDescriptor(DoDItemClass.prototype, 'totalWeight').get;
+
+  // Override the getter
+  Object.defineProperty(DoDItemClass.prototype, 'totalWeight', {
+    get: function() {
+      if (this.system.isStash) {
+        return 0; // Return 0 if the item is in a stash
+      }
+      else{
+        return originalTotalWeightGetter.call(this);
+      }
+    }
+  });
+
+  console.log("Modified totalWeight getter in DoDItem.");
+  const { fields } = foundry.data;
+  const itemTypes = ["item", "helmet", "armor", "weapon"];
+
+  // Iterate over each item type and modify its schema
+  itemTypes.forEach((itemType) => {
+    const originalDefineSchema = CONFIG.Item.dataModels[itemType]?.defineSchema;
+  
+    if (!originalDefineSchema) {
+      console.warn(`No defineSchema method found for item type: ${itemType}`);
+      return;
+    }
+  
+    // Override the defineSchema method for the current item type
+    CONFIG.Item.dataModels[itemType].defineSchema = function () {
+      // Call the original defineSchema to get the base schema
+      const originalSchema = originalDefineSchema.call(this);
+  
+      // Merge the base schema with the new property
+      return this.mergeSchema(originalSchema, {
+        isStash: new fields.BooleanField({ required: false, initial: false }),
+      });
+    };
+  
+    console.log(`Successfully added 'isStash' to ${itemType} schema.`);
+  })
 });
 
 Hooks.on("renderSettingsConfig", (app, html, data) => {
@@ -68,10 +128,21 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   const heroic = game.i18n.translations.DoD.ui["character-sheet"].heroicAbilities;
   const magicTrick = game.i18n.translations.DoD.ui["character-sheet"].trick;
   const spell =  game.i18n.translations.DoD.ui["character-sheet"].spell;
-  const creatItemButton =document.querySelectorAll(".item-create");
+  const creatItemButton = document.querySelectorAll(".item-create");
+  const worn = document.querySelectorAll(".fa-shirt")
+  const closestThElements = Array.from(worn).map((element) => element.closest('th'));
   const actorSheet = game.actors.get(actorID).sheet._element[0];
   const headers =actorSheet.querySelectorAll("th.text-header");
+  const title = game.i18n.localize("DB-IB.stash")
+  const stashIcon = `<th class="checkbox-header-stash">
+                                    <label title="${title}">
+                                        <a class="fa-solid fa-box"></a>
+                                    </label>
+                                </th>`;
   let targetHeader = null;
+  closestThElements.forEach(icon =>{
+    icon.insertAdjacentHTML("beforebegin", stashIcon)
+  })
   headers.forEach(header => {
     if (header.textContent.trim() === heroic) {
       targetHeader = header;
@@ -124,42 +195,76 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
         });
         button.dataset.eventAttached = "true";
     }
-});
-const sellsSetting = game.settings.get("dragonbane-item-browser", "sell-items")
-if(sellsSetting){
-const items = document.querySelectorAll(".sheet-table-data.item.draggable-item");
+  });
 
-items.forEach(item =>{
-  const dataType = item.getAttribute("data-item-id"); 
-  const binIcon = item.querySelector(".item-delete");
-  const iconData = item.querySelector(".icon-data");
-  const title = game.i18n.localize("DB-IB.sellItem");
-  const actor = game.actors.get(actorID);
-  const singleItem = actor.items.filter(element => element.id === dataType)[0];
-  const singleItemHaveCost = /\d/.test(singleItem.system.cost);
-  if(singleItemHaveCost){  
-    const addSellingIcon = `<button class="item-browser-sold" id="${actorID}">
-      <i id="${dataType}" for="item-browser-sold" class="fa-solid fa-piggy-bank" title="${title}"></i>
-      </button>`; 
-    const hasSellingButton = iconData.querySelector(".item-browser-sold") === null;
-    if (hasSellingButton) {
-      binIcon.insertAdjacentHTML("beforebegin", addSellingIcon);
+  const sellsSetting = game.settings.get("dragonbane-item-browser", "sell-items")
+  const stashSetting = game.settings.get("dragonbane-item-browser", "stash-items")
+  const items = document.querySelectorAll(".sheet-table-data.item.draggable-item");
+  if(sellsSetting || stashSetting){  
+    items.forEach(item =>{
+      const dataType = item.getAttribute("data-item-id"); 
+      const binIcon = item.querySelector(".item-delete");
+      const iconData = item.querySelector(".icon-data");
+      if(stashSetting){
+      const wornCheckbox = item.querySelector('input[data-field="system.worn"]')?.closest('td');
+      const templateStash = `
+        <td class="checkbox-data">
+          <input class="inline-edit" data-field="system.isStash" type="checkbox" id="{{id}}" data-tooltip="{{hint}}" {{#if system.isStash}}checked{{/if}}>
+        </td>
+      `;
+      const compiledTemplate = Handlebars.compile(templateStash);
+      const actor1 = game.actors.get(actorID);
+      const itemData = actor1.items.filter(item => item._id === dataType)[0];
+      const data = {
+        id: dataType,
+        system:{
+          isStash: itemData.system.isStash,
+        },
+        hint: game.i18n.localize("DB-IB.stashItem")
+      };
+      const stashCheckBox = compiledTemplate(data);
+      $(stashCheckBox).insertBefore(wornCheckbox);
     }
-  }
-})
-const buttonsSell = document.querySelectorAll(".fa-solid.fa-piggy-bank");
-
-buttonsSell.forEach(button => {
+    if(sellsSetting){
+      const title = game.i18n.localize("DB-IB.sellItem");
+      const actor = game.actors.get(actorID);
+      const singleItem = actor.items.filter(element => element.id === dataType)[0];
+      const singleItemHaveCost = /\d/.test(singleItem.system.cost);
+      if(singleItemHaveCost){  
+        const addSellingIcon = `
+          <button class="item-browser-sold" id="${actorID}">
+            <i id="${dataType}" for="item-browser-sold" class="fa-solid fa-piggy-bank" title="${title}"></i>
+          </button>`; 
+      const hasSellingButton = iconData.querySelector(".item-browser-sold") === null;
+      if (hasSellingButton) {
+        binIcon.insertAdjacentHTML("beforebegin", addSellingIcon);
+      }
+    }
+    }
+  })
+  if(sellsSetting){
+    const buttonsSell = document.querySelectorAll(".fa-solid.fa-piggy-bank");
+    buttonsSell.forEach(button => {
     if (!button.dataset.eventAttached) {
         button.addEventListener("click", (event) => {
           selliItem(event, actorID);
         });
         button.dataset.eventAttached = "true";
     }
-});
+    });
+  }
+  if(stashSetting){
+    const stash = document.querySelectorAll('input[data-field="system.isStash"]')
+    stash.forEach(checkbox => {
+    if (!checkbox.dataset.eventAttached) {
+      checkbox.addEventListener("change", (event) => {
+        stashItem(event, actorID);
+      });
+      checkbox.dataset.eventAttached = "true";
+  }
+    });
+  }
 }
-
-
  
 })
 Hooks.on("renderChatLog", DBIBChat.addChatListeners)
@@ -187,6 +292,21 @@ async function  selliItem(event,actorID) {
   sell.selling(itemID,actorID) 
 }
 
+async function stashItem(event,actorID) {
+  event.preventDefault()
+  const itemID = event.target.id;
+  const isStash = event.target.checked;
+  const actor = game.actors.get(actorID);
+  const item = actor.items.filter(item => item._id === itemID)[0];
+  if(item.system.worn){
+    await item.update({"system.worn": false})
+  }
+  
+  await item.update({"system.isStash": isStash})
+  
+
+}
+
 function registerHandlebarsHelpers() {
   Handlebars.registerHelper({
       eq: (v1, v2) => v1 === v2,
@@ -206,7 +326,8 @@ function registerHandlebarsHelpers() {
       let html = ";"
       if(item.system?.cost !== "" && item.system?.cost !== undefined){
         html = `<i class="cost">${item.system.cost}</i>
-                <i class="fas fa-coins" id="${item.id}"></i>`       
+                <i class="fas fa-plus" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.addItemToCharacter")}"></i>
+                <i class="fas fa-coins" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>`       
       }
       else{
         html = `<i class="fas fa-plus" id="${item.id}"></i>`
