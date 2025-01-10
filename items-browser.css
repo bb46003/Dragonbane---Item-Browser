@@ -4,7 +4,13 @@
     position: relative;
     top: 3px;
 }
-.fa-magnifying-glass.eq:before, .fa-search.eq:before {
+
+th.checkbox-header-stash {
+    padding-right: 0.2em;
+    padding-top: 0.4em;
+
+}
+.fa-magnifying-glass.eq:before, .fa-search.eq:before{
     content: "\f002";
     color: white;
     position: relative;
@@ -24,7 +30,7 @@
 }
 .item-in-browser.weapon, .item-in-browser.item , .item-in-browser.helmet, .item-in-browser.armor{
     display: grid;
-    grid-template-columns: 0.3fr 2fr 1fr 0.5fr;
+    grid-template-columns: 0.3fr 2fr 1fr 0.5fr 0.5fr;
     /* flex-wrap: nowrap; */
     justify-content: space-between;
     align-items: baseline;

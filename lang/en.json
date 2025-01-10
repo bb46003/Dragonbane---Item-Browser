@@ -11,10 +11,10 @@
       "hintRollForBarter": "When you purchase or selling an item from the item browser dialog, a window will pop up asking the player if they want to roll for BARTER to adjust the price according to the rules defined in the RuleBook.",
       "nonCoreSkill": "Insert non-core skill name for BARTER",
       "hintSkillBarter": "The skill name entered here will be searched on the character sheet to use for the Barter roll.",
-      "stashItems": "Add tabel for stashed items to Character Sheets.",
-      "hintStashItems": "This items are own by Character, but are lest in some save space and are not couted toward encumbarace limit.",
       "selling": "Add pigi bank icon to item with cost allowing to sell it.",
-      "hintSelling": "Allow to sell items defoult by 50% of cost, if Bartering option is on it allow to roll for selling as well. "
+      "hintSelling": "Allow to sell items defoult by 50% of cost, if Bartering option is on it allow to roll for selling as well. ",
+      "stash": "Add chcek box for stashing item.",
+      "hintStash": "Stashed items will not be added to encumbrance limit but still will be displed in inventory."
     },
     "Chat": {
       "buyItem": "Buy Item",
@@ -35,6 +35,10 @@
     "rollForBarter": "Roll for Bartering",
     "BuyWithoutRoll": "Buy without Roll.",
     "openItemBrowser": "Open Item Browser",
-    "sellItem": "Sell Item"
+    "sellItem": "Sell Item",
+    "addItemToCharacter": "Add item to Character withoutspending coins.",
+    "buyItem": "Buy Item, It will add Item to Character and spend coins.",
+    "stashItem": "Kepp item in character sheet, but  weight will not be included to encumbrance limit.",
+    "stash": "Stash"
   }
 }

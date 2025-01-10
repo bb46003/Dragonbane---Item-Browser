@@ -1,24 +1,45 @@
 {
-    "DB-IB":{
-        "Any":"Dowolny",
-        "addItem": "<strong>{actor}</strong>dodał/dodała do kary postaci <strong>{type}</strong> <strong>{item}</strong>",
-        "rollForPrice":"Rzut ${formula} aby określić cemę ${item} w ${currency}",
-        "notEnoughMoney":"<strong>{actor}</strong> nie ma wystarczającej ilości monet aby kupić <strong>{item}</strong>.",
-        "spendMoney":"<strong>{actor}</strong> wydał/wydała <strong>{itemPrice}</strong> aby kupić <strong>{item}</strong>",
-        "manualMonyRemoval": "Określ z osobą mistrzującą cenę <strong>{item}</strong> zefiniowaną jako <strong>{itemPrice}</strong> i odejmnij monety ręcznie.",
-        "settings": {
-            "rollForBarter": "Rzut na targowanie podczas zakupu przedmiotu",
-            "hintRollForBarter": "Kiedy kupujesz przedmiot z okna przeglądarki przedmiotów, pojawi się okno, w którym gracz zostanie zapytany, czy chce wykonać rzut na TARGOWANIE, aby dostosować cenę zgodnie z zasadami określonymi w Podręczniku.",
-            "nonCoreSkill": "Wprowadź nazwę umiejętności dodatkowej dla TARGOWANIA",
-            "hintSkillBarter": "Wprowadzona tutaj nazwa umiejętności zostanie wyszukana na karcie postaci w celu użycia jej do rzutu na Targowanie."
-        },
-        "Chat": {
-            "buyItem": "Kup przedmiot",
-            "reducePrice": "Obniżasz cenę {item} o 20%!",
-            "cannotBuy": "Obrażasz sprzedawcę, co skutkuje niemożliwością zakupu {item}",
-            "reducePriceDragon": "Obniżasz cenę {item} o 50%!",
-        "nochangeInPrice": "Możesz kupić {item} w regularnej cenie."
-        },
-        "itemName": "Nazwa przedmiotu"
-    }
+  "DB-IB": {
+    "Any": "Dowolny",
+    "addItem": "<strong>{actor}</strong> dodał do arkusza postaci <strong>{type}</strong> <strong>{item}</strong>",
+    "rollForPrice": "Rzuć {formula}, aby określić koszt <strong>{item}</strong> w <strong>{currency}</strong>",
+    "notEnoughMoney": "<strong>{actor}</strong> nie ma wystarczająco monet, aby kupić <strong>{item}</strong>.",
+    "spendMoney": "<strong>{actor}</strong> wydał <strong>{itemPrice}</strong>, aby kupić <strong>{item}</strong>",
+    "manualMonyRemoval": "Ustal z MG cenę <strong>{item}</strong>, określ jako <strong>{itemPrice}</strong> i zmniejsz ręcznie ilość monet.",
+    "settings": {
+      "rollForBarter": "Rzut na TARGOWANIE podczas zakupu lub sprzedaży przedmiotu",
+      "hintRollForBarter": "Podczas zakupu lub sprzedaży przedmiotu z okna przeglądarki przedmiotów, pojawi się okno, w którym gracz może zdecydować, czy chce rzucić na TARGOWANIE, aby dostosować cenę zgodnie z zasadami w Podręczniku.",
+      "nonCoreSkill": "Wprowadź nazwę umiejętności spoza podstawowych, którą używasz do tastów TARGOWANIA",
+      "hintSkillBarter": "Nazwa umiejętności wprowadzona tutaj będzie wyszukiwana w arkuszu postaci, aby użyć jej do rzutu na targowanie.",
+      "hintStashItems": "Te przedmioty są własnością postaci, ale pozostają w bezpiecznym miejscu i nie są wliczane do limitu obciążenia.",
+      "selling": "Dodaj ikonę skarbonki do przedmiotów z ceną, umożliwiając ich sprzedaż.",
+      "hintSelling": "Umożliwia sprzedaż przedmiotów domyślnie za 50% ceny. Jeśli opcja targowania jest włączona, umożliwia rzut na sprzedaż.",
+      "stash": "Dodaj pole wyboru do schowania przedmiotów.",
+      "hintStash": "Schowane przedmioty nie będą wliczane do limitu obciążenia, ale nadal będą wyświetlane w ekwipunku."
+    },
+    "Chat": {
+      "buyItem": "Kup przedmiot",
+      "reducePrice": "Obniżasz cenę <strong>{item}</strong> o 20%!",
+      "cannotBuy": "Urażasz sprzedawcę, co kończy się brakiem możliwości zakupu <strong>{item}</strong>.",
+      "cannotSell": "Urażasz kupca, co kończy się brakiem możliwości sprzedaży <strong>{item}</strong>.",
+      "reducePriceDragon": "Obniżasz cenę <strong>{item}</strong> o 50%!",
+      "nochangeInPrice": "Możesz kupić <strong>{item}</strong> po regularnej cenie.",
+      "sellItem": "<b>{actor}</b> sprzedaje <b>{item}</b> za <b>{cost} {currency}</b>.",
+      "increasPrice": "Sprzedajesz <strong>{item}</strong> za 20% więcej.",
+      "increasePriceDragon": "Sprzedajesz <strong>{item}</strong> za 50% więcej!",
+      "nochangeInPriceSell": "Możesz sprzedać <strong>{item}</strong> po regularnej cenie.",
+      "sellItemButton": "Sprzedaj przedmiot"
+    },
+    "itemName": "Nazwa przedmiotu",
+    "wannaBarter": "Czy chcesz się targować?",
+    "pickIfYouWantToRollForBartering": "Wybierz, czy chcesz rzucić na TARGOWANIE.",
+    "rollForBarter": "Rzut na TARGOWANIE",
+    "BuyWithoutRoll": "Kup bez rzutu.",
+    "openItemBrowser": "Otwórz przeglądarkę przedmiotów",
+    "sellItem": "Sprzedaj przedmiot",
+    "addItemToCharacter": "Dodaj przedmiot do postaci bez wydawania monet.",
+    "buyItem": "Kup przedmiot. Dodaje przedmiot do postaci i wydaje monety.",
+    "stashItem": "Zachowaj przedmiot w karcie postaci, ale jego waga nie będzie wliczana do limitu obciążenia.",
+    "stash": "Schowaj"
+  }
 }
