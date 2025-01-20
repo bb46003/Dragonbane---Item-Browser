@@ -844,19 +844,25 @@ export class sellingItem {
     }
 
     async sellItem(item,actor) {
-        const itemPrice = item.system.cost;
+        let itemPrice = item.system.cost;
         let actorGC= actor.system.currency.gc;
         let actorSC = actor.system.currency.sc;
         let actorCC = actor.system.currency.cc;
         const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
         const itemPriceNoSpace = itemPrice.replace(/\s+/g, "");
-        const regex = /^(\d+D\d+)x(\d+)([a-zA-Z]+)$/;
+        const regex = /^(\d+[Dd]\d+)(x?)(\d*)([a-zA-Z\u0100-\u017F]+)$/
         const isMatch = regex.test(itemPriceNoSpace);
         if(isMatch){
             const dice = itemPriceNoSpace.match(regex)[1];
-            const multiplyer = itemPriceNoSpace.match(regex)[2];
-            const currency = itemPriceNoSpace.match(regex)[3]
-            const formula = `${dice}*${multiplyer}`
+            const multiplyer = itemPriceNoSpace.match(regex)[3];
+            const currency = itemPriceNoSpace.match(regex)[4];
+            let formula;
+            if(multiplyer === ""){
+                formula = `${dice}`
+            }
+            else{
+                formula = `${dice}*${multiplyer}`
+            }
             const costRoll =await new Roll(formula).evaluate()
             const content = game.i18n.format("DB-IB.rollForPrice",{formula:formula,item:item.name,currency:currency})
             costRoll.toMessage({
@@ -897,7 +903,7 @@ export class sellingItem {
 
         goldPart = Math.floor(cost / 100); 
         silverPart = Math.floor((cost % 100) / 10); 
-        copperPart = cost % 10; 
+        copperPart = Math.round(cost % 10); 
 
         await actor.update({
             ["system.currency.gc"]: actorGC + goldPart,
@@ -1014,16 +1020,22 @@ export class sellingItem {
         let actorCC = actor.system.currency.cc;
         const sucess = roll.postRollData.success;
         const isDragon = roll.postRollData.isDragon;
-        const itemPrice = item.system.cost;
+        let itemPrice = item.system.cost;
         const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
         const itemPriceNoSpace = itemPrice.replace(/\s+/g, "");
-        const regex = /^(\d+D\d+)x(\d+)([a-zA-Z]+)$/;
+        const regex = /^(\d+[Dd]\d+)(x?)(\d*)([a-zA-Z\u0100-\u017F]+)$/
         const isMatch = regex.test(itemPriceNoSpace);
         if(isMatch){
             const dice = itemPriceNoSpace.match(regex)[1];
-            const multiplyer = itemPriceNoSpace.match(regex)[2];
-            const currency = itemPriceNoSpace.match(regex)[3]
-            const formula = `${dice}*${multiplyer}`
+            const multiplyer = itemPriceNoSpace.match(regex)[3];
+            const currency = itemPriceNoSpace.match(regex)[4];
+            let formula;
+            if(multiplyer === ""){
+                formula = `${dice}`
+            }
+            else{
+                formula = `${dice}*${multiplyer}`
+            }
             const costRoll =await new Roll(formula).evaluate()
             const content = game.i18n.format("DB-IB.rollForPrice",{formula:formula,item:item.name,currency:currency})
             costRoll.toMessage({
@@ -1075,7 +1087,7 @@ export class sellingItem {
 
         goldPart = Math.floor(cost / 100); 
         silverPart = Math.floor((cost % 100) / 10); 
-        copperPart = cost % 10; 
+        copperPart = Math.round(cost % 10) 
 
         await actor.update({
             ["system.currency.gc"]: actorGC + goldPart,

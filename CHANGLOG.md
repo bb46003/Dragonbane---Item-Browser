@@ -1,3 +1,10 @@
+# Version 1.0.8
+<h3>Bug Fix</h3>
+<ul>
+    <li>When a selected item had a rolled price, the selling was not performed correctly, with or without the Barter roll. Coins were not added to the character. All errors have been fixed, and now coins are added properly. For items with a cost in copper, the fractional price is rounded up when the fraction is 0.5 or higher, and rounded down when it is below 0.5.</li>
+    <li>Hide the box icon when the stash option is not turned on.</li>
+</ul>
+
 
 # Version 1.0.7
 <h3>New Features</h3>

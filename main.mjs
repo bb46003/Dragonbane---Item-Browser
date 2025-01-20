@@ -129,20 +129,11 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   const magicTrick = game.i18n.translations.DoD.ui["character-sheet"].trick;
   const spell =  game.i18n.translations.DoD.ui["character-sheet"].spell;
   const creatItemButton = document.querySelectorAll(".item-create");
-  const worn = document.querySelectorAll(".fa-shirt")
-  const closestThElements = Array.from(worn).map((element) => element.closest('th'));
+  
   const actorSheet = game.actors.get(actorID).sheet._element[0];
   const headers =actorSheet.querySelectorAll("th.text-header");
-  const title = game.i18n.localize("DB-IB.stash")
-  const stashIcon = `<th class="checkbox-header-stash">
-                                    <label title="${title}">
-                                        <a class="fa-solid fa-box"></a>
-                                    </label>
-                                </th>`;
+
   let targetHeader = null;
-  closestThElements.forEach(icon =>{
-    icon.insertAdjacentHTML("beforebegin", stashIcon)
-  })
   headers.forEach(header => {
     if (header.textContent.trim() === heroic) {
       targetHeader = header;
@@ -200,6 +191,21 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   const sellsSetting = game.settings.get("dragonbane-item-browser", "sell-items")
   const stashSetting = game.settings.get("dragonbane-item-browser", "stash-items")
   const items = document.querySelectorAll(".sheet-table-data.item.draggable-item");
+if(stashSetting){
+  const title = game.i18n.localize("DB-IB.stash")
+  const worn = document.querySelectorAll(".fa-shirt")
+  const closestThElements = Array.from(worn).map((element) => element.closest('th'));
+  const stashIcon = `<th class="checkbox-header-stash">
+                                    <label title="${title}">
+                                        <a class="fa-solid fa-box"></a>
+                                    </label>
+                                </th>`;
+ 
+  closestThElements.forEach(icon =>{
+    icon.insertAdjacentHTML("beforebegin", stashIcon)
+  })
+}
+
   if(sellsSetting || stashSetting){  
     items.forEach(item =>{
       const dataType = item.getAttribute("data-item-id"); 
