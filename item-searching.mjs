@@ -824,7 +824,7 @@ export class sellingItem {
                         },
                     },
                     sellWithoutRoll: {
-                        label: game.i18n.localize("DB-IB.BuyWithoutRoll"),
+                        label: game.i18n.localize("DB-IB.SellWithoutBarter"),
                         callback: async () => {
                            await this.sellItem(item,actor);
                         },
@@ -842,7 +842,6 @@ export class sellingItem {
         }
 
     }
-
     async sellItem(item,actor) {
         let itemPrice = item.system.cost;
         let actorGC= actor.system.currency.gc;

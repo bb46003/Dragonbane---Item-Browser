@@ -1,4 +1,9 @@
 {
+  "TYPES": {
+    "Actor": {
+      "dragonbane-item-browser.merchant": "Merchant"
+    }
+  },
   "DB-IB": {
     "Any": "Any",
     "addItem": "<strong>{actor}</strong> add to character sheet <strong>{type}</strong> <strong>{item}</strong>",
@@ -27,7 +32,9 @@
       "increasPrice": "You sell {item} for 20% more.",
       "increasePriceDragon": "You sell {item} for 50% more!",
       "nochangeInPriceSell": "You can sell {item} in regular price.",
-      "sellItemButton": "Sell Item"
+      "sellItemButton": "Sell Item",
+      "actorSells": "{actor} sells items {items} for",
+      "and": "and"
     },
     "itemName": "Item name",
     "wannaBarter": "Did you want to barter?",
@@ -39,6 +46,26 @@
     "addItemToCharacter": "Add item to Character withoutspending coins.",
     "buyItem": "Buy Item, It will add Item to Character and spend coins.",
     "stashItem": "Kepp item in character sheet, but  weight will not be included to encumbrance limit.",
-    "stash": "Stash"
+    "stash": "Stash",
+    "SellWithoutBarter": "Sell without Barter",
+    "merchant": {
+      "setting": "Settings",
+      "selling": "Stuff for sell",
+      "buing": "Merchant buy from you",
+      "setSellingRate": "Set merchant slelling rate as percentage of original price",
+      "setBuingRate": "Set merchat buing rate as percentage of original price",
+      "allowedSupply": "Till what kind of supply of item Merchant accept",
+      "sells": "is selling",
+      "notAcceptSuply": "This Merchan do not accept this type of suply."
+    },
+    "warrning": {
+      "incoretInput": "Please input number or number wiht % symbol",
+      "youAreNotOwnerOfDeletedItem": "You try deleted items for sells that are not yours!"
+    },
+    "itemPrice": "Item price",
+    "dialog": {
+      "denfieQuantity": "Defnie selling quantity. ",
+      "selectSellingQuantity": "Selesct how many of {item} you want to sell"
+    }
   }
 }

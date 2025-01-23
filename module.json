@@ -50,6 +50,11 @@
       "path": "lang/sv.json"
     }
   ],
+  "documentTypes": {
+    "Actor":{
+      "merchant":{}
+    }
+  },
   "url": "Filled in by the release workflow",
   "manifest":"Filled in by the release workflow",
   "download": "Filled in by the release workflow"

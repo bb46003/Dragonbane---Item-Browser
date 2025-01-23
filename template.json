@@ -1,0 +1,6 @@
+{
+    "Actor": {
+      "types":["merchant"],
+      "merchant":{}
+    }
+}

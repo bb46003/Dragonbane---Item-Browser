@@ -1,6 +1,7 @@
 
 import {itemsSearch, sellingItem} from  "./item-searching.mjs"
 import * as DBIBChat from "./item-searching.mjs"
+import { merchant, merchantData, DB_BI_Actor } from "./merchant-character.mjs";
 
 Hooks.once("init", function () {
 
@@ -47,33 +48,41 @@ game.settings.register("dragonbane-item-browser", "stash-items", {
 
 
 
-  // Check if the class DoDItem exists
+  Actors.registerSheet("merchant", merchant ,{
+    types: ["dragonbane-item-browser.merchant"],
+    makeDefault: true
+  })
+  Object.assign(CONFIG.Actor.dataModels, {
+        "dragonbane-item-browser.merchant": merchantData
+  });
+
   const DoDItemClass = CONFIG.Item.documentClass;
   if (!DoDItemClass) {
     console.error("DoDItem class not found.");
     return;
   }
 
-  // Get the original getter
-  const originalTotalWeightGetter = Object.getOwnPropertyDescriptor(DoDItemClass.prototype, 'totalWeight').get;
 
-  // Override the getter
+  const originalTotalWeightGetter = Object.getOwnPropertyDescriptor(DoDItemClass.prototype, 'totalWeight').get;
   Object.defineProperty(DoDItemClass.prototype, 'totalWeight', {
     get: function() {
       if (this.system.isStash) {
-        return 0; // Return 0 if the item is in a stash
+        return 0;
       }
       else{
         return originalTotalWeightGetter.call(this);
       }
     }
-  });
+  })
+
+  CONFIG.Actor.documentClass = DB_BI_Actor;
+
 
   console.log("Modified totalWeight getter in DoDItem.");
   const { fields } = foundry.data;
   const itemTypes = ["item", "helmet", "armor", "weapon"];
 
-  // Iterate over each item type and modify its schema
+
   itemTypes.forEach((itemType) => {
     const originalDefineSchema = CONFIG.Item.dataModels[itemType]?.defineSchema;
   
@@ -82,12 +91,9 @@ game.settings.register("dragonbane-item-browser", "stash-items", {
       return;
     }
   
-    // Override the defineSchema method for the current item type
+   
     CONFIG.Item.dataModels[itemType].defineSchema = function () {
-      // Call the original defineSchema to get the base schema
       const originalSchema = originalDefineSchema.call(this);
-  
-      // Merge the base schema with the new property
       return this.mergeSchema(originalSchema, {
         isStash: new fields.BooleanField({ required: false, initial: false }),
       });
@@ -95,6 +101,7 @@ game.settings.register("dragonbane-item-browser", "stash-items", {
   
     console.log(`Successfully added 'isStash' to ${itemType} schema.`);
   })
+  preloadHandlebarsTemplates();
 });
 
 Hooks.on("renderSettingsConfig", (app, html, data) => {
@@ -281,6 +288,12 @@ Hooks.on("renderChatLog", (app, html, data) => {
     sellingInstance.addChatListeners(app, html, data);
 });
 
+Hooks.on("createActor", async function (actor) { 
+  if(actor.type === "dragonbane-item-browser.merchant"){
+    actor.ownership.default = 3;
+  }
+})
+
 
 async function openItemsBrowser(event,actorID){
   event.preventDefault();
@@ -356,5 +369,76 @@ function registerHandlebarsHelpers() {
       return descriptionWithoutHTML
   
     })
+    Handlebars.registerHelper("isGM", () => {
+      const isGM = game.user.isGM;
+      if(isGM){
+        const localize = game.i18n.localize("DB-IB.merchant.setting")
+        const html = `<a class="settings" data-tab="settings">${localize}</a>`
+        return html
+      }
+    })
+    Handlebars.registerHelper("sellingRate",(selling_rate)=>{
+      const sellingRatePercentage = String(Math.round(selling_rate * 100))+"%";
+      const html = `  <input   id="percentage"   type="text"  value="${sellingRatePercentage}">`
+      return html
+    })
+    Handlebars.registerHelper("groupByActor", function (items) {
+      const grouped = {};
+       items.forEach(item => {
+        if (item.flags?.actor) { 
+            const actorFlag = item.flags.actor;
+            if (!grouped[actorFlag]) {
+                grouped[actorFlag] = [];
+            }
+            grouped[actorFlag].push(item);
+        }
+    });
+
+      let result = "";
+      const sells = game.i18n.localize("DB-IB.merchant.sells");
+      const itemName = game.i18n.localize("DB-IB.itemName");
+      const itemPrice = game.i18n.localize("DB-IB.itemPrice")
+      for (const [actor, items] of Object.entries(grouped)) {
+            const actorName = game.actors.get(actor).name
+          result += `
+              <div class="actor-group">
+                  <div class="header-row" id="${actor}">
+                      <h3>${actorName} ${sells}</h3>
+                  </div>
+                   <div class="buying-item-header">
+                      <label>${itemName}</label>
+                      <label>${itemPrice}</label>
+                   </div>
+                  ${items
+                      .map(
+                          item => `
+                              <div class="buying-item" id="${item._id}">
+                                  <label>${item.name}</label>
+                                  <label class="price-label">${item.system.cost}</label>
+                                  <label><i class="fa fa-trash"></i></label>
+                              </div>
+                          `
+                      )
+                      .join("")}
+              </div>
+          `;
+      }
+  
+      return new Handlebars.SafeString(result); 
+  });
+  Handlebars.registerHelper('range', function(end) {
+    let result = "";
+    for (let i = 0; i <= end; i++) {
+        result += `<option value="${i}">${i}</option>`
+    }
+    return new Handlebars.SafeString(result); 
+});
+  
 }
 
+async function preloadHandlebarsTemplates() {
+  return loadTemplates([
+    "modules/dragonbane-item-browser/templates/tab/settings.hbs",
+     "modules/dragonbane-item-browser/templates/tab/to-buy.hbs"
+  ])
+}
