@@ -384,61 +384,140 @@ function registerHandlebarsHelpers() {
     })
     Handlebars.registerHelper("groupByActor", function (items) {
       const grouped = {};
-       items.forEach(item => {
-        if (item.flags?.actor) { 
-            const actorFlag = item.flags.actor;
-            if (!grouped[actorFlag]) {
-                grouped[actorFlag] = [];
-            }
-            grouped[actorFlag].push(item);
-        }
-    });
-
+      
+      items.forEach(item => {
+          if (item.flags?.actor) { 
+              const actorFlag = item.flags.actor;
+              if (!grouped[actorFlag]) {
+                  grouped[actorFlag] = [];
+              }
+              grouped[actorFlag].push(item);
+          }
+      });
+  
       let result = "";
       const sells = game.i18n.localize("DB-IB.merchant.sells");
       const itemName = game.i18n.localize("DB-IB.itemName");
-      const itemPrice = game.i18n.localize("DB-IB.itemPrice")
-      for (const [actor, items] of Object.entries(grouped)) {
-            const actorName = game.actors.get(actor).name
+      const itemPrice = game.i18n.localize("DB-IB.itemPrice");
+  
+      for (const [actorId, items] of Object.entries(grouped)) {
+          const actor = game.actors.get(actorId);
+          const actorName = actor.name;
+  
           result += `
               <div class="actor-group">
-                  <div class="header-row" id="${actor}">
+                  <div class="header-row" id="${actorId}">
                       <h3>${actorName} ${sells}</h3>
                   </div>
-                   <div class="buying-item-header">
+                  <div class="buying-item-header">
                       <label>${itemName}</label>
                       <label>${itemPrice}</label>
-                   </div>
-                  ${items
-                      .map(
-                          item => `
-                              <div class="buying-item" id="${item._id}">
-                                  <label>${item.name}</label>
-                                  <label class="price-label">${item.system.cost}</label>
-                                  <label><i class="fa fa-trash"></i></label>
-                              </div>
-                          `
-                      )
-                      .join("")}
-              </div>
+                  </div>
           `;
-      }
   
-      return new Handlebars.SafeString(result); 
-  });
-  Handlebars.registerHelper('range', function(end) {
+          for (const item of items) {
+              const itemCost = item.system.cost;
+              const buyingRate = this.actor.system?.buing_rate || 1;
+             
+  
+             
+              const [costValue, currency2] = itemCost.split(" ");
+              const finalCost = Number(costValue) * buyingRate;
+              let roundedCost;
+
+              if (currency2 === "copper" || currency2 === game.i18n.translations.DoD.currency.copper.toLowerCase()) {
+                roundedCost = Math.round(finalCost);
+              } 
+              else if (currency2 === "silver" || currency2 === game.i18n.translations.DoD.currency.silver.toLowerCase()) {
+                roundedCost = finalCost.toFixed(1);
+              } 
+              else if (currency2 === "gold" || currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()) {
+                roundedCost = finalCost.toFixed(2);
+              }
+              const finalSellingPrice = `${roundedCost} ${currency2}`;
+  
+              result += `
+                  <div class="buying-item" id="${item._id}">
+                      <label>${item.name}</label>
+                      <label class="price-label">${finalSellingPrice}</label>
+                      <label><i class="fa fa-trash"></i></label>
+                  </div>
+              `;
+          }
+  
+          result += `</div>`; 
+      }
+      const newHtml = new Handlebars.SafeString(result);
+
+      return newHtml
+    });  
+    Handlebars.registerHelper('range', function(end) {
     let result = "";
     for (let i = 0; i <= end; i++) {
         result += `<option value="${i}">${i}</option>`
     }
     return new Handlebars.SafeString(result); 
-});
+    });
+    Handlebars.registerHelper('itemToBuy', function(items){
+      const itemName = game.i18n.localize("DB-IB.itemName");
+      const itemPrice = game.i18n.localize("DB-IB.itemPrice");
+  
+      let result = ` 
+      <div class="actor-group">
+        <div class="buying-item-header">
+          <label>${itemName}</label>
+          <label>${itemPrice}</label>
+        </div>`
+  const sellingRate = this.actor.system?.selling_rate || 1;
+      items.forEach(item => {
+          if (!item.flags?.actor) { 
+            const [costValue, currency2] = item.system.cost.split(" ");
+            const finalCost = Number(costValue) * sellingRate;
+            let roundedCost;
+
+            if (currency2 === "copper" || currency2 === game.i18n.translations.DoD.currency.copper.toLowerCase()) {
+              roundedCost = Math.round(finalCost);
+            } 
+            else if (currency2 === "silver" || currency2 === game.i18n.translations.DoD.currency.silver.toLowerCase()) {
+              roundedCost = finalCost.toFixed(1);
+            } 
+            else if (currency2 === "gold" || currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()) {
+              roundedCost = finalCost.toFixed(2);
+            }
+            const finalPrice = `${roundedCost} ${currency2}`;
+            const description = item.system.description;
+            const containUUID = description.includes("@");
+            let descriptionWithoutHTML = "";
+            if (containUUID){
+              const descriptionWithRemovedUUID = description.replace(/@.*?\{(.*?)\}/, '$1');
+              descriptionWithoutHTML = descriptionWithRemovedUUID.replace(/<[^>]*>/g, '');       
+            }
+           else{
+             descriptionWithoutHTML = description.replace(/<[^>]*>/g, '');
+            }
+            result += `
+             <div class="buying-item" id="${item._id}">
+                <label data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
+                <label class="price-label">${finalPrice}</label>
+                <i class="fas fa-coins" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
+             </div>
+         `;
+          }
+      });
+      result +=`</div>`  
+      const newHtml = new Handlebars.SafeString(result);
+
+      return newHtml
+      
+
+    });
   
 }
 
 async function preloadHandlebarsTemplates() {
   return loadTemplates([
     "modules/dragonbane-item-browser/templates/tab/settings.hbs",
-     "modules/dragonbane-item-browser/templates/tab/to-buy.hbs"
+     "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
+      "modules/dragonbane-item-browser/templates/tab/to-sell.hbs"
   ])
 }

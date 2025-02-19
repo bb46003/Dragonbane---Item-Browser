@@ -900,21 +900,62 @@ export class sellingItem {
 
         } 
 
-        goldPart = Math.floor(cost / 100); 
-        silverPart = Math.floor((cost % 100) / 10); 
-        copperPart = Math.round(cost % 10); 
 
-        await actor.update({
-            ["system.currency.gc"]: actorGC + goldPart,
-            ["system.currency.sc"]: actorSC + silverPart,
-            ["system.currency.cc"]: actorCC + copperPart,
+        const quantity = item.system.quantity;
+        if(quantity === 1){
+            goldPart = Math.floor(cost / 100); 
+            silverPart = Math.floor((cost % 100) / 10); 
+            copperPart = Math.round(cost % 10);
+            await actor.update({
+                ["system.currency.gc"]: actorGC + goldPart,
+                ["system.currency.sc"]: actorSC + silverPart,
+                ["system.currency.cc"]: actorCC + copperPart,
 
-        })
-        actor.deleteEmbeddedDocuments("Item", [item.id])
-        ChatMessage.create({
-            content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
-            speaker: ChatMessage.getSpeaker({ actor })
-        });
+            })
+            actor.deleteEmbeddedDocuments("Item", [item.id])
+            ChatMessage.create({
+                content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
+                speaker: ChatMessage.getSpeaker({ actor })
+            });
+        }
+        else{
+            const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
+            const quantityDialog =  
+            new Dialog({
+                title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
+                content: html,
+                buttons:{ 
+                    sell:{
+                        label: game.i18n.localize("DB-IB.dialog.sell"),
+                        callback: async () =>{
+                            const selectedQuantity = Number(document.querySelector(".quantity-selector").value);
+                            goldPart = Math.floor((cost*selectedQuantity) / 100); 
+                            silverPart = Math.floor(((cost*selectedQuantity) % 100) / 10); 
+                            copperPart = Math.round((cost*selectedQuantity) % 10);
+                            await actor.update({
+                                ["system.currency.gc"]: actorGC + goldPart,
+                                ["system.currency.sc"]: actorSC + silverPart,
+                                ["system.currency.cc"]: actorCC + copperPart,
+                
+                            })
+                            const newQunatity = item.seystem.quantity - selectedQuantity;
+                            if(newQunatity > 0){
+                                await item.update({["system.quantity"]:newQunatity})
+                            }
+                            else{
+                                actor.deleteEmbeddedDocuments("Item", [item.id])
+                            }
+                            const sellsQunatity = `${selectedQuantity} -  ${item.name}`
+                            ChatMessage.create({
+                                content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:sellsQunatity, actor:actor.name, currency:currency2}),
+                                speaker: ChatMessage.getSpeaker({ actor })
+                            });
+                        }
+                    }
+                }
+            })
+            quantityDialog.reder(true)
+        }
 
     }
     async barterSellPushButton(existingMessage) {
@@ -1065,7 +1106,7 @@ export class sellingItem {
                 currencyType = index;
                 break;
             }
-            index++; // Increment the index in each iteration
+            index++; 
         }
         let copperPart = 0, silverPart = 0, goldPart = 0;
         switch(currencyType){
@@ -1084,21 +1125,61 @@ export class sellingItem {
 
         } 
 
-        goldPart = Math.floor(cost / 100); 
-        silverPart = Math.floor((cost % 100) / 10); 
-        copperPart = Math.round(cost % 10) 
+        const quantity = item.system.quantity;
+        if(quantity === 1){
+            goldPart = Math.floor(cost / 100); 
+            silverPart = Math.floor((cost % 100) / 10); 
+            copperPart = Math.round(cost % 10);
+            await actor.update({
+                ["system.currency.gc"]: actorGC + goldPart,
+                ["system.currency.sc"]: actorSC + silverPart,
+                ["system.currency.cc"]: actorCC + copperPart,
 
-        await actor.update({
-            ["system.currency.gc"]: actorGC + goldPart,
-            ["system.currency.sc"]: actorSC + silverPart,
-            ["system.currency.cc"]: actorCC + copperPart,
-
-        })
-        actor.deleteEmbeddedDocuments("Item", [item._id])
-        ChatMessage.create({
-            content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
-            speaker: ChatMessage.getSpeaker({ actor })
-        });
+            })
+            actor.deleteEmbeddedDocuments("Item", [item.id])
+            ChatMessage.create({
+                content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
+                speaker: ChatMessage.getSpeaker({ actor })
+            });
+        }
+        else{
+            const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
+            const quantityDialog =  
+            new Dialog({
+                title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
+                content: html,
+                buttons:{ 
+                    sell:{
+                        label: game.i18n.localize("DB-IB.dialog.sell"),
+                        callback: async () =>{
+                            const selectedQuantity = Number(document.querySelector(".quantity-selector").value);
+                            goldPart = Math.floor((cost*selectedQuantity) / 100); 
+                            silverPart = Math.floor(((cost*selectedQuantity) % 100) / 10); 
+                            copperPart = Math.round((cost*selectedQuantity) % 10);
+                            await actor.update({
+                                ["system.currency.gc"]: actorGC + goldPart,
+                                ["system.currency.sc"]: actorSC + silverPart,
+                                ["system.currency.cc"]: actorCC + copperPart,
+                
+                            })
+                            const newQunatity = item.seystem.quantity - selectedQuantity;
+                            if(newQunatity > 0){
+                                await item.update({["system.quantity"]:newQunatity})
+                            }
+                            else{
+                                actor.deleteEmbeddedDocuments("Item", [item.id])
+                            }
+                            const sellsQunatity = `${selectedQuantity} -  ${item.name}`
+                            ChatMessage.create({
+                                content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:sellsQunatity, actor:actor.name, currency:currency2}),
+                                speaker: ChatMessage.getSpeaker({ actor })
+                            });
+                        }
+                    }
+                }
+            })
+            quantityDialog.reder(true)
+        }
 
 
 

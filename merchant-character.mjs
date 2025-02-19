@@ -105,6 +105,13 @@ export class merchant extends ActorSheet{
         html.on("change",".supply-selection", (ev) => this.changeSupply(ev))
         html.on("click",".fa.fa-trash", (ev) => this.removeFromSelling(ev))
         html.on("click","button.sell-button", (ev) => this.sellWithOutBarter(ev))
+        const rollForBarter =  game.settings.get("dragonbane-item-browser", "barter-roll-when-buys")
+        if (!rollForBarter){
+        html.on("click", ".fas.fa-coins",(ev) => this.buyItem(ev));
+        }
+        else{
+            html.on("click", ".fas.fa-coins", (ev) => this.rollForBarter(ev)); 
+        } 
     }
     updateSliderOutput(ev) {
         const slider = ev.target;
@@ -177,6 +184,30 @@ export class merchant extends ActorSheet{
                 const supplyTypes = ["common", "uncommon", "rare", "any"];
                 const index = supplyTypes.indexOf(this.actor.system.supply);
                 const itemSuply = supplyTypes.indexOf(itemData.system.supply)
+                const itemPriceNoSpace = itemData.system.cost.replace(/\s+/g, "");
+              
+                const regex = /^(\d+[Dd]\d+)(x?)(\d*)([a-zA-Z\u0100-\u017F]+)$/;
+                
+                
+                if (regex.test(itemPriceNoSpace)) {
+                    const [, dice, , multiplyer, currency] = itemPriceNoSpace.match(regex);
+                    const formula = multiplyer ? `${dice}*${multiplyer}` : dice;
+                    
+                    const costRoll =await  new Roll(formula).evaluate();
+                    const content = game.i18n.format("DB-IB.rollForPrice", {
+                        formula: formula,
+                        item: itemData.name,
+                        currency: currency
+                    });
+    
+                     await costRoll.toMessage({
+                        user: game.user.id,
+                        flavor: content,
+                    });
+    
+                    const sellingPrice = `${costRoll.total} ${currency}`;
+                    await itemData.update({["system.cost"]:sellingPrice})
+                }
                 if(droppedItem.uuid.includes("Actor")){
                     const actorID = droppedItem.uuid.split(".")[1]
                     await itemData.update({ flags: { "actor": actorID }})
@@ -243,7 +274,6 @@ export class merchant extends ActorSheet{
 
     }
     async sellWithOutBarter(ev){
-        const buingRate = this.actor.system.buing_rate;
         const actorGroups = document.querySelectorAll(".actor-group");
         const result = {};
         const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
@@ -264,18 +294,18 @@ export class merchant extends ActorSheet{
             let allItemName = "";
             const sellingActor = game.actors.get(headerID);
             result[headerID].forEach(async item => {
-                const priceMatch = item.price.match(/(\d+)\s*(\w+)/); 
+                const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
                 if (priceMatch) {
                     const price = parseInt(priceMatch[1], 10);
                     const coninType = priceMatch[2];
                     let index = 0;
-                    let currencyType = 10; // Initialize the index variable
+                    let currencyType = 10; 
                     for (const coin of coinsType) {
                         if (coninType.toLowerCase() === coin) {
                             currencyType = index;
                             break;
                         }
-                        index++; // Increment the index in each iteration
+                        index++; 
                     }
                     switch(currencyType){
                         case 0:
@@ -299,18 +329,14 @@ export class merchant extends ActorSheet{
 
                 }
             });
-            const sellingPrice = buingRate * totalPrice;
-            
+            const sellingPrice = totalPrice;
+            console.log(sellingPrice, totalPrice )
             const goldPart = Math.floor(sellingPrice / 100); 
             const silverPart = Math.floor((sellingPrice % 100) / 10); 
             const copperPart = Math.round(sellingPrice % 10); 
             let actorGC= sellingActor.system.currency.gc;
             let actorSC = sellingActor.system.currency.sc;
             let actorCC = sellingActor.system.currency.cc;
-            console.log("copper:",copperPart);
-            console.log("silver:",silverPart);
-            console.log("gold:",goldPart);
-            console.log(allItemName)
             await sellingActor.update({
                 ["system.currency.gc"]: actorGC + goldPart,
                 ["system.currency.sc"]: actorSC + silverPart,
@@ -322,6 +348,12 @@ export class merchant extends ActorSheet{
                 content: content
             });
         });
+    }
+    async buyItem(ev){
+
+    }
+    async rollForBarter(ev){
+        
     }
 }
 
