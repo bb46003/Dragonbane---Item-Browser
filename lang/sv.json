@@ -4,25 +4,41 @@
     "addItem": "<strong>{actor}</strong> lägger till på karaktärsbladet <strong>{type}</strong> <strong>{item}</strong>",
     "rollForPrice": "Slå {formula} för att bestämma priset för {item} i {currency}",
     "notEnoughMoney": "<strong>{actor}</strong> har inte tillräckligt mycket pengar för att köpa <strong>{item}</strong>.",
-    "spendMoney": "<strong>{actor}</strong> spenderar <strong>{itemPrice}</strong> för att köpa <strong>{item}</strong>",
-    "manualMonyRemoval": "Bestäm tillsammans med SL priset för <strong>{item}</strong>. Definiera som <strong>{itemPrice}</strong> och reducera pris manuellt.",
+    "spendMoney": "<strong>{actor}</strong> betalar <strong>{itemPrice}</strong> för att köpa <strong>{item}</strong>",
+    "manualMonyRemoval": "Bestäm priset tillsammans med SL priset för <strong>{item}</strong>. Definiera som <strong>{itemPrice}</strong> och reducera pris manuellt.",
     "settings": {
       "rollForBarter": "Slå köpslå när du köper en vara",
       "hintRollForBarter": "När du köper en vara via item browser-dialogen kommer ett fönster att dyka upp och fråga spelaren om de vill köpslå för att justera priset enligt reglerna definierade i Regelboken.",
       "nonCoreSkill": "Ange icke-kärnskills namn för att köpslå",
-      "hintSkillBarter": "Det skillnamn du anger här kommer att sökas på karaktärsbladet för att användas när du köpslår."
+      "hintSkillBarter": "Det skillnamn du anger här kommer att sökas på karaktärsbladet för att användas när du köpslår.",
+      "selling": "Lägg till spargris-ikon till föremål med pris, för att tillåta att sälja det.",
+      "hintSelling": "Tillåt att sälja föremål till halva priset. Om Köpslå-alternativet är påslaget tillåt slag vid försäljning också. ",
+      "stash": "Lägg till ruta för att lagra föremålet.",
+      "hintStash": "Lagrade föremål ökar inte belastningen men kommer fortfarande synas i packningen.."
     },
     "Chat": {
       "buyItem": "Köp vara",
       "reducePrice": "Du reducerar priset på {item} med 20%!",
-      "cannotBuy": "Du upprör säljaren, vilket leder till att du inte kan köpa {item}",
+      "cannotBuy": "Du upprör säljaren, vilket leder till att du inte kan köpa {item}.",
+      "cannotSell": "Du förolämpar säljaren som nu vägrar sälja {item}.",
       "reducePriceDragon": "Du reducerar priset på {item} med 50%!",
-      "nochangeInPrice": "Du kan köpa {item} till det vanliga priset."
+      "nochangeInPrice": "Du kan köpa {item} till det vanliga priset.",
+      "sellItem": "<b>{actor}</b> säljer <b>{item}</b> för <b>{cost} {currency}</b>.",
+      "increasPrice": "Du säljer {item} för 20% mer.",
+      "increasePriceDragon": "Du säljer {item} för 50% mer!",
+      "nochangeInPriceSell": "Du kan sälja {item} för vanligt pris.",
+      "sellItemButton": "Sälj föremål"
     },
     "itemName": "Varans namn",
     "wannaBarter": "Vill du köpslå?",
     "pickIfYouWantToRollForBartering": "Välj om du vill köpslå eller inte.",
     "rollForBarter": "Köpslå",
-    "BuyWithoutRoll": "Köpslå inte."
+    "BuyWithoutRoll": "Köpslå inte.",
+    "openItemBrowser": "Öppna föremålsbläddraren",
+    "sellItem": "Sälj föremål",
+    "addItemToCharacter": "Lägg till föremål utan att betala något.",
+    "buyItem": "Köp föremålet. Detta lägger till föremålet i packningen och automatiskt använda pengar.",
+    "stashItem": "Behåll föremålet i packningen men utan att påverka belastningen.",
+    "stash": "Lager"
   }
 }
