@@ -13,7 +13,7 @@
       "hintSkillBarter": "The skill name entered here will be searched on the character sheet to use for the Barter roll.",
       "selling": "Add pigi bank icon to item with cost allowing to sell it.",
       "hintSelling": "Allow to sell items defoult by 50% of cost, if Bartering option is on it allow to roll for selling as well. ",
-      "stash": "Add chcek box for stashing item.",
+      "stash": "Add check box for stashing item.",
       "hintStash": "Stashed items will not be added to encumbrance limit but still will be displed in inventory."
     },
     "Chat": {
