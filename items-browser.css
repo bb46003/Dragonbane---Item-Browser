@@ -177,14 +177,14 @@ input#percentage {
 select.supply-selection {
     text-align: center;
 }
-.buying-item-header {
+.buying-item-header, .selling-item-header{
     display: flex;
     justify-content: space-around;
     align-items: center;
     margin-top: -10px;
     margin-bottom: 10px;
 }
-.buying-item-header label {
+.buying-item-header label, .selling-item-header label {
     border: 1px solid black;
     width: 100%;
     text-align: center;
@@ -193,18 +193,21 @@ select.supply-selection {
     width: 80%;
     
 }
-.buying-item {
+.buying-item, .selling-item{
     display: grid;
     grid-template-columns: 2fr 2fr 1fr;
     margin-left: 20%;
 }
+.buing-items {
+    min-height: 5em;
+}
 .price-label {
     text-align: right;
 }
-.buing-items {
+.buing-item, .selling-items {
     margin-bottom: 1em;
 }
-.actor-group {
+.actor-group, .item-group {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
 }

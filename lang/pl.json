@@ -57,7 +57,8 @@
       "setBuingRate": "Ustaw stawkę zakupu przez kupca jako procent ceny pierwotnej",
       "allowedSupply": "Do jakiej dostępności przedmioty skupuje kupiec",
       "sells": "sprzedaje",
-      "notAcceptSuply": "Ten Kupiec nie skupuje przedmiotów o tej dostępnoiści."
+      "notAcceptSuply": "Ten Kupiec nie skupuje przedmiotów o tej dostępnoiści.",
+      "nonGMaddItemsToSell": "Nie jesteś MG, nie możesz dodawać przdmiotów, które sprzedaje kupiec."
     },
     "warrning": {
       "incoretInput": "Wpisz liczbę lub liczbę z symbolem %",

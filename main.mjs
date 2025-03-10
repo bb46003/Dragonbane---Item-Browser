@@ -421,7 +421,7 @@ function registerHandlebarsHelpers() {
              
   
              
-              const [costValue, currency2] = itemCost.split(" ");
+              let [costValue, currency2] = itemCost.split(" ");
               const finalCost = Number(costValue) * buyingRate;
               let roundedCost;
 
@@ -433,6 +433,21 @@ function registerHandlebarsHelpers() {
               } 
               else if (currency2 === "gold" || currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()) {
                 roundedCost = finalCost.toFixed(2);
+              }
+              if(roundedCost< 1){
+                const coinsTypeLocal = [game.i18n.translations.DoD.currency.gold.toLowerCase(), game.i18n.translations.DoD.currency.silver.toLowerCase(), game.i18n.translations.DoD.currency.copper.toLowerCase()];
+                const coinTypeEn = ["gold", "silver", "copper"]
+                roundedCost = roundedCost*10;
+                let coin2 = coinTypeEn.indexOf(currency2)
+                let coin3 = 0
+                if(coin2 === -1){
+                  coin3 = coinsTypeLocal.indexOf(currency2)
+                  currency2 =  coinsTypeLocal[coin3+1]
+                }
+                else {
+                  currency2 = coinTypeEn[coin2+1]
+                }
+                
               }
               const finalSellingPrice = `${roundedCost} ${currency2}`;
   
@@ -463,8 +478,8 @@ function registerHandlebarsHelpers() {
       const itemPrice = game.i18n.localize("DB-IB.itemPrice");
   
       let result = ` 
-      <div class="actor-group">
-        <div class="buying-item-header">
+      <div class="item-group">
+        <div class="selling-item-header">
           <label>${itemName}</label>
           <label>${itemPrice}</label>
         </div>`
@@ -484,6 +499,7 @@ function registerHandlebarsHelpers() {
             else if (currency2 === "gold" || currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()) {
               roundedCost = finalCost.toFixed(2);
             }
+
             const finalPrice = `${roundedCost} ${currency2}`;
             const description = item.system.description;
             const containUUID = description.includes("@");
@@ -496,7 +512,7 @@ function registerHandlebarsHelpers() {
              descriptionWithoutHTML = description.replace(/<[^>]*>/g, '');
             }
             result += `
-             <div class="buying-item" id="${item._id}">
+             <div class="selling-item" id="${item._id}">
                 <label data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
                 <label class="price-label">${finalPrice}</label>
                 <i class="fas fa-coins" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>

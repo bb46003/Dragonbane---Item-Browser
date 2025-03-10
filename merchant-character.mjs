@@ -245,7 +245,12 @@ export class merchant extends ActorSheet{
                     }                  
                 }
                 else{
-                    await this.actor.createEmbeddedDocuments("Item", [itemData])
+                    if(game.user.isGM){
+                        await this.actor.createEmbeddedDocuments("Item", [itemData])
+                    }
+                    else{
+                        DoD_Utility.WARNING(game.i18n.localize("DB-IB.merchant.nonGMaddItemsToSell"))
+                    }
                 }               
             }
         }
@@ -275,9 +280,11 @@ export class merchant extends ActorSheet{
     }
     async sellWithOutBarter(ev){
         const actorGroups = document.querySelectorAll(".actor-group");
+
         const result = {};
         const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
         actorGroups.forEach(group => {
+           
             const header = group.querySelector(".header-row");
             const headerID = header.id;
             const items = group.querySelectorAll(".buying-item");
@@ -289,6 +296,7 @@ export class merchant extends ActorSheet{
             });
             result[headerID] = itemsData;
         });
+      
         Object.keys(result).forEach(async headerID => {
             let totalPrice = 0;
             let allItemName = "";
@@ -296,17 +304,9 @@ export class merchant extends ActorSheet{
             result[headerID].forEach(async item => {
                 const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
                 if (priceMatch) {
-                    const price = parseInt(priceMatch[1], 10);
+                    const price = Math.round(Number(priceMatch[1]) * 10) / 10;
                     const coninType = priceMatch[2];
-                    let index = 0;
-                    let currencyType = 10; 
-                    for (const coin of coinsType) {
-                        if (coninType.toLowerCase() === coin) {
-                            currencyType = index;
-                            break;
-                        }
-                        index++; 
-                    }
+                    let currencyType = coinsType.indexOf(coninType)
                     switch(currencyType){
                         case 0:
                         case 1:
@@ -321,7 +321,10 @@ export class merchant extends ActorSheet{
                             totalPrice += price
                             break;            
                     } 
-                    allItemName += item.name +" "
+                    if(allItemName !== ""){
+                        allItemName += ", "
+                    }
+                    allItemName += item.name;
                     const sellingItem = item.name;
                     this.actor.deleteEmbeddedDocuments("Item",[item.id])
                     const removerdItem = await sellingActor.items.find(item => item.name === sellingItem)
@@ -330,7 +333,6 @@ export class merchant extends ActorSheet{
                 }
             });
             const sellingPrice = totalPrice;
-            console.log(sellingPrice, totalPrice )
             const goldPart = Math.floor(sellingPrice / 100); 
             const silverPart = Math.floor((sellingPrice % 100) / 10); 
             const copperPart = Math.round(sellingPrice % 10); 
@@ -350,7 +352,6 @@ export class merchant extends ActorSheet{
         });
     }
     async buyItem(ev){
-
     }
     async rollForBarter(ev){
         

@@ -56,7 +56,8 @@
       "setBuingRate": "Set merchat buing rate as percentage of original price",
       "allowedSupply": "Till what kind of supply of item Merchant accept",
       "sells": "is selling",
-      "notAcceptSuply": "This Merchan do not accept this type of suply."
+      "notAcceptSuply": "This Merchan do not accept this type of suply.",
+      "nonGMaddItemsToSell": "You are not GM, you canno add items whichmerchant sells."
     },
     "warrning": {
       "incoretInput": "Please input number or number wiht % symbol",
