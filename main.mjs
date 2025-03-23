@@ -31,7 +31,7 @@ Hooks.once("init", function () {
     hint: game.i18n.localize("DB-IB.settings.hintSelling"),
     scope: "world",
     type: Boolean,
-    default: "",
+    default: false,
     config: true, 
 });
 
@@ -40,8 +40,25 @@ game.settings.register("dragonbane-item-browser", "stash-items", {
   hint: game.i18n.localize("DB-IB.settings.hintStash"),
   scope: "world",
   type: Boolean,
-  default: "",
+  default: false,
   config: true, 
+});
+game.settings.register("dragonbane-item-browser", "skip-folders-for-browser", {
+  name: game.i18n.localize("DB-IB.settings.skippedFoldersForBrowser"),
+  hint: game.i18n.localize("DB-IB.settings.hintSkippedFoldersForBrowser"),
+  scope: "world",
+  type: Boolean,
+  default: false,
+  config: true,
+  onChange: foundry.utils.debounce(() => {
+      window.location.reload();
+  }, 100),
+});
+game.settings.register("dragonbane-item-browser", "selectedFolders", {
+  name: "Selected Folders",
+  scope: "world",
+  type: Array,
+  config: false,
 });
 
   registerHandlebarsHelpers()
@@ -78,7 +95,7 @@ game.settings.register("dragonbane-item-browser", "stash-items", {
   CONFIG.Actor.documentClass = DB_BI_Actor;
 
 
-  console.log("Modified totalWeight getter in DoDItem.");
+  
   const { fields } = foundry.data;
   const itemTypes = ["item", "helmet", "armor", "weapon"];
 
@@ -99,10 +116,13 @@ game.settings.register("dragonbane-item-browser", "stash-items", {
       });
     };
   
-    console.log(`Successfully added 'isStash' to ${itemType} schema.`);
+   
   })
   preloadHandlebarsTemplates();
 });
+
+
+
 
 Hooks.on("renderSettingsConfig", (app, html, data) => {
   const barterRollEnabled = game.settings.get("dragonbane-item-browser", "barter-roll-when-buys");
@@ -114,13 +134,75 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
           barterSkillRow.hide();
       }
   };
-  toggleCustomBarterSkill(barterRollEnabled); 
+
+ 
+  
+  const skipFoldersEnabled = game.settings.get("dragonbane-item-browser", "skip-folders-for-browser");
+  const settingContainer = html.find('[data-setting-id="dragonbane-item-browser.skip-folders-for-browser"] .form-fields');
+  
+
+  const toggleFolderList = (isEnabled) => {
+      if (isEnabled) {
+          settingContainer.find(".folder-checkboxes").show();
+      } else {
+          settingContainer.find(".folder-checkboxes").hide();
+      }
+  };
+  
+  const itemFolders = game.folders.filter(f => f.type === "Item");
+  if (itemFolders.length !== 0) {
+      let checkboxList = `<div class="folder-checkboxes"  ${skipFoldersEnabled ? '' : 'style="display:none;"'}>`;
+  
+     
+      itemFolders.forEach(folder => {
+          let folders = game.settings.get("dragonbane-item-browser", "selectedFolders");
+          let checked = folders.includes(folder.id) ? "checked" : "";
+       
+          checkboxList += `
+              <div class="folder-element">
+                  <label>
+                      <input type="checkbox" id="selectedFolder" value="${folder.id}" ${checked}> ${folder.name}
+                  </label>
+              </div>
+          `;
+      });
+  
+      checkboxList += `</div>`;
+  
+      settingContainer.append(checkboxList);
+  
+
+      settingContainer.find('input[id="selectedFolder"]').on("change", async function () {
+        let selectedFolders = game.settings.get("dragonbane-item-browser", "selectedFolders") || {};
+    
+        if (this.checked) {
+          if (!selectedFolders.includes(this.value)) {
+              selectedFolders.push(this.value); 
+          }
+      } else {
+          selectedFolders = selectedFolders.filter(id => id !== this.value); 
+      }
+    
+        await game.settings.set("dragonbane-item-browser", "selectedFolders", selectedFolders); 
+       
+    });
+    
+  }
+  toggleCustomBarterSkill(barterRollEnabled);
+
   const barterRollCheckbox = html.find('[name="dragonbane-item-browser.barter-roll-when-buys"]');
   barterRollCheckbox.on("change", (event) => {
-      const isChecked = event.target.checked;
-      toggleCustomBarterSkill(isChecked);
+      toggleCustomBarterSkill(event.target.checked);
   });
+
+
+  const skipFoldersCheckbox = html.find('[name="dragonbane-item-browser.skip-folders-for-browser"]');
+  skipFoldersCheckbox.on("change", (event) => {
+      toggleFolderList(event.target.checked);
+  });
+  
 });
+
 
 Hooks.on("renderDoDCharacterSheet", (html) => {
   const actorID = html.object._id;

@@ -20,7 +20,9 @@
       "selling": "Dodaj ikonę skarbonki do przedmiotów z ceną, umożliwiając ich sprzedaż.",
       "hintSelling": "Umożliwia sprzedaż przedmiotów domyślnie za 50% ceny. Jeśli opcja targowania jest włączona, umożliwia rzut na sprzedaż.",
       "stash": "Dodaj pole wyboru do schowania przedmiotów.",
-      "hintStash": "Schowane przedmioty nie będą wliczane do limitu obciążenia, ale nadal będą wyświetlane w ekwipunku."
+      "hintStash": "Schowane przedmioty nie będą wliczane do limitu obciążenia, ale nadal będą wyświetlane w ekwipunku.",
+      "hintSkippedFoldersForBrowser": "Foldery defnie z elementami, które nie są w przeglądarce pozycji",
+      "skippedFoldersForBrowser": "Zdefiniuj foldery do pominięcia"
     },
     "Chat": {
       "buyItem": "Kup przedmiot",

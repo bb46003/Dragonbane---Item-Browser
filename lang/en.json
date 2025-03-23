@@ -19,7 +19,9 @@
       "selling": "Add pigi bank icon to item with cost allowing to sell it.",
       "hintSelling": "Allow to sell items defoult by 50% of cost, if Bartering option is on it allow to roll for selling as well. ",
       "stash": "Add chcek box for stashing item.",
-      "hintStash": "Stashed items will not be added to encumbrance limit but still will be displed in inventory."
+      "hintStash": "Stashed items will not be added to encumbrance limit but still will be displed in inventory.",
+      "hintSkippedFoldersForBrowser": "Defnie folders with items to not apper in Item Browser",
+      "skippedFoldersForBrowser": "Defnie folders to skip"
     },
     "Chat": {
       "buyItem": "Buy Item",

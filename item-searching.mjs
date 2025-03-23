@@ -71,12 +71,32 @@ export class itemsSearch extends Dialog {
         "spell",
         "weapon"]
         const supplyTypes = ["common", "uncommon", "rare"];
-
-    const filteredItems = game.items.filter(item => {
-        const isTypeValid = types.includes(item.type);
-        const isSupplyTypeValid = item.system.supply ? supplyTypes.includes(item.system.supply) : true;
-        return isTypeValid && isSupplyTypeValid;
-    });    
+        const skipFoldersEnabled = game.settings.get("dragonbane-item-browser", "skip-folders-for-browser");
+        
+        let filteredItems = await Promise.all(game.items.map(async item => {
+            const isTypeValid = types.includes(item.type);
+            let skippedFolders;
+            if (item.folder !== null) {
+                skippedFolders = await this.getFolderPathIds(item.folder?._id);
+            } else {
+                skippedFolders = true;
+            }
+        
+            const isSupplyTypeValid = item.system.supply ? supplyTypes.includes(item.system.supply) : true;
+            const isInSkippedFolder = skipFoldersEnabled && skippedFolders;
+            const willBeAvaliable = isTypeValid && isSupplyTypeValid && isInSkippedFolder;
+        
+            if(willBeAvaliable){
+                return item
+            }
+        
+            
+        }));
+        
+        filteredItems = filteredItems.filter(item => item !== undefined);
+     
+        
+    
     const weaponsSkillsArray = game.items.filter(item => item.type === "skill" && item.system.skillType === "weapon");
     const weaponsSkills =weaponsSkillsArray.reduce((obj, item) => {
         obj[item.name] = item.name;
@@ -156,6 +176,19 @@ export class itemsSearch extends Dialog {
         return data
 
     }
+    async getFolderPathIds(folder) {
+        const skippedFolders = game.settings.get("dragonbane-item-browser", "selectedFolders") || []; 
+        const folderObject = game.folders.get(folder);     
+        const parentFoldersArray = folderObject?.ancestors || [];   
+        for (const parent of parentFoldersArray) {
+            if (skippedFolders.includes(parent.id)) { 
+                return false; 
+            }
+        }
+        return true; 
+    }
+    
+    
     async itemFiltration(data,chosenType){
     let chosenItems = {};
     switch(chosenType){

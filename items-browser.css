@@ -211,3 +211,9 @@ select.supply-selection {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
 }
+
+.folder-checkboxes {
+    display: grid;
+    grid-template-columns: auto auto;
+    min-width: 420px;
+}
