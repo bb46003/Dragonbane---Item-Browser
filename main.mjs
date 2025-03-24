@@ -156,7 +156,7 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
      
       itemFolders.forEach(folder => {
           let folders = game.settings.get("dragonbane-item-browser", "selectedFolders");
-          let checked = folders.includes(folder.id) ? "checked" : "";
+          let checked = folders?.includes(folder.id) ? "checked" : "";
        
           checkboxList += `
               <div class="folder-element">
@@ -581,7 +581,7 @@ function registerHandlebarsHelpers() {
             else if (currency2 === "gold" || currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()) {
               roundedCost = finalCost.toFixed(2);
             }
-
+            const isGM = game.user.isGM;
             const finalPrice = `${roundedCost} ${currency2}`;
             const description = item.system.description;
             const containUUID = description.includes("@");
@@ -593,14 +593,30 @@ function registerHandlebarsHelpers() {
            else{
              descriptionWithoutHTML = description.replace(/<[^>]*>/g, '');
             }
+            if(item.system.quantity > 1 ){
             result += `
              <div class="selling-item" id="${item._id}">
-                <label data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
+                <label data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
                 <label class="price-label">${finalPrice}</label>
-                <i class="fas fa-coins" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
-             </div>
-         `;
-          }
+                <div class="merchant-icon">
+                  <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
+                  ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
+                </div>
+             </div>`;
+            }
+         else{
+          result += `
+          <div class="selling-item" id="${item._id}">
+            <label data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
+            <label class="price-label">${finalPrice}</label>
+            <div class="merchant-icon">
+              <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
+              ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
+            </div>
+          </div>`;
+         }
+      }
+          
       });
       result +=`</div>`  
       const newHtml = new Handlebars.SafeString(result);

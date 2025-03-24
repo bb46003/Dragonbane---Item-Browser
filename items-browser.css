@@ -193,6 +193,9 @@ select.supply-selection {
     width: 80%;
     
 }
+.merchant-icon {
+    margin: auto;
+}
 .buying-item, .selling-item{
     display: grid;
     grid-template-columns: 2fr 2fr 1fr;
