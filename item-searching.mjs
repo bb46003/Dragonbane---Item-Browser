@@ -357,7 +357,7 @@ export class itemsSearch extends Dialog {
         else if (isGold){
           
             while (cost > actorGC){
-                console.log(cost > actorGC)
+                
                 if (actorCC >=10){
                     actorCC = actorCC - 10;
                     actorSC = actorSC + 1;
@@ -807,6 +807,7 @@ async function creatConditionMagade(actor, choice){
         speaker: ChatMessage.getSpeaker({ actor: actor })
     });   
 }
+
 export class sellingItem {
     constructor({ itemID, actorID}) {     
         this.itemID = itemID; 

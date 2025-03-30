@@ -1,7 +1,7 @@
 
 import DragonbaneDataModel from "/systems/dragonbane/modules/data/DragonbaneDataModel.js"
 import DoD_Utility from "/systems/dragonbane/modules/utility.js";
-
+import DoDSkillTest from "/systems/dragonbane/modules/tests/skill-test.js";
 
 export class merchantData extends DragonbaneDataModel  {
     static defineSchema() {
@@ -389,7 +389,7 @@ export class merchant extends ActorSheet{
         let sellingPrice ;
         let currencyType;
         let userActor;
-    
+        const merchantActor = this.actor;
         if (user.isGM) {
             const characters = game.actors.filter(actor => actor.type === "character")
             
@@ -422,118 +422,556 @@ export class merchant extends ActorSheet{
             ui.notifications.error("No valid character selected.");
             return;
         }
+        sellingPrice = Number(priceMatch[1]);
+        currencyType = coinsType.indexOf(coinType);
     
         if (rollForBarter) {
-            // Implement barter roll logic if needed
-            return;
+            
+          
+            let skillName = game.settings.get("dragonbane-item-browser", "custom-barter-skill");
+        if (skillName === "") {
+            skillName = "Bartering";
+        }
+        let skill = userActor.findSkill(skillName);
+        if (skill === undefined && skillName !== "Bartering") {
+            skill = userActor.findSkill("Bartering");
+        }
+        const options = {};
+        const test = new DoDSkillTest(userActor, skill, options);
+    
+        // Create Dialog
+        const d = new Dialog({
+            title: game.i18n.localize("DB-IB.wannaBarter"),
+            content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
+            buttons: {
+                buyWithRoll: {
+                    label: game.i18n.localize("DB-IB.rollForBarter"),
+                    callback: async () => {
+                        const barterSkillRoll = await test.roll();
+                        if (barterSkillRoll !== undefined) {
+                            const success = barterSkillRoll.postRollData.success;
+                            const isDemon = barterSkillRoll.postRollData.isDemon;
+                            const isDragon = barterSkillRoll.postRollData.isDragon;
+                            const canPush = barterSkillRoll.postRollData.canPush;
+                            const ChatMessage = barterSkillRoll.rollMessage._id;
+                            let existingMessage = game.messages.get(ChatMessage);
+                            
+                            if (canPush) {
+                                await barterPushButton(existingMessage);
+                                existingMessage = game.messages.get(ChatMessage);
+                            }
+                            await addBuyButton(item, userActor, success, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel,merchantActor);
+                        }
+                    },
+                },
+                buyWithoutRoll: {
+                    label: game.i18n.localize("DB-IB.BuyWithoutRoll"),
+                    callback: async () => {
+                       
+                       await this.spendMony(currencyType, sellingPrice, userActor, item, merchantActor, itemID, priceLabel)
+                    },
+                },
+            },
+            default: "buyWithRoll", // Default button when hitting Enter
+        });
+    
+        // Render the Dialog
+        d.render(true);
         }
     
         else{
        
-        sellingPrice = Number(priceMatch[1]);
-        currencyType = coinsType.indexOf(coinType);
+    
+        await this.spendMony(currencyType, sellingPrice, userActor, item, merchantActor, itemID, priceLabel)
         }
-        switch (currencyType) {
-            case 0:
-            case 1:
-                sellingPrice *= 100;
-                break;
-            case 2:
-            case 3:
-                sellingPrice *= 10;
-                break;
-            case 4:
-            case 5:
-                sellingPrice = sellingPrice;
-                break;
-        }
-    
-        const goldPart = Math.floor(sellingPrice / 100);
-        const silverPart = Math.floor((sellingPrice % 100) / 10);
-        const copperPart = Math.round(sellingPrice % 10);
-    
-        let actorGC = userActor.system.currency.gc;
-        let actorSC = userActor.system.currency.sc;
-        let actorCC = userActor.system.currency.cc;
-    
-        const totalMoney = actorGC * 100 + actorSC * 10 + actorCC;
-        const totalItemPrice = goldPart * 100 + silverPart * 10 + copperPart;
-    
-        if (totalMoney < totalItemPrice) {
-            ChatMessage.create({
-                content: game.i18n.format("DB-IB.notEnoughMoney", { actor: userActor.name, item: item.name }),
-                speaker: ChatMessage.getSpeaker({ actor: userActor })
-            });
-            return;
-        }
-    
-        // Deduct money correctly
-        let newGold = actorGC - goldPart;
-        let newSilver = actorSC - silverPart;
-        let newCopper = actorCC - copperPart;
-    
-        while (newGold < 0) {
-            actorSC -= 10;
-            if (actorSC >= 0) newGold++;
-            else {
-                actorCC -= 100;
-                newGold++;
-            }
-        }
-        while (newSilver < 0) {
-            actorGC -= 1;
-            if (actorGC >= 0) {
-                newSilver += 10;
-                actorSC += 10;
-            } else {
-                actorCC -= 10;
-                newSilver += 1;
-                actorSC += 1;
-            }
-        }
-        while (newCopper < 0) {
-            actorSC -= 1;
-            if (actorSC >= 0) {
-                newCopper += 10;
-                actorCC += 10;
-            } else {
-                actorGC -= 1;
-                newCopper += 100;
-                actorCC += 100;
-            }
-        }
-    
-        await userActor.update({
-            "system.currency.gc": actorGC - goldPart,
-            "system.currency.sc": actorSC - silverPart,
-            "system.currency.cc": actorCC - copperPart,
-        });
-    
-        await userActor.createEmbeddedDocuments("Item", [item]);
         
-        if (item.system.quantity > 1) {
-            await item.update({ "system.quantity": item.system.quantity - 1 });
-        } else {
-            await this.actor.deleteEmbeddedDocuments("Item", [itemID]);
-        }
-    
+    }
+
+
+async spendMony(currencyType, sellingPrice, userActor, item, merchantActor, itemID, priceLabel){
+    switch (currencyType) {
+        case 0:
+        case 1:
+            sellingPrice *= 100;
+            break;
+        case 2:
+        case 3:
+            sellingPrice *= 10;
+            break;
+        case 4:
+        case 5:
+            sellingPrice = sellingPrice;
+            break;
+    }
+
+    const goldPart = Math.floor(sellingPrice / 100);
+    const silverPart = Math.floor((sellingPrice % 100) / 10);
+    const copperPart = Math.round(sellingPrice % 10);
+
+    let actorGC = userActor.system.currency.gc;
+    let actorSC = userActor.system.currency.sc;
+    let actorCC = userActor.system.currency.cc;
+
+    const totalMoney = actorGC * 100 + actorSC * 10 + actorCC;
+    const totalItemPrice = goldPart * 100 + silverPart * 10 + copperPart;
+
+    if (totalMoney < totalItemPrice) {
         ChatMessage.create({
-            content: game.i18n.format("DB-IB.spendMoney", {
-                actor: userActor.name,
-                item: item.name,
-                itemPrice: priceLabel
-            }),
+            content: game.i18n.format("DB-IB.notEnoughMoney", { actor: userActor.name, item: item.name }),
             speaker: ChatMessage.getSpeaker({ actor: userActor })
         });
+        return;
+    }
+
+    // Deduct money correctly
+    let newGold = actorGC - goldPart;
+    let newSilver = actorSC - silverPart;
+    let newCopper = actorCC - copperPart;
+
+    while (newGold < 0) {
+        actorSC -= 10;
+        if (actorSC >= 0) newGold++;
+        else {
+            actorCC -= 100;
+            newGold++;
+        }
+    }
+    while (newSilver < 0) {
+        actorGC -= 1;
+        if (actorGC >= 0) {
+            newSilver += 10;
+            actorSC += 10;
+        } else {
+            actorCC -= 10;
+            newSilver += 1;
+            actorSC += 1;
+        }
+    }
+    while (newCopper < 0) {
+        actorSC -= 1;
+        if (actorSC >= 0) {
+            newCopper += 10;
+            actorCC += 10;
+        } else {
+            actorGC -= 1;
+            newCopper += 100;
+            actorCC += 100;
+        }
+    }
+
+    await userActor.update({
+        "system.currency.gc": actorGC - goldPart,
+        "system.currency.sc": actorSC - silverPart,
+        "system.currency.cc": actorCC - copperPart,
+    });
+
+    await userActor.createEmbeddedDocuments("Item", [item]);
+    
+    if (item.system.quantity > 1) {
+        await item.update({ "system.quantity": item.system.quantity - 1 });
+    } else {
+        await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
+    }
+
+    ChatMessage.create({
+        content: game.i18n.format("DB-IB.spendMoney", {
+            actor: userActor.name,
+            item: item.name,
+            itemPrice: priceLabel
+        }),
+        speaker: ChatMessage.getSpeaker({ actor: userActor })
+    });
+}
+}
+async function  addChatListeners(_app, html, _data) { 
+    html.on("click", ".chat-button.buy-item-merchat", buyFromChat);
+    html.on("click", ".merchat-barter-push-roll", barterPushRoll);
+  
+
+
+}
+async function barterPushButton(existingMessage) {
+    let tempDiv = document.createElement('div');
+    tempDiv.innerHTML = existingMessage.content;
+    let button = tempDiv.querySelector("button.push-roll");
+    if (button) {
+        button.classList.remove("push-roll");
+        button.classList.add("merchat-barter-push-roll");
+    }
+    let updatedContent = tempDiv.innerHTML;
+    existingMessage.content = updatedContent; 
+    existingMessage.update({ content: updatedContent });
+}
+async function addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel,merchantActor) {
+    let flavor = existingMessage.flavor;
+    let newFlavor = "";
+    if(sucess && !isDragon){
+        const tekst = game.i18n.format("DB-IB.Chat.reducePrice",{item:item.name});
+        const reducePrice =`<br><p> ${tekst}</p>`
+        newFlavor = flavor + reducePrice  
+        
+
+    }   
+    else if(isDemon)  {
+        const tekst = game.i18n.format("DB-IB.Chat.cannotBuy",{item:item.name});
+        const cannotBuy =`<br><p> ${tekst}</p>`
+        newFlavor = flavor +cannotBuy   
+                
+        }
+    else if(isDragon)  {
+            const tekst = game.i18n.format("DB-IB.Chat.reducePriceDragon",{item:item.name});
+            const reducePriceDragon =`<br><p> ${tekst}</p>`
+            newFlavor = flavor +reducePriceDragon    // Keep </span> and add reducePrice after it
+              
+        }
+    else{
+        const tekst = game.i18n.format("DB-IB.Chat.nochangeInPrice",{item:item.name});
+        const regularPrice =`<br><p> ${tekst}</p>`
+        newFlavor = flavor +regularPrice
+    }
+    if (isDemon === false){
+        const newButton = `
+        <button type="button" class="chat-button buy-item-merchat" data-message-id="${ChatMessage}">
+        ${game.i18n.format("DB-IB.Chat.buyItem")}
+         </button>
+        `;
+        let updatedContent = `${existingMessage.content} <div>${newButton}</div>`;
+        existingMessage.update({ content: updatedContent,flavor:newFlavor, system: {actor,item,barterSkillRoll, priceLabel,merchantActor}} );
+      
+    }
+    else{
+        existingMessage.update({ flavor:newFlavor, system: {actor,item,barterSkillRoll,priceLabel}} );
+
     }
     
-    async rollForBarter(ev){
-        
-    }
 }
+async function barterPushRoll(event) {
+    const ChatMessageID = event.target.closest('[data-message-id]')?.getAttribute('data-message-id');
+    const currentMessage =  game.messages.get(ChatMessageID);
+    const formula = currentMessage.rolls[0]._formula;
+    const actor = game.actors.get(currentMessage.system.actor._id);
+    
+    const element = event.currentTarget;
+        const parent = element.parentElement;
+        const pushChoices = parent.getElementsByTagName("input");
+        const choice = Array.from(pushChoices).find(e => e.name==="pushRollChoice" && e.checked);
+        if (!actor.hasCondition(choice.value)) {
+           actor.updateCondition(choice.value, true);
+           await creatConditionMagade(actor,choice)
+        } else {
+            DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+            return;
+        }
+        let skillName =  game.settings.get("dragonbane-item-browser","custom-barter-skill")
+        if (skillName === ""){
+            skillName = "Bartering"
+        }
+        let skill = actor.findSkill(skillName)
+        if (skill === undefined && skill !== "Bartering"){
+            skill = actor.findSkill("Bartering")
+        }
+       
+        let options = {canPush:false,skipDialog: true, formula:formula};
+        const test = new DoDSkillTest(actor, skill, options);
+        const barterSkillRoll = await test.roll();
+        const sucess = barterSkillRoll.postRollData.success;
+        const isDemon = barterSkillRoll.postRollData.isDemon;
+        const isDragon = barterSkillRoll.postRollData.isDragon;
+        const ChatMessage = barterSkillRoll.rollMessage._id;
+        let existingMessage = game.messages.get(ChatMessage);
+        const priceLabel = currentMessage.system.priceLabel;
+        const merchantActor = game.actors.get(ChatMessage.system.merchantActor._id);
+        const item = merchantActor.items.get(ChatMessage.system.item._id);
+        await addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel,merchantActor)
+    
+}
+async function creatConditionMagade(actor, choice){
+    const msg = game.i18n.format("DoD.ui.chat.takeCondition",
+        {
+            actor: actor.name,
+            condition: game.i18n.localize("DoD.conditions." + choice.value)
+        });
+    ChatMessage.create({
+        content: msg,
+        user: game.user.id,
+        speaker: ChatMessage.getSpeaker({ actor: actor })
+    });   
+}
+async function  buyFromChat(event) {
+    const ChatMessage =  game.messages.get(event.target.getAttribute("data-message-id"));
+    console.log(ChatMessage)
+}
+export class sellingItemMerchat {
+    constructor({ itemID, actorID}) {     
+        this.itemID = itemID; 
+        this.actorID = actorID;
+    }
+async  addChatListeners(_app, html, _data) { 
+    html.on("click", ".chat-button.buy-item-merchat", this.buyFromChat.bind(this));
+    html.on("click", ".merchat-barter-push-roll", this.barterPushRoll.bind(this));
+  
 
 
+}
+async  barterPushButton(existingMessage) {
+    let tempDiv = document.createElement('div');
+    tempDiv.innerHTML = existingMessage.content;
+    let button = tempDiv.querySelector("button.push-roll");
+    if (button) {
+        button.classList.remove("push-roll");
+        button.classList.add("merchat-barter-push-roll");
+    }
+    let updatedContent = tempDiv.innerHTML;
+    existingMessage.content = updatedContent; 
+    existingMessage.update({ content: updatedContent });
+}
+async  addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel) {
+    let flavor = existingMessage.flavor;
+    let newFlavor = "";
+    if(sucess){
+        const tekst = game.i18n.format("DB-IB.Chat.reducePrice",{item:item.name});
+        const reducePrice =`<br><p> ${tekst}</p>`
+        newFlavor = flavor + reducePrice  
+        
 
+    }   
+    else if(isDemon)  {
+        const tekst = game.i18n.format("DB-IB.Chat.cannotBuy",{item:item.name});
+        const cannotBuy =`<br><p> ${tekst}</p>`
+        newFlavor = flavor +cannotBuy   
+                
+        }
+    else if(isDragon)  {
+            const tekst = game.i18n.format("DB-IB.Chat.reducePriceDragon",{item:item.name});
+            const reducePriceDragon =`<br><p> ${tekst}</p>`
+            newFlavor = flavor +reducePriceDragon    // Keep </span> and add reducePrice after it
+              
+        }
+    else{
+        const tekst = game.i18n.format("DB-IB.Chat.nochangeInPrice",{item:item.name});
+        const regularPrice =`<br><p> ${tekst}</p>`
+        newFlavor = flavor +regularPrice
+    }
+    if (isDemon === false){
+        const newButton = `
+        <button type="button" class="chat-button buy-item-merchat" data-message-id="${ChatMessage}">
+        ${game.i18n.format("DB-IB.Chat.buyItem")}
+         </button>
+        `;
+        let updatedContent = `${existingMessage.content} <div>${newButton}</div>`;
+        existingMessage.update({ content: updatedContent,flavor:newFlavor, system: {actor,item,barterSkillRoll, priceLabel}} );
+      
+    }
+    else{
+        existingMessage.update({ flavor:newFlavor, system: {actor,item,barterSkillRoll,priceLabel}} );
+
+    }
+    
+}
+async  barterPushRoll(event) {
+    const ChatMessageID = event.target.closest('[data-message-id]')?.getAttribute('data-message-id');
+    const currentMessage =  game.messages.get(ChatMessageID);
+    const formula = currentMessage.rolls[0]._formula;
+    const actor = game.actors.get(currentMessage.system.actor._id);
+    const priceLabel = currentMessage.system.priceLabel;
+    const element = event.currentTarget;
+        const parent = element.parentElement;
+        const pushChoices = parent.getElementsByTagName("input");
+        const choice = Array.from(pushChoices).find(e => e.name==="pushRollChoice" && e.checked);
+        if (!actor.hasCondition(choice.value)) {
+           actor.updateCondition(choice.value, true);
+           await creatConditionMagade(actor,choice)
+        } else {
+            DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+            return;
+        }
+        let skillName =  game.settings.get("dragonbane-item-browser","custom-barter-skill")
+        if (skillName === ""){
+            skillName = "Bartering"
+        }
+        let skill = actor.findSkill(skillName)
+        if (skill === undefined && skill !== "Bartering"){
+            skill = actor.findSkill("Bartering")
+        }
+       
+        let options = {canPush:false,skipDialog: true, formula:formula};
+        const test = new DoDSkillTest(actor, skill, options);
+        const barterSkillRoll = await test.roll();
+        const sucess = barterSkillRoll.postRollData.success;
+        const isDemon = barterSkillRoll.postRollData.isDemon;
+        const isDragon = barterSkillRoll.postRollData.isDragon;
+        const ChatMessage = barterSkillRoll.rollMessage._id;
+        const merchantActor = game.actors.get(currentMessage.system.merchantActor._id);
+        const item = merchantActor.items.get(currentMessage.system.item._id);
+        let existingMessage = game.messages.get(ChatMessage);
+        await addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel,merchantActor)
+    
+}
+async  creatConditionMagade(actor, choice){
+    const msg = game.i18n.format("DoD.ui.chat.takeCondition",
+        {
+            actor: actor.name,
+            condition: game.i18n.localize("DoD.conditions." + choice.value)
+        });
+    ChatMessage.create({
+        content: msg,
+        user: game.user.id,
+        speaker: ChatMessage.getSpeaker({ actor: actor })
+    });   
+}
+async  buyFromChat(event) {
+    const ChatMessage =  game.messages.get(event.target.getAttribute("data-message-id"));
+    const priceLabel = ChatMessage.system.priceLabel;
+    const priceMatch = priceLabel.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
+    const coinType = priceMatch[2];
+    const rollResults = ChatMessage.system.barterSkillRoll.postRollData.success;
+    const isDragon = ChatMessage.system.barterSkillRoll.postRollData.isDragon;
+    let cost = priceMatch[1];
+    if(rollResults === false){
+        cost = cost; 
+    } 
+    else if(rollResults === true && isDragon === false){
+        cost = (cost)*0.8;
+        cost = Math.round(cost * 100) / 100;
+    }
+    else if(rollResults === true && isDragon === true){
+        cost = (cost)*0.5;
+        cost = Math.round(cost * 100) / 100;
+
+    }  
+    const coinsType = [
+        game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold",
+        game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver",
+        game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"
+    ];
+
+    const currencyType = coinsType.indexOf(coinType);
+    const userActor = game.actors.get(ChatMessage.system.actor._id);
+    const merchantActor = game.actors.get(ChatMessage.system.merchantActor._id);
+    const item = merchantActor.items.get(ChatMessage.system.item._id);
+
+    const itemID = item.id; 
+    this.spendMony(currencyType, cost, userActor, item, merchantActor, itemID, priceLabel)
+}
+async spendMony(currencyType, sellingPrice, userActor, item, merchantActor, itemID, priceLabel){
+    switch (currencyType) {
+        case 0:
+        case 1:
+            sellingPrice *= 100;
+            break;
+        case 2:
+        case 3:
+            sellingPrice *= 10;
+            break;
+        case 4:
+        case 5:
+            sellingPrice = sellingPrice;
+            break;
+    }
+
+    
+    const goldPart = Math.floor(sellingPrice / 100);
+    const silverPart = Math.floor((sellingPrice % 100) / 10);
+    const copperPart = Math.round(sellingPrice % 10);
+    priceLabel = "";
+    if(goldPart !== 0){
+        priceLabel = String(goldPart) + " " + game.i18n.translations.DoD.currency.gold.toLowerCase();
+    }
+    if(goldPart !== 0 && silverPart !== 0 && copperPart === 0){
+        priceLabel += game.i18n.localize("DB-IB.Chat.and")
+        priceLabel += " " + String(silverPart) + " " + game.i18n.translations.DoD.currency.silver.toLowerCase();
+    }
+    if(goldPart !== 0 && silverPart !== 0 && copperPart !== 0){
+        priceLabel += game.i18n.localize("DB-IB.Chat.and")        
+        priceLabel += " " + String(silverPart) + " " + game.i18n.translations.DoD.currency.silver.toLowerCase();
+    }
+    if(goldPart === 0 && silverPart !== 0){
+        priceLabel += String(silverPart) + " " + game.i18n.translations.DoD.currency.silver.toLowerCase();
+    }
+    if((goldPart !== 0 && silverPart !== 0 && copperPart !== 0) || (goldPart === 0 && silverPart !== 0 && copperPart !== 0) || (goldPart !== 0 && silverPart === 0 && copperPart !== 0)){
+        priceLabel += game.i18n.localize("DB-IB.Chat.and")
+        priceLabel += " " + String(copperPart) + " " + game.i18n.translations.DoD.currency.copper.toLowerCase();
+
+    }
+    if(goldPart === 0 && silverPart === 0 && copperPart !== 0){
+        priceLabel += String(copperPart) + " " + game.i18n.translations.DoD.currency.copper.toLowerCase();
+    }
+        
+    let actorGC = userActor.system.currency.gc;
+    let actorSC = userActor.system.currency.sc;
+    let actorCC = userActor.system.currency.cc;
+
+    const totalMoney = actorGC * 100 + actorSC * 10 + actorCC;
+    const totalItemPrice = goldPart * 100 + silverPart * 10 + copperPart;
+
+    if (totalMoney < totalItemPrice) {
+        ChatMessage.create({
+            content: game.i18n.format("DB-IB.notEnoughMoney", { actor: userActor.name, item: item.name }),
+            speaker: ChatMessage.getSpeaker({ actor: userActor })
+        });
+        return;
+    }
+
+    // Deduct money correctly
+    let newGold = actorGC - goldPart;
+    let newSilver = actorSC - silverPart;
+    let newCopper = actorCC - copperPart;
+
+    while (newGold < 0) {
+        actorSC -= 10;
+        if (actorSC >= 0) newGold++;
+        else {
+            actorCC -= 100;
+            newGold++;
+        }
+    }
+    while (newSilver < 0) {
+        actorGC -= 1;
+        if (actorGC >= 0) {
+            newSilver += 10;
+            actorSC += 10;
+        } else {
+            actorCC -= 10;
+            newSilver += 1;
+            actorSC += 1;
+        }
+    }
+    while (newCopper < 0) {
+        actorSC -= 1;
+        if (actorSC >= 0) {
+            newCopper += 10;
+            actorCC += 10;
+        } else {
+            actorGC -= 1;
+            newCopper += 100;
+            actorCC += 100;
+        }
+    }
+
+    await userActor.update({
+        "system.currency.gc": actorGC - goldPart,
+        "system.currency.sc": actorSC - silverPart,
+        "system.currency.cc": actorCC - copperPart,
+    });
+
+    await userActor.createEmbeddedDocuments("Item", [item]);
+    
+    if (item.system.quantity > 1) {
+        await item.update({ "system.quantity": item.system.quantity - 1 });
+    } else {
+        await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
+    }
+
+    ChatMessage.create({
+        content: game.i18n.format("DB-IB.spendMoney", {
+            actor: userActor.name,
+            item: item.name,
+            itemPrice: priceLabel
+        }),
+        speaker: ChatMessage.getSpeaker({ actor: userActor })
+    });
+}
+}
 import {DoDActor} from "/systems/dragonbane/modules/actor.js"
 export class DB_BI_Actor extends DoDActor {
 

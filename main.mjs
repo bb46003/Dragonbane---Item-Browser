@@ -1,7 +1,7 @@
 
 import {itemsSearch, sellingItem} from  "./item-searching.mjs"
 import * as DBIBChat from "./item-searching.mjs"
-import { merchant, merchantData, DB_BI_Actor } from "./merchant-character.mjs";
+import { merchant, merchantData, DB_BI_Actor, sellingItemMerchat } from "./merchant-character.mjs";
 
 Hooks.once("init", function () {
 
@@ -365,9 +365,12 @@ if(stashSetting){
 Hooks.on("renderChatLog", DBIBChat.addChatListeners)
 
 
+
 Hooks.on("renderChatLog", (app, html, data) => {
   const sellingInstance = new sellingItem({ itemID: null, actorID: null });
     sellingInstance.addChatListeners(app, html, data);
+  const sellingMerchantInstance = new sellingItemMerchat({ itemID: null, actorID: null });
+  sellingMerchantInstance.addChatListeners(app, html, data);
 });
 
 Hooks.on("createActor", async function (actor) { 
