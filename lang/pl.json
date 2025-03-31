@@ -64,12 +64,17 @@
     },
     "warrning": {
       "incoretInput": "Wpisz liczbę lub liczbę z symbolem %",
-      "youAreNotOwnerOfDeletedItem": "Prubujesz usunąć nie swoje przedmioty na sprzedarz!"
+      "youAreNotOwnerOfDeletedItem": "Prubujesz usunąć nie swoje przedmioty na sprzedarz!",
+      "merchantDoNotHaveMoreItem": "Kupiec nie ma już {itemName}",
+      "youDoNotSellAnything": "Twoja Postać nie sprzedaje nieczego!"
     },
     "itemPrice": "Cena przedmiotu",
     "dialog": {
       "denfieQuantity": "Zdefiniuj ilosć sprzedawanych przemiotów.",
-      "selectSellingQuantity": "Wybierz ile z {item} chcesz sprzedać"
+      "selectSellingQuantity": "Wybierz ile z {item} chcesz sprzedać",
+      "selectActor": "Wybierz Aktora który kupuje",
+      "buy": "Kup jako wybrany Aktor",
+      "sell": "Przekarz przedmiot do kupca"
     }
   }
 }

@@ -63,12 +63,17 @@
     },
     "warrning": {
       "incoretInput": "Please input number or number wiht % symbol",
-      "youAreNotOwnerOfDeletedItem": "You try deleted items for sells that are not yours!"
+      "youAreNotOwnerOfDeletedItem": "You try deleted items for sells that are not yours!",
+      "merchantDoNotHaveMoreItem": "Merchant do not have more of {itemName}",
+      "youDoNotSellAnything": "Your Charactyer do not sell anything!"
     },
     "itemPrice": "Item price",
     "dialog": {
       "denfieQuantity": "Defnie selling quantity. ",
-      "selectSellingQuantity": "Selesct how many of {item} you want to sell"
+      "selectSellingQuantity": "Selesct how many of {item} you want to sell",
+      "selectActor": "Select Actor who is buying",
+      "buy": "Buy for selected Actore",
+      "sell": "Pass item to merchant"
     }
   }
 }

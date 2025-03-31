@@ -954,7 +954,7 @@ export class sellingItem {
         }
         else{
             const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
-            const quantityDialog =  
+            const quantityDialog =  await
             new Dialog({
                 title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
                 content: html,
@@ -972,7 +972,7 @@ export class sellingItem {
                                 ["system.currency.cc"]: actorCC + copperPart,
                 
                             })
-                            const newQunatity = item.seystem.quantity - selectedQuantity;
+                            const newQunatity = item.system.quantity - selectedQuantity;
                             if(newQunatity > 0){
                                 await item.update({["system.quantity"]:newQunatity})
                             }
@@ -988,7 +988,7 @@ export class sellingItem {
                     }
                 }
             })
-            quantityDialog.reder(true)
+            quantityDialog.render(true)
         }
 
     }
@@ -1214,9 +1214,6 @@ export class sellingItem {
             })
             quantityDialog.reder(true)
         }
-
-
-
     }
 }
 

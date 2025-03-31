@@ -6,14 +6,11 @@ import DoDSkillTest from "/systems/dragonbane/modules/tests/skill-test.js";
 export class merchantData extends DragonbaneDataModel  {
     static defineSchema() {
         const {fields} = foundry.data;
-
-     
         return this.mergeSchema(super.defineSchema(), {
             selling_rate:   new fields.NumberField({
                 required: true,
                 initial: 0.5,
                 min: 0.01,
-               
             }),
             buing_rate:  new fields.NumberField({
                 required: true,
@@ -26,11 +23,7 @@ export class merchantData extends DragonbaneDataModel  {
             }),
         })      
     }
-   
-
 }
-
-
 export class merchant extends ActorSheet{
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
@@ -48,7 +41,7 @@ export class merchant extends ActorSheet{
           
         });
     }
-      async getData() {
+    async getData() {
         const source = super.getData();
         const actorData = this.actor.toObject(false);
         const updateActoprData = await deleteSkill(actorData)
@@ -64,7 +57,6 @@ export class merchant extends ActorSheet{
           type: this.actor.type,
           useKgs: this.actor.useKgs,
         };
-
         async function enrich(html) {
             if (html) {
               return await TextEditor.enrichHTML(html, {
@@ -80,10 +72,7 @@ export class merchant extends ActorSheet{
             const filteredItem = items.filter(item => item.type !== "skill")
             actorData.items=filteredItem;
             return actorData
-            
-            
           }
-      
         return context
     }
     activateListeners(html) {
@@ -93,23 +82,20 @@ export class merchant extends ActorSheet{
             const newValue = parseFloat(ev.target.value);
             this.actor.update({ "system.selling_rate": newValue }); 
             const slider = ev.target;
-            slider.blur();
-            
+            slider.blur();   
         });
         html.on("input", "#slider-buing", (ev) => this.updateSliderOutput(ev));
         html.on("change", "#slider-buing", async (ev) => {
             const newValue = parseFloat(ev.target.value); 
             await this.actor.update({ "system.buing_rate": newValue }); 
             const slider = ev.target;
-            slider.blur();
-            
+            slider.blur();  
         });
         html.on("change", "#percentage", (ev) => this.textInput(ev))
         html.on("change",".supply-selection", (ev) => this.changeSupply(ev))
         html.on("click",".fa.fa-trash", (ev) => this.removeFromSelling(ev))
         html.on("click","button.sell-button", (ev) => this.sellWithOutBarter(ev))
-       
-     
+        html.on("click","button.barter-button", (ev) => this.rollForBarter(ev))
         html.on("click", ".fas.fa-coins",(ev) => this.buyItem(ev));
      
        
@@ -136,8 +122,6 @@ export class merchant extends ActorSheet{
         const actor = this.actor;
         const regex = /^[1-9]\d*%?$/;
         const regex2 =  /^[1-9]\d*%$/;
-     
-       
         const isMatch = regex.test(input);
         if(isMatch){
             let value = 0;  
@@ -159,16 +143,12 @@ export class merchant extends ActorSheet{
                 nearestSlider.setAttribute("max",2)  
             }
             await actor.update({[systemVaralble]:value})
-
         }
         else{
             const warning = game.i18n.localize("DB-IB.warrning.incoretInput")
             DoD_Utility.WARNING(warning);
             ev.target.value = String(Number(actor.system[`${systemVaralble}`])*100)+"%"
         }
-
-     
-
     }
     async changeSupply(ev){
         const value = ev.currentTarget.value
@@ -186,26 +166,20 @@ export class merchant extends ActorSheet{
                 const index = supplyTypes.indexOf(this.actor.system.supply);
                 const itemSuply = supplyTypes.indexOf(itemData.system.supply)
                 const itemPriceNoSpace = itemData.system.cost.replace(/\s+/g, "");
-              
                 const regex = /^(\d+[Dd]\d+)(x?)(\d*)([a-zA-Z\u0100-\u017F]+)$/;
-                
-                
                 if (regex.test(itemPriceNoSpace)) {
                     const [dice,  multiplyer, currency] = itemPriceNoSpace.match(regex);
                     const formula = multiplyer ? `${dice}*${multiplyer}` : dice;
-                    
                     const costRoll =await  new Roll(formula).evaluate();
                     const content = game.i18n.format("DB-IB.rollForPrice", {
                         formula: formula,
                         item: itemData.name,
                         currency: currency
-                    });
-    
+                    });  
                      await costRoll.toMessage({
                         user: game.user.id,
                         flavor: content,
                     });
-    
                     const sellingPrice = `${costRoll.total} ${currency}`;
                     await itemData.update({["system.cost"]:sellingPrice})
                 }
@@ -225,16 +199,13 @@ export class merchant extends ActorSheet{
                                             const selectedQuantity = document.querySelector(".quantity-selector").value;
                                             const newName= itemData.name + `(${selectedQuantity})`;
                                             const oldCost = itemData.system.cost.match(/(\d+)\s*(\w+)/); ;
-                                            const newPrice = String(Number(oldCost[1]) * Number(selectedQuantity))+" "+oldCost[2];
-                                          
+                                            const newPrice = String(Number(oldCost[1]) * Number(selectedQuantity))+" "+oldCost[2];                                         
                                             await this.actor.createEmbeddedDocuments("Item", [itemData])
                                             const merchantItem = this.actor.items.find(item => item.flags.actor === actorID && item.name === itemData.name);
                                             await merchantItem.update({["system.cost"]:newPrice,["name"]:newName})
-
                                         }
                                     }
                                 }
-
                             }).render(true)
                         }
                         else{
@@ -274,38 +245,34 @@ export class merchant extends ActorSheet{
     async removeFromSelling(ev){
         const item =  ev.target.closest(".buying-item");
         if(item !== null){
-        const userID = game.user.id;
-        const actorID = game.actors.filter(actor => {return actor.ownership[userID]===3 && actor.type === "character"})     
-        const sellingHeader = ev.target.closest(".actor-group").querySelector(".header-row");
-        const ownerOfSellingItem = sellingHeader.getAttribute("id");
-        let isOwner = false;
-        actorID.forEach(actor => {
-            if(actor._id === ownerOfSellingItem){
-                isOwner = true;
+            const userID = game.user.id;
+            const actorID = game.actors.filter(actor => {return actor.ownership[userID]===3 && actor.type === "character"})     
+            const sellingHeader = ev.target.closest(".actor-group").querySelector(".header-row");
+            const ownerOfSellingItem = sellingHeader.getAttribute("id");
+            let isOwner = false;
+            actorID.forEach(actor => {
+                if(actor._id === ownerOfSellingItem){
+                    isOwner = true;
+                }
+            });
+            if(isOwner){
+                const ID = item.getAttribute("id");
+                await this.actor.deleteEmbeddedDocuments("Item",[ID])
             }
-            
-        });
-        if(isOwner){
-            const ID = item.getAttribute("id");
-            await this.actor.deleteEmbeddedDocuments("Item",[ID])
+            else{
+                DoD_Utility.WARNING(game.i18n.localize("DB-IB.warrning.youAreNotOwnerOfDeletedItem"))
+            }
         }
         else{
-            DoD_Utility.WARNING(game.i18n.localize("DB-IB.warrning.youAreNotOwnerOfDeletedItem"))
+            const itemID = ev.target.id;
+            await this.actor.deleteEmbeddedDocuments("Item",[itemID])
         }
-    }
-    else{
-        const itemID = ev.target.id;
-        await this.actor.deleteEmbeddedDocuments("Item",[itemID])
-    }
-
     }
     async sellWithOutBarter(ev){
         const actorGroups = document.querySelectorAll(".actor-group");
-
         const result = {};
         const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
         actorGroups.forEach(group => {
-           
             const header = group.querySelector(".header-row");
             const headerID = header.id;
             const items = group.querySelectorAll(".buying-item");
@@ -317,11 +284,11 @@ export class merchant extends ActorSheet{
             });
             result[headerID] = itemsData;
         });
-      
         Object.keys(result).forEach(async headerID => {
             let totalPrice = 0;
             let allItemName = "";
             const sellingActor = game.actors.get(headerID);
+            const user = game.user.id;
             result[headerID].forEach(async item => {
                 const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
                 if (priceMatch) {
@@ -347,9 +314,11 @@ export class merchant extends ActorSheet{
                     }
                     allItemName += item.name;
                     const sellingItem = item.name;
-                    this.actor.deleteEmbeddedDocuments("Item",[item.id])
-                    const removerdItem = await sellingActor.items.find(item => item.name === sellingItem)
-                    sellingActor.deleteEmbeddedDocuments("Item",[removerdItem._id])
+                    if(sellingActor.ownership[user] === 3){
+                        this.actor.deleteEmbeddedDocuments("Item",[item.id])
+                        const removerdItem = await sellingActor.items.find(item => item.name === sellingItem)
+                        sellingActor.deleteEmbeddedDocuments("Item",[removerdItem._id])
+                    }
 
                 }
             });
@@ -360,6 +329,7 @@ export class merchant extends ActorSheet{
             let actorGC= sellingActor.system.currency.gc;
             let actorSC = sellingActor.system.currency.sc;
             let actorCC = sellingActor.system.currency.cc;
+            if(sellingActor.ownership[user] === 3){
             await sellingActor.update({
                 ["system.currency.gc"]: actorGC + goldPart,
                 ["system.currency.sc"]: actorSC + silverPart,
@@ -370,6 +340,7 @@ export class merchant extends ActorSheet{
             ChatMessage.create({
                 content: content
             });
+        }
         });
     }
     async buyItem(ev) {
@@ -401,7 +372,7 @@ export class merchant extends ActorSheet{
                     content: content,
                     buttons: {
                         select: {
-                            label: game.i18n.localize("DB-IB.dialog.sell"),
+                            label: game.i18n.localize("DB-IB.dialog.buy"),
                             callback: async (html) => {
                                 const selectedActorId = html.find("select").val();
                                 const selectedActor = game.actors.get(selectedActorId);
@@ -414,7 +385,8 @@ export class merchant extends ActorSheet{
             });
     
             if (!userActor) return; 
-        } else {
+        } 
+        else {
             userActor = user.character;
         }
     
@@ -425,30 +397,26 @@ export class merchant extends ActorSheet{
         sellingPrice = Number(priceMatch[1]);
         currencyType = coinsType.indexOf(coinType);
     
-        if (rollForBarter) {
-            
-          
+        if (rollForBarter) {   
             let skillName = game.settings.get("dragonbane-item-browser", "custom-barter-skill");
-        if (skillName === "") {
-            skillName = "Bartering";
-        }
-        let skill = userActor.findSkill(skillName);
-        if (skill === undefined && skillName !== "Bartering") {
-            skill = userActor.findSkill("Bartering");
-        }
-        const options = {};
-        const test = new DoDSkillTest(userActor, skill, options);
-    
-        // Create Dialog
-        const d = new Dialog({
-            title: game.i18n.localize("DB-IB.wannaBarter"),
-            content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
-            buttons: {
-                buyWithRoll: {
-                    label: game.i18n.localize("DB-IB.rollForBarter"),
-                    callback: async () => {
-                        const barterSkillRoll = await test.roll();
-                        if (barterSkillRoll !== undefined) {
+            if (skillName === "") {
+                skillName = "Bartering";
+            }
+            let skill = userActor.findSkill(skillName);
+            if (skill === undefined && skillName !== "Bartering") {
+                skill = userActor.findSkill("Bartering");
+            }
+            const options = {};
+            const test = new DoDSkillTest(userActor, skill, options);
+            const d = new Dialog({
+                title: game.i18n.localize("DB-IB.wannaBarter"),
+                content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
+                buttons: {
+                    buyWithRoll: {
+                        label: game.i18n.localize("DB-IB.rollForBarter"),
+                        callback: async () => {
+                            const barterSkillRoll = await test.roll();
+                            if (barterSkillRoll !== undefined) {
                             const success = barterSkillRoll.postRollData.success;
                             const isDemon = barterSkillRoll.postRollData.isDemon;
                             const isDragon = barterSkillRoll.postRollData.isDragon;
@@ -472,10 +440,8 @@ export class merchant extends ActorSheet{
                     },
                 },
             },
-            default: "buyWithRoll", // Default button when hitting Enter
+            default: "buyWithRoll", 
         });
-    
-        // Render the Dialog
         d.render(true);
         }
     
@@ -486,9 +452,7 @@ export class merchant extends ActorSheet{
         }
         
     }
-
-
-async spendMony(currencyType, sellingPrice, userActor, item, merchantActor, itemID, priceLabel){
+    async spendMony(currencyType, sellingPrice, userActor, item, merchantActor, itemID, priceLabel){
     switch (currencyType) {
         case 0:
         case 1:
@@ -522,7 +486,7 @@ async spendMony(currencyType, sellingPrice, userActor, item, merchantActor, item
         });
         return;
     }
-
+    else{
     // Deduct money correctly
     let newGold = actorGC - goldPart;
     let newSilver = actorSC - silverPart;
@@ -581,14 +545,66 @@ async spendMony(currencyType, sellingPrice, userActor, item, merchantActor, item
         }),
         speaker: ChatMessage.getSpeaker({ actor: userActor })
     });
-}
+    }
+    }
+    async rollForBarter(ev){        
+        const userActor = game.user.character;        
+        let skillName = game.settings.get("dragonbane-item-browser", "custom-barter-skill");
+        if (skillName === "") {
+            skillName = "Bartering";
+        }
+        let skill = userActor.findSkill(skillName);
+        if (skill === undefined && skillName !== "Bartering") {
+            skill = userActor.findSkill("Bartering");
+        }
+        let items = {};
+        const actorGroups = document.querySelectorAll(".actor-group");
+        actorGroups.forEach(group => {
+            const header = group.querySelector(".header-row");
+            const headerID = header.id;
+            if(headerID === userActor._id){
+            const items = group.querySelectorAll(".buying-item");
+            const itemsData = Array.from(items).map(item => {
+                const itemID = item.id;
+                const name = item.querySelector("label:not(.price-label)").innerText;
+                const price = item.querySelector(".price-label").innerText.trim();
+                return { id: itemID, price: price, name: name};
+            });
+            items[headerID] = itemsData;
+        }
+        });
+        if (Object.keys(items).length > 0) {
+        const options = {};
+        const test = new DoDSkillTest(userActor, skill, options);
+        const barterSkillRoll = await test.roll();
+        if (barterSkillRoll !== undefined) {
+            const success = barterSkillRoll.postRollData.success;
+            const isDemon = barterSkillRoll.postRollData.isDemon;
+            const isDragon = barterSkillRoll.postRollData.isDragon;
+            const canPush = barterSkillRoll.postRollData.canPush;
+            barterSkillRoll.system.items = items;
+            barterSkillRoll.system.merchant = this.actor;
+            const ChatMessage = barterSkillRoll.rollMessage._id;
+           
+            let existingMessage = game.messages.get(ChatMessage);
+        
+        if (canPush) {
+            await barterSellPushButton(existingMessage);
+            existingMessage = game.messages.get(ChatMessage);
+        }
+            const merchantActor = this.actor;
+            await addSellButton(items, userActor, success, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, merchantActor);
+        }
+        }
+        else{
+            DoD_Utility.WARNING(game.i18n.localize("DB-IB.warrning.youDoNotSellAnything"))
+        }
+    }
+
 }
 async function  addChatListeners(_app, html, _data) { 
     html.on("click", ".chat-button.buy-item-merchat", buyFromChat);
     html.on("click", ".merchat-barter-push-roll", barterPushRoll);
-  
-
-
 }
 async function barterPushButton(existingMessage) {
     let tempDiv = document.createElement('div');
@@ -701,6 +717,48 @@ async function  buyFromChat(event) {
     const ChatMessage =  game.messages.get(event.target.getAttribute("data-message-id"));
     console.log(ChatMessage)
 }
+async function addSellButton(items, userActor, sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, merchantActor){
+    let flavor = existingMessage.flavor;
+    let newFlavor = "";
+    if(sucess && !isDragon){
+        const tekst = game.i18n.format("DB-IB.Chat.reducePrice",{item:item.name});
+        const reducePrice =`<br><p> ${tekst}</p>`
+        newFlavor = flavor + reducePrice  
+        
+
+    }   
+    else if(isDemon)  {
+        const tekst = game.i18n.format("DB-IB.Chat.cannotBuy",{item:item.name});
+        const cannotBuy =`<br><p> ${tekst}</p>`
+        newFlavor = flavor +cannotBuy   
+                
+        }
+    else if(isDragon)  {
+            const tekst = game.i18n.format("DB-IB.Chat.reducePriceDragon",{item:item.name});
+            const reducePriceDragon =`<br><p> ${tekst}</p>`
+            newFlavor = flavor +reducePriceDragon    // Keep </span> and add reducePrice after it
+              
+        }
+    else{
+        const tekst = game.i18n.format("DB-IB.Chat.nochangeInPrice",{item:item.name});
+        const regularPrice =`<br><p> ${tekst}</p>`
+        newFlavor = flavor +regularPrice
+    }
+    if (isDemon === false){
+        const newButton = `
+        <button type="button" class="chat-button sell-item-merchat" data-message-id="${ChatMessage}">
+        ${game.i18n.format("DB-IB.Chat.sellItem")}
+         </button>
+        `;
+        let updatedContent = `${existingMessage.content} <div>${newButton}</div>`;
+        existingMessage.update({ content: updatedContent,flavor:newFlavor, system: {actor,item,barterSkillRoll, priceLabel,merchantActor}} );
+      
+    }
+    else{
+        existingMessage.update({ flavor:newFlavor, system: {actor,item,barterSkillRoll,priceLabel}} );
+
+    } 
+}
 export class sellingItemMerchat {
     constructor({ itemID, actorID}) {     
         this.itemID = itemID; 
@@ -744,7 +802,7 @@ async  addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatM
     else if(isDragon)  {
             const tekst = game.i18n.format("DB-IB.Chat.reducePriceDragon",{item:item.name});
             const reducePriceDragon =`<br><p> ${tekst}</p>`
-            newFlavor = flavor +reducePriceDragon    // Keep </span> and add reducePrice after it
+            newFlavor = flavor +reducePriceDragon    
               
         }
     else{
@@ -849,9 +907,13 @@ async  buyFromChat(event) {
     const userActor = game.actors.get(ChatMessage.system.actor._id);
     const merchantActor = game.actors.get(ChatMessage.system.merchantActor._id);
     const item = merchantActor.items.get(ChatMessage.system.item._id);
-
-    const itemID = item.id; 
-    this.spendMony(currencyType, cost, userActor, item, merchantActor, itemID, priceLabel)
+    if(item === undefined){
+        DoD_Utility.WARNING(game.i18n.format("DB-IB.warrning.merchantDoNotHaveMoreItem", {itemName:ChatMessage.system.item.name}))
+    }
+    else{
+        const itemID = item.id; 
+        this.spendMony(currencyType, cost, userActor, item, merchantActor, itemID, priceLabel)
+    }
 }
 async spendMony(currencyType, sellingPrice, userActor, item, merchantActor, itemID, priceLabel){
     switch (currencyType) {
