@@ -547,8 +547,47 @@ export class merchant extends ActorSheet{
     });
     }
     }
-    async rollForBarter(ev){        
-        const userActor = game.user.character;        
+    async rollForBarter(ev){
+        let userActor;
+        let characters ={};        
+        if (game.user.isGM) {
+            const actorGroups = document.querySelectorAll(".actor-group");
+            actorGroups.forEach(group => {
+                const header = group.querySelector(".header-row");
+                const headerID = header.id;
+                characters[headerID] = game.actors.get(headerID)
+            })
+            if(Object.keys(characters).length > 1){
+            const content = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/chose-actor.hbs", { actors:characters });
+            userActor = await new Promise((resolve) => {               
+    
+                new Dialog({
+                    title: game.i18n.localize("DB-IB.dialog.selectActor"),
+                    content: content,
+                    buttons: {
+                        select: {
+                            label: game.i18n.localize("DB-IB.dialog.buy"),
+                            callback: async (html) => {
+                                const selectedActorId = html.find("select").val();
+                                const selectedActor = game.actors.get(selectedActorId);
+                                resolve(selectedActor);
+                            }
+                        }
+                    },
+                    close: () => resolve(null)
+                }).render(true);
+            });
+    
+            if (!userActor) return; 
+            }
+            else{
+                const singleActorId = Object.keys(characters)[0];
+                userActor = characters[singleActorId]; 
+            }
+        } 
+        else {
+            userActor = game.user.character;
+        }       
         let skillName = game.settings.get("dragonbane-item-browser", "custom-barter-skill");
         if (skillName === "") {
             skillName = "Bartering";
@@ -563,8 +602,8 @@ export class merchant extends ActorSheet{
             const header = group.querySelector(".header-row");
             const headerID = header.id;
             if(headerID === userActor._id){
-            const items = group.querySelectorAll(".buying-item");
-            const itemsData = Array.from(items).map(item => {
+            const itemsForSell = group.querySelectorAll(".buying-item");
+            const itemsData = Array.from(itemsForSell).map(item => {
                 const itemID = item.id;
                 const name = item.querySelector("label:not(.price-label)").innerText;
                 const price = item.querySelector(".price-label").innerText.trim();
@@ -582,8 +621,8 @@ export class merchant extends ActorSheet{
             const isDemon = barterSkillRoll.postRollData.isDemon;
             const isDragon = barterSkillRoll.postRollData.isDragon;
             const canPush = barterSkillRoll.postRollData.canPush;
-            barterSkillRoll.system.items = items;
-            barterSkillRoll.system.merchant = this.actor;
+             barterSkillRoll["system.items"]= items;//},{"system.merchant":this.actor})
+          
             const ChatMessage = barterSkillRoll.rollMessage._id;
            
             let existingMessage = game.messages.get(ChatMessage);
@@ -697,8 +736,8 @@ async function barterPushRoll(event) {
         let existingMessage = game.messages.get(ChatMessage);
         const priceLabel = currentMessage.system.priceLabel;
         const merchantActor = game.actors.get(ChatMessage.system.merchantActor._id);
-        const item = merchantActor.items.get(ChatMessage.system.item._id);
-        await addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel,merchantActor)
+        const items= merchantActor.items.get(ChatMessage.system.items);
+        await addBuyButton(items ,actor, sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel, merchantActor)
     
 }
 async function creatConditionMagade(actor, choice){
@@ -720,44 +759,106 @@ async function  buyFromChat(event) {
 async function addSellButton(items, userActor, sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, merchantActor){
     let flavor = existingMessage.flavor;
     let newFlavor = "";
+    const sellsItem = items[userActor._id].map(item => item.name).join(", ");
+    const priceLabel = combinePrice(items[userActor._id])
     if(sucess && !isDragon){
-        const tekst = game.i18n.format("DB-IB.Chat.reducePrice",{item:item.name});
+        const tekst = game.i18n.format("DB-IB.Chat.reducePrice",{item:sellsItem});
         const reducePrice =`<br><p> ${tekst}</p>`
         newFlavor = flavor + reducePrice  
         
 
     }   
     else if(isDemon)  {
-        const tekst = game.i18n.format("DB-IB.Chat.cannotBuy",{item:item.name});
+        const tekst = game.i18n.format("DB-IB.Chat.cannotBuy",{item:sellsItem});
         const cannotBuy =`<br><p> ${tekst}</p>`
         newFlavor = flavor +cannotBuy   
                 
         }
     else if(isDragon)  {
-            const tekst = game.i18n.format("DB-IB.Chat.reducePriceDragon",{item:item.name});
+            const tekst = game.i18n.format("DB-IB.Chat.reducePriceDragon",{item:sellsItem});
             const reducePriceDragon =`<br><p> ${tekst}</p>`
             newFlavor = flavor +reducePriceDragon    // Keep </span> and add reducePrice after it
               
         }
     else{
-        const tekst = game.i18n.format("DB-IB.Chat.nochangeInPrice",{item:item.name});
+        const tekst = game.i18n.format("DB-IB.Chat.nochangeInPrice",{item:sellsItem});
         const regularPrice =`<br><p> ${tekst}</p>`
         newFlavor = flavor +regularPrice
     }
     if (isDemon === false){
         const newButton = `
         <button type="button" class="chat-button sell-item-merchat" data-message-id="${ChatMessage}">
-        ${game.i18n.format("DB-IB.Chat.sellItem")}
+        ${game.i18n.localize("DB-IB.Chat.sellItemButton")}
          </button>
         `;
         let updatedContent = `${existingMessage.content} <div>${newButton}</div>`;
-        existingMessage.update({ content: updatedContent,flavor:newFlavor, system: {actor,item,barterSkillRoll, priceLabel,merchantActor}} );
+        existingMessage.update({ content: updatedContent,flavor:newFlavor, system: {userActor,items,barterSkillRoll, priceLabel,merchantActor}} );
       
     }
     else{
         existingMessage.update({ flavor:newFlavor, system: {actor,item,barterSkillRoll,priceLabel}} );
 
     } 
+}
+async function combinePrice(items) {
+    let cost = 0;
+    let finalCost = "";
+    const coinsType = [game.i18n.translations.DoD.currency.gold.toLowerCase(), "gold", game.i18n.translations.DoD.currency.silver.toLowerCase(), "silver", game.i18n.translations.DoD.currency.copper.toLowerCase(), "copper"];
+    const totalPrice = items.reduce((cost, item) => {
+        const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
+        if (!priceMatch) return cost; 
+    
+        const coinType = priceMatch[2];
+        let currencyType = coinsType.indexOf(coinType);
+        let buyingCost = Number(priceMatch[1]);
+    
+        switch (currencyType) {
+            case 0:
+            case 1:
+                buyingCost *= 100;
+                break;
+            case 2:
+            case 3:
+                buyingCost *= 10;
+                break;
+            case 4:
+            case 5:
+                break;
+        }
+    
+        return cost + buyingCost; 
+    }, 0);
+    const goldPart = Math.floor(totalPrice / 100);
+    const silverPart = Math.floor((totalPrice % 100) / 10);
+    const copperPart = Math.round(totalPrice % 10);
+    let i = 1;
+    if(game.i18n.lang === "en"){
+        i=1;
+    }
+    else{
+        i=0
+    }
+        if(goldPart !== 0 ){
+            finalCost = String(goldPart) + " " + coinsType[i]
+        }
+        if (goldPart === 0 && silverPart !== 0 && copperPart === 0){
+            finalCost = String(silverPart) + " "  + coinsType[i+2]
+        }
+        if (goldPart === 0 && silverPart === 0 && copperPart !== 0){
+            finalCost = String(copperPart) + " "  + coinsType[i+4]
+        }
+        if ((goldPart !== 0 && silverPart !== 0 && copperPart === 0) || (goldPart !== 0 && silverPart !== 0 && copperPart !== 0) ){
+            finalCost +=", " + String(silverPart) + " "  + coinsType[i+2]
+        }
+        if (((goldPart === 0 && silverPart !== 0) || (goldPart !== 0 && silverPart === 0) || (goldPart !== 0 && silverPart !==0)) && copperPart !== 0){
+            finalCost += ", " + String(copperPart) + " "  + coinsType[i+4]
+        }
+    return finalCost
+    
+    
+}
+async function barterSellPushButton(event) {
+
 }
 export class sellingItemMerchat {
     constructor({ itemID, actorID}) {     
