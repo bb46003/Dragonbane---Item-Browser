@@ -92,7 +92,7 @@ export class itemsSearch extends Dialog {
         
             
         }));
-        
+        console.log(filteredItems)
         filteredItems = filteredItems.filter(item => item !== undefined);
      
         

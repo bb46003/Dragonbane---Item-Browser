@@ -641,10 +641,13 @@ export class merchant extends ActorSheet{
     }
 
 }
+/*
 async function  addChatListeners(_app, html, _data) { 
     html.on("click", ".chat-button.buy-item-merchat", buyFromChat);
     html.on("click", ".merchat-barter-push-roll", barterPushRoll);
+    html.on("click", ".chat-button.sell-item-merchat", sellFromChat);
 }
+    */
 async function barterPushButton(existingMessage) {
     let tempDiv = document.createElement('div');
     tempDiv.innerHTML = existingMessage.content;
@@ -700,6 +703,7 @@ async function addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessag
     }
     
 }
+/*
 async function barterPushRoll(event) {
     const ChatMessageID = event.target.closest('[data-message-id]')?.getAttribute('data-message-id');
     const currentMessage =  game.messages.get(ChatMessageID);
@@ -740,6 +744,7 @@ async function barterPushRoll(event) {
         await addBuyButton(items ,actor, sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel, merchantActor)
     
 }
+        */
 async function creatConditionMagade(actor, choice){
     const msg = game.i18n.format("DoD.ui.chat.takeCondition",
         {
@@ -752,10 +757,12 @@ async function creatConditionMagade(actor, choice){
         speaker: ChatMessage.getSpeaker({ actor: actor })
     });   
 }
+/*
 async function  buyFromChat(event) {
     const ChatMessage =  game.messages.get(event.target.getAttribute("data-message-id"));
     console.log(ChatMessage)
 }
+    */
 async function addSellButton(items, userActor, sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, merchantActor){
     let flavor = existingMessage.flavor;
     let newFlavor = "";
@@ -857,9 +864,20 @@ async function combinePrice(items) {
     
     
 }
-async function barterSellPushButton(event) {
+async function barterSellPushButton(existingMessage) {
+    let tempDiv = document.createElement('div');
+    tempDiv.innerHTML = existingMessage.content;
+    let button = tempDiv.querySelector("button.push-roll");
+    if (button) {
+        button.classList.remove("push-roll");
+        button.classList.add("merchat-barter-push-roll");
+    }
+    let updatedContent = tempDiv.innerHTML;
+    existingMessage.content = updatedContent; 
+    existingMessage.update({ content: updatedContent });
 
 }
+
 export class sellingItemMerchat {
     constructor({ itemID, actorID}) {     
         this.itemID = itemID; 
@@ -868,6 +886,7 @@ export class sellingItemMerchat {
 async  addChatListeners(_app, html, _data) { 
     html.on("click", ".chat-button.buy-item-merchat", this.buyFromChat.bind(this));
     html.on("click", ".merchat-barter-push-roll", this.barterPushRoll.bind(this));
+    html.on("click", ".chat-button.sell-item-merchat", this.sellFromChat.bind(this));
   
 
 
@@ -931,15 +950,16 @@ async  barterPushRoll(event) {
     const ChatMessageID = event.target.closest('[data-message-id]')?.getAttribute('data-message-id');
     const currentMessage =  game.messages.get(ChatMessageID);
     const formula = currentMessage.rolls[0]._formula;
-    const actor = game.actors.get(currentMessage.system.actor._id);
+    let options = currentMessage.rolls[0].options;
+    const userActor = game.actors.get(currentMessage.system.userActor._id);
     const priceLabel = currentMessage.system.priceLabel;
     const element = event.currentTarget;
         const parent = element.parentElement;
         const pushChoices = parent.getElementsByTagName("input");
         const choice = Array.from(pushChoices).find(e => e.name==="pushRollChoice" && e.checked);
-        if (!actor.hasCondition(choice.value)) {
-           actor.updateCondition(choice.value, true);
-           await creatConditionMagade(actor,choice)
+        if (!userActor.hasCondition(choice.value)) {
+            userActor.updateCondition(choice.value, true);
+           await creatConditionMagade(userActor,choice)
         } else {
             DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
             return;
@@ -948,22 +968,32 @@ async  barterPushRoll(event) {
         if (skillName === ""){
             skillName = "Bartering"
         }
-        let skill = actor.findSkill(skillName)
+        let skill = userActor.findSkill(skillName)
         if (skill === undefined && skill !== "Bartering"){
-            skill = actor.findSkill("Bartering")
+            skill = userActor.findSkill("Bartering")
         }
-       
-        let options = {canPush:false,skipDialog: true, formula:formula};
-        const test = new DoDSkillTest(actor, skill, options);
+        if (options.boons) {
+            options.boons = options.boons.filter(boon => boon.value !== false);
+        }
+        if (options.banes) {
+            options.banes = options.banes.filter(bane => bane.value !== false);
+        }
+        options = {
+            ...options, 
+            canPush: false,
+            skipDialog: true,
+            formula: formula
+        };
+        const test = new DoDSkillTest(userActor, skill, options);
         const barterSkillRoll = await test.roll();
         const sucess = barterSkillRoll.postRollData.success;
         const isDemon = barterSkillRoll.postRollData.isDemon;
         const isDragon = barterSkillRoll.postRollData.isDragon;
         const ChatMessage = barterSkillRoll.rollMessage._id;
         const merchantActor = game.actors.get(currentMessage.system.merchantActor._id);
-        const item = merchantActor.items.get(currentMessage.system.item._id);
+        const items = currentMessage.system.items;
         let existingMessage = game.messages.get(ChatMessage);
-        await addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, priceLabel,merchantActor)
+        await addSellButton(items, userActor, sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll, merchantActor)
     
 }
 async  creatConditionMagade(actor, choice){
@@ -1133,6 +1163,10 @@ async spendMony(currencyType, sellingPrice, userActor, item, merchantActor, item
         }),
         speaker: ChatMessage.getSpeaker({ actor: userActor })
     });
+}
+async sellFromChat(event){
+    const ChatMessage =  game.messages.get(event.target.getAttribute("data-message-id"));
+    console.log(ChatMessage)
 }
 }
 import {DoDActor} from "/systems/dragonbane/modules/actor.js"

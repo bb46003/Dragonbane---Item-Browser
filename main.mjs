@@ -173,10 +173,10 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
   
 
       settingContainer.find('input[id="selectedFolder"]').on("change", async function () {
-        let selectedFolders = game.settings.get("dragonbane-item-browser", "selectedFolders") || {};
+        let selectedFolders = await game.settings.get("dragonbane-item-browser", "selectedFolders") || []
     
         if (this.checked) {
-          if (!selectedFolders.includes(this.value)) {
+          if (!selectedFolders?.includes(this.value)) {
               selectedFolders.push(this.value); 
           }
       } else {
