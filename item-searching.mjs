@@ -496,8 +496,10 @@ export class itemsSearch extends Dialog {
     }
 }
 export async function addChatListeners(_app, html, _data) { 
-    html.on("click", ".chat-button.buy-item", buyFromChat);
-    html.on("click", ".barter-push-roll", barterPushRoll);
+    
+    DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.buy-item", buyFromChat);
+    
+    DoD_Utility.addHtmlEventListener(html,"click", ".barter-push-roll", barterPushRoll);
   
 
 
@@ -814,8 +816,8 @@ export class sellingItem {
         this.actorID = actorID;
     }
     async  addChatListeners(_app, html, _data) { 
-        html.on("click", ".sell-push-roll",  this.sellPushRoll.bind(this));
-        html.on("click", ".chat-button.sell-item",  this.sellFromChat.bind(this));
+        DoD_Utility.addHtmlEventListener(html,"click", ".sell-push-roll",  this.sellPushRoll.bind(this));
+        DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.sell-item",  this.sellFromChat.bind(this));
 
     }
     async selling(itemID, actorID){

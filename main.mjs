@@ -266,11 +266,11 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
     }
     
   });
-  const buttonsBrowser = document.querySelectorAll(".fa-magnifying-glass");
+  const buttonsBrowser = html._element[0].querySelectorAll(".fa-magnifying-glass");
 
   buttonsBrowser.forEach(button => {
     if (!button.dataset.eventAttached) {
-        button.addEventListener("click", (event) => {
+        button.addEventListener(html[0],"click", (event) => {
             openItemsBrowser(event, actorID);
         });
         button.dataset.eventAttached = "true";

@@ -80,7 +80,7 @@ select.filter {
     width: 100%;
 }
 button.item-browser {
-    width: 0px;
+   /* width: 0px; */
     border: none;
     background: transparent;
     /* visibility: hidden; */
