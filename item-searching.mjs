@@ -819,8 +819,14 @@ export class sellingItem {
         this.actorID = actorID;
     }
     async  addChatListeners(_app, html, _data) { 
-        DoD_Utility.addHtmlEventListener(html,"click", ".sell-push-roll",  this.sellPushRoll.bind(this));
-        DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.sell-item",  this.sellFromChat.bind(this));
+        if(game.release.generation < 13){
+            html.on("click", ".sell-push-roll",  this.sellPushRoll.bind(this));
+            html.on("click", ".chat-button.sell-item",  this.sellFromChat.bind(this))
+        }
+        else{
+            DoD_Utility.addHtmlEventListener(html,"click", ".sell-push-roll",  this.sellPushRoll.bind(this));
+            DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.sell-item",  this.sellFromChat.bind(this));
+        }
 
     }
     async selling(itemID, actorID){

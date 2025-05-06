@@ -10,6 +10,7 @@
     "rollForPrice": "Roll {formula} to Define cost of {item} in {currency}",
     "notEnoughMoney": "<strong>{actor}</strong> do not have enough coins to buy <strong>{item}</strong>.",
     "spendMoney": "<strong>{actor}</strong> spend <strong>{itemPrice}</strong> to buy <strong>{item}</strong>",
+    "gainMoney": "<strong>{actor}</strong> get <strong>{itemPrice}</strong> from selling <strong>{item}</strong>",
     "manualMonyRemoval": "Define with GM price of <strong>{item}</strong> Define as <strong>{itemPrice}</strong> and reduce price manually.",
     "settings": {
       "rollForBarter": "Barter roll when purchasing or selling an item",
@@ -59,7 +60,8 @@
       "allowedSupply": "Till what kind of supply of item Merchant accept",
       "sells": "is selling",
       "notAcceptSuply": "This Merchan do not accept this type of suply.",
-      "nonGMaddItemsToSell": "You are not GM, you canno add items whichmerchant sells."
+      "nonGMaddItemsToSell": "You are not GM, you canno add items whichmerchant sells.",
+      "youCannotSellTheSameItemTwice": "You cannot sell item more than ones!"
     },
     "warrning": {
       "incoretInput": "Please input number or number wiht % symbol",

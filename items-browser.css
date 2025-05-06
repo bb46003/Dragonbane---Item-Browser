@@ -34,6 +34,7 @@ th.checkbox-header-stash {
     /* flex-wrap: nowrap; */
     justify-content: space-between;
     align-items: baseline;
+    margin-top: 5px;
 }
 .item-in-browser.spell, .item-in-browser.ability{
     display: grid;
@@ -41,13 +42,16 @@ th.checkbox-header-stash {
     /* flex-wrap: nowrap; */
     justify-content: space-between;
     align-items: baseline;
+    margin-top: 5px;
 }
 .fa-coins, i.cost, .fa-plus {
     justify-self: right;
+    align-self: center;
 }
 a.item-name-browser {
     justify-self: left;
     margin-left: 2px;
+    align-self: center;
 }
 
 .left-side {
@@ -202,7 +206,7 @@ select.supply-selection {
     margin-left: 20%;
 }
 .buing-items {
-    min-height: 5em;
+    min-height: 7em;
 }
 .price-label {
     text-align: right;
@@ -234,3 +238,7 @@ select.supply-selection {
 a.fa-solid.fa-magnifying-glass {
     padding-bottom: 12px;
 }
+
+.merchant {
+    min-height: 380px;
+  }

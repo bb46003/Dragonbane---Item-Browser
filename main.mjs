@@ -142,7 +142,13 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
   //const settingContainer = $html.find('[data-setting-id="dragonbane-item-browser.skip-folders-for-browser"] .form-fields');
   
   const label = $html.find('label[for="settings-config-dragonbane-item-browser.skip-folders-for-browser"]');
-  const settingContainer = label.closest('.form-group').find('.form-fields');
+  let settingContainer
+  if(game.release.generation < 13){
+    settingContainer = html.find('[data-setting-id="dragonbane-item-browser.skip-folders-for-browser"] .form-fields');
+  }
+  else{
+    settingContainer = label.closest('.form-group').find('.form-fields');
+  }
   const toggleFolderList = (isEnabled) => {
       if (isEnabled) {
           settingContainer.find(".folder-checkboxes").show();
@@ -249,7 +255,6 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
     if (header.textContent.trim() === spell) {
       targetHeader = header;
       const closestNumberHeader = header.previousElementSibling; 
-      console.log(closestNumberHeader)
       closestNumberHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);   
     }
   });
@@ -329,10 +334,9 @@ if(stashSetting){
       const singleItem = actor.items.filter(element => element.id === dataType)[0];
       const singleItemHaveCost = /\d/.test(singleItem.system.cost);
       if(singleItemHaveCost){  
-        console.log(dataType)
         const addSellingIcon = `
           <button class="item-browser-sold" actor-data ="${actorID}" id="${dataType}" title="${title}">
-            <i  for="item-browser-sold" class="fa-solid fa-piggy-bank" ></i>
+            <i  for="item-browser-sold" class="fa-solid fa-piggy-bank" id="${dataType}" ></i>
           </button>`; 
       const hasSellingButton = iconData.querySelector(".item-browser-sold") === null;
       if (hasSellingButton) {
@@ -475,8 +479,8 @@ function registerHandlebarsHelpers() {
       const grouped = {};
       
       items.forEach(item => {
-          if (item.flags?.actor) { 
-              const actorFlag = item.flags.actor;
+          if (item.flags["dragonbane-item-browser"]?.actor) { 
+              const actorFlag = item.flags["dragonbane-item-browser"].actor;
               if (!grouped[actorFlag]) {
                   grouped[actorFlag] = [];
               }

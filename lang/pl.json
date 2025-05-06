@@ -10,6 +10,7 @@
     "rollForPrice": "Rzuć {formula}, aby określić koszt <strong>{item}</strong> w <strong>{currency}</strong>",
     "notEnoughMoney": "<strong>{actor}</strong> nie ma wystarczająco monet, aby kupić <strong>{item}</strong>.",
     "spendMoney": "<strong>{actor}</strong> wydał <strong>{itemPrice}</strong>, aby kupić <strong>{item}</strong>",
+    "gainMoney": "<strong>{actor}</strong> otrzymał <strong>{itemPrice}</strong> za sprzedaż <strong>{item}</strong>",
     "manualMonyRemoval": "Ustal z MG cenę <strong>{item}</strong>, określ jako <strong>{itemPrice}</strong> i zmniejsz ręcznie ilość monet.",
     "settings": {
       "rollForBarter": "Rzut na TARGOWANIE podczas zakupu lub sprzedaży przedmiotu",
@@ -60,7 +61,8 @@
       "allowedSupply": "Do jakiej dostępności przedmioty skupuje kupiec",
       "sells": "sprzedaje",
       "notAcceptSuply": "Ten Kupiec nie skupuje przedmiotów o tej dostępnoiści.",
-      "nonGMaddItemsToSell": "Nie jesteś MG, nie możesz dodawać przdmiotów, które sprzedaje kupiec."
+      "nonGMaddItemsToSell": "Nie jesteś MG, nie możesz dodawać przdmiotów, które sprzedaje kupiec.",
+      "youCannotSellTheSameItemTwice": "Nie możesz sprzedaćtego samego przetmiotu więcej niż raz!"
     },
     "warrning": {
       "incoretInput": "Wpisz liczbę lub liczbę z symbolem %",
