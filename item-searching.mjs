@@ -83,7 +83,13 @@ export class itemsSearch extends Dialog {
             }
         
             const isSupplyTypeValid = item.system.supply ? supplyTypes.includes(item.system.supply) : true;
-            const isInSkippedFolder = skipFoldersEnabled && skippedFolders;
+            let isInSkippedFolder;
+            if(skipFoldersEnabled){
+                isInSkippedFolder =  skippedFolders;
+                }
+                else{
+                    isInSkippedFolder = true;
+                }
             const willBeAvaliable = isTypeValid && isSupplyTypeValid && isInSkippedFolder;
         
             if(willBeAvaliable){
@@ -92,7 +98,6 @@ export class itemsSearch extends Dialog {
         
             
         }));
-        console.log(filteredItems)
         filteredItems = filteredItems.filter(item => item !== undefined);
      
         
@@ -181,14 +186,12 @@ export class itemsSearch extends Dialog {
         const folderObject = game.folders.get(folder);     
         const parentFoldersArray = folderObject?.ancestors || [];   
         for (const parent of parentFoldersArray) {
-            if (skippedFolders.includes(parent.id)) { 
+            if (skippedFolders.includes(parent.id) || skippedFolders.includes(folder)) { 
                 return false; 
             }
         }
         return true; 
     }
-    
-    
     async itemFiltration(data,chosenType){
     let chosenItems = {};
     switch(chosenType){
@@ -549,7 +552,7 @@ async function spendMoneyWithBarter(item,actor,rollResults, isDragon){
     if(rollResults === false){
         cost = cost; 
     } 
-    else if(rollResults === true){
+    else if(rollResults === true && !isDragon){
         cost = (cost)*0.8;
         cost = Math.round(cost * 100) / 100;
     }
@@ -708,7 +711,7 @@ async function spendMoneyWithBarter(item,actor,rollResults, isDragon){
 async function addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll) {
     let flavor = existingMessage.flavor;
     let newFlavor = "";
-    if(sucess){
+    if(sucess && !isDragon){
         const tekst = game.i18n.format("DB-IB.Chat.reducePrice",{item:item.name});
         const reducePrice =`<br><p> ${tekst}</p>`
         newFlavor = flavor + reducePrice  
@@ -1126,11 +1129,11 @@ export class sellingItem {
         if(sucess === false){
             cost = cost; 
         } 
-        else if (sucess){
+        if (sucess && !isDragon){
             cost = (cost)*1.2;
             cost = Math.round(cost * 100) / 100;
         }
-        else if(isDragon){
+        if(isDragon){
             cost = (cost)*1.5;
             cost = Math.round(cost * 100) / 100;
         }
@@ -1172,7 +1175,7 @@ export class sellingItem {
                 ["system.currency.cc"]: actorCC + copperPart,
 
             })
-            actor.deleteEmbeddedDocuments("Item", [item.id])
+            actor.deleteEmbeddedDocuments("Item", [item._id])
             ChatMessage.create({
                 content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
                 speaker: ChatMessage.getSpeaker({ actor })

@@ -64,8 +64,8 @@ game.settings.register("dragonbane-item-browser", "selectedFolders", {
   registerHandlebarsHelpers()
 
 
-
-  Actors.registerSheet("merchant", merchant ,{
+  const ActorsElemet = game.release.generation < 13 ? Actors         : foundry.documents.collections.Actors;
+  ActorsElemet.registerSheet("merchant", merchant ,{
     types: ["dragonbane-item-browser.merchant"],
     makeDefault: true
   })
@@ -126,7 +126,8 @@ game.settings.register("dragonbane-item-browser", "selectedFolders", {
 
 Hooks.on("renderSettingsConfig", (app, html, data) => {
   const barterRollEnabled = game.settings.get("dragonbane-item-browser", "barter-roll-when-buys");
-  const barterSkillRow = html.find('[name="dragonbane-item-browser.custom-barter-skill"]').closest(".form-group");
+  const $html = $(html);
+  const barterSkillRow = $html .find('[name="dragonbane-item-browser.custom-barter-skill"]').closest(".form-group");
   const toggleCustomBarterSkill = (isEnabled) => {
       if (isEnabled) {
           barterSkillRow.show();
@@ -138,9 +139,10 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
  
   
   const skipFoldersEnabled = game.settings.get("dragonbane-item-browser", "skip-folders-for-browser");
-  const settingContainer = html.find('[data-setting-id="dragonbane-item-browser.skip-folders-for-browser"] .form-fields');
+  //const settingContainer = $html.find('[data-setting-id="dragonbane-item-browser.skip-folders-for-browser"] .form-fields');
   
-
+  const label = $html.find('label[for="settings-config-dragonbane-item-browser.skip-folders-for-browser"]');
+  const settingContainer = label.closest('.form-group').find('.form-fields');
   const toggleFolderList = (isEnabled) => {
       if (isEnabled) {
           settingContainer.find(".folder-checkboxes").show();
@@ -190,13 +192,13 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
   }
   toggleCustomBarterSkill(barterRollEnabled);
 
-  const barterRollCheckbox = html.find('[name="dragonbane-item-browser.barter-roll-when-buys"]');
+  const barterRollCheckbox = $html.find('[name="dragonbane-item-browser.barter-roll-when-buys"]');
   barterRollCheckbox.on("change", (event) => {
       toggleCustomBarterSkill(event.target.checked);
   });
 
 
-  const skipFoldersCheckbox = html.find('[name="dragonbane-item-browser.skip-folders-for-browser"]');
+  const skipFoldersCheckbox = $html.find('[name="dragonbane-item-browser.skip-folders-for-browser"]');
   skipFoldersCheckbox.on("change", (event) => {
       toggleFolderList(event.target.checked);
   });
@@ -205,14 +207,15 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
 
 
 Hooks.on("renderDoDCharacterSheet", (html) => {
+  const title = game.i18n.localize("DB-IB.openItemBrowser")
   const actorID = html.object._id;
   const buttonAbilitiesHTML = `
-    <button class="item-browser" id="${actorID}">
-      <i id="custom-search-button" for="item-browser" class="fa-solid fa-magnifying-glass" data-type="ability" title="Items Browser"></i>
+    <button class="item-browser" id="${actorID}" data-type="ability" title="${title}">
+      <a class="fa-solid fa-magnifying-glass"></a>
     </button>`;  
   const buttonSpellHTML = `  
-    <button class="item-browser" id="${actorID}">
-      <i id="custom-search-button" for="item-browser" class="fa-solid fa-magnifying-glass" data-type="spell" title="Items Browser"></i>
+    <button class="item-browser" id="${actorID}" data-type="spell" title="${title}">
+      <a class="fa-solid fa-magnifying-glass" ></a>
     </button>`;  
   const heroic = game.i18n.translations.DoD.ui["character-sheet"].heroicAbilities;
   const magicTrick = game.i18n.translations.DoD.ui["character-sheet"].trick;
@@ -226,6 +229,7 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   headers.forEach(header => {
     if (header.textContent.trim() === heroic) {
       targetHeader = header;
+      
      
       targetHeader.insertAdjacentHTML("afterbegin", buttonAbilitiesHTML);  
     }
@@ -244,33 +248,32 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   headers.forEach(header => {
     if (header.textContent.trim() === spell) {
       targetHeader = header;
-    
-      targetHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);   
+      const closestNumberHeader = header.previousElementSibling; 
+      console.log(closestNumberHeader)
+      closestNumberHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);   
     }
   });
 
   creatItemButton.forEach(button => {
     const dataType = button.getAttribute("data-type"); 
+    if(dataType !== "effect"){
     const existingButton = button.nextElementSibling?.classList.contains("item-browser");
-    const title = game.i18n.localize("DB-IB.openItemBrowser")
+
     if (!existingButton) {
         const buttonHTML = `
-          <button class="item-browser" id="${actorID}">
-            <i id="custom-search-button" for="item-browser"
-               class="fa-solid fa-magnifying-glass eq" 
-               data-type="${dataType}" 
-               title="${title}"></i>
+          <button class="item-browser" id="${actorID}" title="${title}"  data-type="${dataType}">
+            <a class="fa-solid fa-magnifying-glass"></a>
           </button>
         `;
         button.insertAdjacentHTML("afterend", buttonHTML);
     }
-    
+  }
   });
-  const buttonsBrowser = html._element[0].querySelectorAll(".fa-magnifying-glass");
+  const buttonsBrowser = html._element[0].querySelectorAll("button.item-browser");
 
   buttonsBrowser.forEach(button => {
     if (!button.dataset.eventAttached) {
-        button.addEventListener(html[0],"click", (event) => {
+        button.addEventListener("click", (event) => {
             openItemsBrowser(event, actorID);
         });
         button.dataset.eventAttached = "true";
@@ -326,9 +329,10 @@ if(stashSetting){
       const singleItem = actor.items.filter(element => element.id === dataType)[0];
       const singleItemHaveCost = /\d/.test(singleItem.system.cost);
       if(singleItemHaveCost){  
+        console.log(dataType)
         const addSellingIcon = `
-          <button class="item-browser-sold" id="${actorID}">
-            <i id="${dataType}" for="item-browser-sold" class="fa-solid fa-piggy-bank" title="${title}"></i>
+          <button class="item-browser-sold" actor-data ="${actorID}" id="${dataType}" title="${title}">
+            <i  for="item-browser-sold" class="fa-solid fa-piggy-bank" ></i>
           </button>`; 
       const hasSellingButton = iconData.querySelector(".item-browser-sold") === null;
       if (hasSellingButton) {
@@ -338,7 +342,7 @@ if(stashSetting){
     }
   })
   if(sellsSetting){
-    const buttonsSell = document.querySelectorAll(".fa-solid.fa-piggy-bank");
+    const buttonsSell = document.querySelectorAll("button.item-browser-sold");
     buttonsSell.forEach(button => {
     if (!button.dataset.eventAttached) {
         button.addEventListener("click", (event) => {
@@ -632,9 +636,17 @@ function registerHandlebarsHelpers() {
 }
 
 async function preloadHandlebarsTemplates() {
+  if(game.release.generation < 13){
   return loadTemplates([
     "modules/dragonbane-item-browser/templates/tab/settings.hbs",
-     "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
-      "modules/dragonbane-item-browser/templates/tab/to-sell.hbs"
+    "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
+    "modules/dragonbane-item-browser/templates/tab/to-sell.hbs"
   ])
+  }
+  else{
+    foundry.applications.handlebars.loadTemplates([ 
+      "modules/dragonbane-item-browser/templates/tab/settings.hbs",
+      "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
+      "modules/dragonbane-item-browser/templates/tab/to-sell.hbs"])
+  }
 }

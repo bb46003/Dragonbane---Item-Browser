@@ -24,7 +24,9 @@ export class merchantData extends DragonbaneDataModel  {
         })      
     }
 }
-export class merchant extends ActorSheet{
+const BaseActorSheet = (typeof foundry?.appv1?.sheets?.ActorSheet !== "undefined") ? foundry.appv1.sheets.ActorSheet : ActorSheet;
+
+export class merchant extends BaseActorSheet{
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
           classes: ["merchant"],

@@ -220,3 +220,17 @@ select.supply-selection {
     grid-template-columns: auto auto;
     min-width: 420px;
 }
+
+.system-dragonbane .sheet-table-header .thumbnail-header {
+    padding: 0px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 5px;
+}
+a.fa-solid.fa-magnifying-glass {
+    padding-bottom: 12px;
+}
