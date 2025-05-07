@@ -79,6 +79,29 @@ export class merchant extends BaseActorSheet{
     }
     activateListeners(html) {
         super.activateListeners(html);
+        if(game.release.generation < 13){
+            html.on("input", "#slider-selling", (ev) => this.updateSliderOutput(ev));
+             html.on("change", "#slider-selling", (ev) => {
+               const newValue = parseFloat(ev.target.value);
+               this.actor.update({ "system.selling_rate": newValue }); 
+               const slider = ev.target;
+               slider.blur();   
+           });
+           html.on("input", "#slider-buing", (ev) => this.updateSliderOutput(ev));
+           html.on("change", "#slider-buing", async (ev) => {
+               const newValue = parseFloat(ev.target.value); 
+               await this.actor.update({ "system.buing_rate": newValue }); 
+               const slider = ev.target;
+               slider.blur();  
+           });
+              html.on("change", "#percentage", (ev) => this.textInput(ev))
+              html.on("change",".supply-selection", (ev) => this.changeSupply(ev))
+              html.on("click",".fa.fa-trash", (ev) => this.removeFromSelling(ev))
+              html.on("click","button.sell-button", (ev) => this.sellWithOutBarter(ev))
+              html.on("click","button.barter-button", (ev) => this.rollForBarter(ev))
+              html.on("click", ".fas.fa-coins",(ev) => this.buyItem(ev));
+           }
+        else{
          DoD_Utility.addHtmlEventListener(html,"input", "#slider-selling", (ev) => this.updateSliderOutput(ev));
          DoD_Utility.addHtmlEventListener(html,"change", "#slider-selling", (ev) => {
             const newValue = parseFloat(ev.target.value);
@@ -99,7 +122,7 @@ export class merchant extends BaseActorSheet{
          DoD_Utility.addHtmlEventListener(html,"click","button.sell-button", (ev) => this.sellWithOutBarter(ev))
          DoD_Utility.addHtmlEventListener(html,"click","button.barter-button", (ev) => this.rollForBarter(ev))
          DoD_Utility.addHtmlEventListener(html,"click", ".fas.fa-coins",(ev) => this.buyItem(ev));
-     
+        }
        
     }
     updateSliderOutput(ev) {
@@ -651,13 +674,7 @@ export class merchant extends BaseActorSheet{
     }
 
 }
-/*
-async function  addChatListeners(_app, html, _data) { 
-     DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.buy-item-merchat", buyFromChat);
-     DoD_Utility.addHtmlEventListener(html,"click", ".merchat-barter-push-roll", barterPushRoll);
-     DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.sell-item-merchat", sellFromChat);
-}
-    */
+
 async function barterPushButton(existingMessage) {
     let tempDiv = document.createElement('div');
     tempDiv.innerHTML = existingMessage.content;
@@ -898,10 +915,16 @@ export class sellingItemMerchat {
         this.actorID = actorID;
     }
 async  addChatListeners(_app, html, _data) { 
+    if(game.release.generation < 13){
+          html.on("click", ".chat-button.buy-item-merchat", this.buyFromChat.bind(this));
+          html.on("click", ".merchat-barter-push-roll", this.barterPushRoll.bind(this));
+          html.on("click", ".chat-button.sell-item-merchat", this.sellFromChat.bind(this));
+    }
+    else{
      DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.buy-item-merchat", this.buyFromChat.bind(this));
      DoD_Utility.addHtmlEventListener(html,"click", ".merchat-barter-push-roll", this.barterPushRoll.bind(this));
      DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.sell-item-merchat", this.sellFromChat.bind(this));
-  
+    }    
 
 
 }

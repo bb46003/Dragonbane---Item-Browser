@@ -499,13 +499,14 @@ export class itemsSearch extends Dialog {
     }
 }
 export async function addChatListeners(_app, html, _data) { 
-    
-    DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.buy-item", buyFromChat);
-    
-    DoD_Utility.addHtmlEventListener(html,"click", ".barter-push-roll", barterPushRoll);
-  
-
-
+    if(game.release.generation < 13){
+        html.on("click", ".chat-button.buy-item", buyFromChat); ;
+        html.on("click", ".barter-push-roll", barterPushRoll);
+    }
+    else{
+        DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.buy-item", buyFromChat); 
+        DoD_Utility.addHtmlEventListener(html,"click", ".barter-push-roll", barterPushRoll);
+    }  
 }
 async function buyFromChat(event) {
  

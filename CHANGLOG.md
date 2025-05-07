@@ -1,3 +1,16 @@
+
+# Version 1.0.9
+<h3>New Features</h3>
+<ul>
+    <li>Add new Actor type Merchant - GM can modyfi original item price for selling and buying by Merchant, this modification is a percentage of origninal price.
+     This will impact only seling/buing activitie and will not change item itself. Player can move miltiple items to merchant and sell all of them at onec with or without rolling for Bartering. In Merchant setting GM can set what type of supply Merchant will accept. Selling/buing from Merchant automaticaly modify coins in given actor.
+     </li>
+     <li>New setting allow to ignor items in chosen Folder while Item Browser is open</li>
+     <li>Module is compatible with Foundry V12 and V13</li>
+</ul> 
+
+
+
 # Version 1.0.8
 <h3>Bug Fix</h3>
 <ul>
