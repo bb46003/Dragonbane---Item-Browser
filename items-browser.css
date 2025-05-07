@@ -34,6 +34,7 @@ th.checkbox-header-stash {
     /* flex-wrap: nowrap; */
     justify-content: space-between;
     align-items: baseline;
+    margin-top: 5px;
 }
 .item-in-browser.spell, .item-in-browser.ability{
     display: grid;
@@ -41,13 +42,16 @@ th.checkbox-header-stash {
     /* flex-wrap: nowrap; */
     justify-content: space-between;
     align-items: baseline;
+    margin-top: 5px;
 }
 .fa-coins, i.cost, .fa-plus {
     justify-self: right;
+    align-self: center;
 }
 a.item-name-browser {
     justify-self: left;
     margin-left: 2px;
+    align-self: center;
 }
 
 .left-side {
@@ -80,7 +84,7 @@ select.filter {
     width: 100%;
 }
 button.item-browser {
-    width: 0px;
+   /* width: 0px; */
     border: none;
     background: transparent;
     /* visibility: hidden; */
@@ -93,3 +97,148 @@ input.input-item-name {
     top: -3px;
     right: 3px;
 }
+.image-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+}
+img.profile-img {
+    max-height: 100px;
+}
+h1.merchant-name {
+    border: none;
+    margin: auto;
+
+}
+
+.merchant-name input {
+    text-align: center;
+    min-height: 50px;
+}
+
+#slider-output {
+    position: absolute;
+    left: 65%;
+    top:73%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    width: 50px;
+    text-align: center;
+}
+output#slider-output{
+    position: absolute;
+    left: 65%;
+    top: 73%;
+}
+
+.selling-price input:active + #slider-output,
+.selling-price input:focus + #slider-output,
+.buing-price input:active + #slider-output,
+.buing-price input:focus + #slider-output {
+    opacity: 1;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    background: transparent;
+    height: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 95%;
+}
+
+.selling-price, .buing-price {
+   
+    display: grid;
+    justify-content: space-between;
+    grid-template-columns: 6fr 5fr 1fr;
+    margin-bottom: 1em;
+}
+    
+input#percentage {
+    text-align: center;
+    
+}
+.merchant-settings {
+    margin-top: 3em;
+}
+.supply-element {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-content: space-between;
+    margin-bottom: 1em;
+}
+select.supply-selection {
+    text-align: center;
+}
+.buying-item-header, .selling-item-header{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: -10px;
+    margin-bottom: 10px;
+}
+.buying-item-header label, .selling-item-header label {
+    border: 1px solid black;
+    width: 100%;
+    text-align: center;
+}
+.buying-item label {
+    width: 80%;
+    
+}
+.merchant-icon {
+    margin: auto;
+}
+.buying-item, .selling-item{
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    margin-left: 20%;
+}
+.buing-items {
+    min-height: 7em;
+}
+.price-label {
+    text-align: right;
+}
+.buing-item, .selling-items {
+    margin-bottom: 1em;
+}
+.actor-group, .item-group {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.folder-checkboxes {
+    display: grid;
+    grid-template-columns: auto auto;
+    min-width: 420px;
+}
+
+.system-dragonbane .sheet-table-header .thumbnail-header {
+    padding: 0px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 5px;
+}
+a.fa-solid.fa-magnifying-glass {
+    padding-bottom: 12px;
+}
+
+.merchant {
+    min-height: 380px;
+  }

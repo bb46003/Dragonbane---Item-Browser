@@ -1,6 +1,7 @@
 
 import {itemsSearch, sellingItem} from  "./item-searching.mjs"
 import * as DBIBChat from "./item-searching.mjs"
+import { merchant, merchantData, DB_BI_Actor, sellingItemMerchat } from "./merchant-character.mjs";
 
 Hooks.once("init", function () {
 
@@ -30,7 +31,7 @@ Hooks.once("init", function () {
     hint: game.i18n.localize("DB-IB.settings.hintSelling"),
     scope: "world",
     type: Boolean,
-    default: "",
+    default: false,
     config: true, 
 });
 
@@ -39,41 +40,66 @@ game.settings.register("dragonbane-item-browser", "stash-items", {
   hint: game.i18n.localize("DB-IB.settings.hintStash"),
   scope: "world",
   type: Boolean,
-  default: "",
+  default: false,
   config: true, 
+});
+game.settings.register("dragonbane-item-browser", "skip-folders-for-browser", {
+  name: game.i18n.localize("DB-IB.settings.skippedFoldersForBrowser"),
+  hint: game.i18n.localize("DB-IB.settings.hintSkippedFoldersForBrowser"),
+  scope: "world",
+  type: Boolean,
+  default: false,
+  config: true,
+  onChange: foundry.utils.debounce(() => {
+      window.location.reload();
+  }, 100),
+});
+game.settings.register("dragonbane-item-browser", "selectedFolders", {
+  name: "Selected Folders",
+  scope: "world",
+  type: Array,
+  config: false,
 });
 
   registerHandlebarsHelpers()
 
 
+  const ActorsElemet = game.release.generation < 13 ? Actors         : foundry.documents.collections.Actors;
+  ActorsElemet.registerSheet("merchant", merchant ,{
+    types: ["dragonbane-item-browser.merchant"],
+    makeDefault: true
+  })
+  Object.assign(CONFIG.Actor.dataModels, {
+        "dragonbane-item-browser.merchant": merchantData
+  });
 
-  // Check if the class DoDItem exists
   const DoDItemClass = CONFIG.Item.documentClass;
   if (!DoDItemClass) {
     console.error("DoDItem class not found.");
     return;
   }
 
-  // Get the original getter
-  const originalTotalWeightGetter = Object.getOwnPropertyDescriptor(DoDItemClass.prototype, 'totalWeight').get;
 
-  // Override the getter
+  const originalTotalWeightGetter = Object.getOwnPropertyDescriptor(DoDItemClass.prototype, 'totalWeight').get;
   Object.defineProperty(DoDItemClass.prototype, 'totalWeight', {
     get: function() {
       if (this.system.isStash) {
-        return 0; // Return 0 if the item is in a stash
+        return 0;
       }
       else{
         return originalTotalWeightGetter.call(this);
       }
     }
-  });
+  })
 
-  console.log("Modified totalWeight getter in DoDItem.");
+  CONFIG.Actor.documentClass = DB_BI_Actor;
+
+
+  
   const { fields } = foundry.data;
   const itemTypes = ["item", "helmet", "armor", "weapon"];
 
-  // Iterate over each item type and modify its schema
+
   itemTypes.forEach((itemType) => {
     const originalDefineSchema = CONFIG.Item.dataModels[itemType]?.defineSchema;
   
@@ -82,24 +108,26 @@ game.settings.register("dragonbane-item-browser", "stash-items", {
       return;
     }
   
-    // Override the defineSchema method for the current item type
+   
     CONFIG.Item.dataModels[itemType].defineSchema = function () {
-      // Call the original defineSchema to get the base schema
       const originalSchema = originalDefineSchema.call(this);
-  
-      // Merge the base schema with the new property
       return this.mergeSchema(originalSchema, {
         isStash: new fields.BooleanField({ required: false, initial: false }),
       });
     };
   
-    console.log(`Successfully added 'isStash' to ${itemType} schema.`);
+   
   })
+  preloadHandlebarsTemplates();
 });
+
+
+
 
 Hooks.on("renderSettingsConfig", (app, html, data) => {
   const barterRollEnabled = game.settings.get("dragonbane-item-browser", "barter-roll-when-buys");
-  const barterSkillRow = html.find('[name="dragonbane-item-browser.custom-barter-skill"]').closest(".form-group");
+  const $html = $(html);
+  const barterSkillRow = $html .find('[name="dragonbane-item-browser.custom-barter-skill"]').closest(".form-group");
   const toggleCustomBarterSkill = (isEnabled) => {
       if (isEnabled) {
           barterSkillRow.show();
@@ -107,23 +135,93 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
           barterSkillRow.hide();
       }
   };
-  toggleCustomBarterSkill(barterRollEnabled); 
-  const barterRollCheckbox = html.find('[name="dragonbane-item-browser.barter-roll-when-buys"]');
+
+ 
+  
+  const skipFoldersEnabled = game.settings.get("dragonbane-item-browser", "skip-folders-for-browser");
+  //const settingContainer = $html.find('[data-setting-id="dragonbane-item-browser.skip-folders-for-browser"] .form-fields');
+  
+  const label = $html.find('label[for="settings-config-dragonbane-item-browser.skip-folders-for-browser"]');
+  let settingContainer
+  if(game.release.generation < 13){
+    settingContainer = html.find('[data-setting-id="dragonbane-item-browser.skip-folders-for-browser"] .form-fields');
+  }
+  else{
+    settingContainer = label.closest('.form-group').find('.form-fields');
+  }
+  const toggleFolderList = (isEnabled) => {
+      if (isEnabled) {
+          settingContainer.find(".folder-checkboxes").show();
+      } else {
+          settingContainer.find(".folder-checkboxes").hide();
+      }
+  };
+  
+  const itemFolders = game.folders.filter(f => f.type === "Item");
+  if (itemFolders.length !== 0) {
+      let checkboxList = `<div class="folder-checkboxes"  ${skipFoldersEnabled ? '' : 'style="display:none;"'}>`;
+  
+     
+      itemFolders.forEach(folder => {
+          let folders = game.settings.get("dragonbane-item-browser", "selectedFolders");
+          let checked = folders?.includes(folder.id) ? "checked" : "";
+       
+          checkboxList += `
+              <div class="folder-element">
+                  <label>
+                      <input type="checkbox" id="selectedFolder" value="${folder.id}" ${checked}> ${folder.name}
+                  </label>
+              </div>
+          `;
+      });
+  
+      checkboxList += `</div>`;
+  
+      settingContainer.append(checkboxList);
+  
+
+      settingContainer.find('input[id="selectedFolder"]').on("change", async function () {
+        let selectedFolders = await game.settings.get("dragonbane-item-browser", "selectedFolders") || []
+    
+        if (this.checked) {
+          if (!selectedFolders?.includes(this.value)) {
+              selectedFolders.push(this.value); 
+          }
+      } else {
+          selectedFolders = selectedFolders.filter(id => id !== this.value); 
+      }
+    
+        await game.settings.set("dragonbane-item-browser", "selectedFolders", selectedFolders); 
+       
+    });
+    
+  }
+  toggleCustomBarterSkill(barterRollEnabled);
+
+  const barterRollCheckbox = $html.find('[name="dragonbane-item-browser.barter-roll-when-buys"]');
   barterRollCheckbox.on("change", (event) => {
-      const isChecked = event.target.checked;
-      toggleCustomBarterSkill(isChecked);
+      toggleCustomBarterSkill(event.target.checked);
   });
+
+
+  const skipFoldersCheckbox = $html.find('[name="dragonbane-item-browser.skip-folders-for-browser"]');
+  skipFoldersCheckbox.on("change", (event) => {
+      toggleFolderList(event.target.checked);
+  });
+  
 });
 
+
 Hooks.on("renderDoDCharacterSheet", (html) => {
+  const title = game.i18n.localize("DB-IB.openItemBrowser")
   const actorID = html.object._id;
   const buttonAbilitiesHTML = `
-    <button class="item-browser" id="${actorID}">
-      <i id="custom-search-button" for="item-browser" class="fa-solid fa-magnifying-glass" data-type="ability" title="Items Browser"></i>
+    <button class="item-browser" id="${actorID}" data-type="ability" title="${title}">
+      <a class="fa-solid fa-magnifying-glass"></a>
     </button>`;  
   const buttonSpellHTML = `  
-    <button class="item-browser" id="${actorID}">
-      <i id="custom-search-button" for="item-browser" class="fa-solid fa-magnifying-glass" data-type="spell" title="Items Browser"></i>
+    <button class="item-browser" id="${actorID}" data-type="spell" title="${title}">
+      <a class="fa-solid fa-magnifying-glass" ></a>
     </button>`;  
   const heroic = game.i18n.translations.DoD.ui["character-sheet"].heroicAbilities;
   const magicTrick = game.i18n.translations.DoD.ui["character-sheet"].trick;
@@ -137,6 +235,7 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   headers.forEach(header => {
     if (header.textContent.trim() === heroic) {
       targetHeader = header;
+      
      
       targetHeader.insertAdjacentHTML("afterbegin", buttonAbilitiesHTML);  
     }
@@ -155,29 +254,27 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   headers.forEach(header => {
     if (header.textContent.trim() === spell) {
       targetHeader = header;
-    
-      targetHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);   
+      const closestNumberHeader = header.previousElementSibling; 
+      closestNumberHeader.insertAdjacentHTML("afterbegin", buttonSpellHTML);   
     }
   });
 
   creatItemButton.forEach(button => {
     const dataType = button.getAttribute("data-type"); 
+    if(dataType !== "effect"){
     const existingButton = button.nextElementSibling?.classList.contains("item-browser");
-    const title = game.i18n.localize("DB-IB.openItemBrowser")
+
     if (!existingButton) {
         const buttonHTML = `
-          <button class="item-browser" id="${actorID}">
-            <i id="custom-search-button" for="item-browser"
-               class="fa-solid fa-magnifying-glass eq" 
-               data-type="${dataType}" 
-               title="${title}"></i>
+          <button class="item-browser" id="${actorID}" title="${title}"  data-type="${dataType}">
+            <a class="fa-solid fa-magnifying-glass"></a>
           </button>
         `;
         button.insertAdjacentHTML("afterend", buttonHTML);
     }
-    
+  }
   });
-  const buttonsBrowser = document.querySelectorAll(".fa-magnifying-glass");
+  const buttonsBrowser = html._element[0].querySelectorAll("button.item-browser");
 
   buttonsBrowser.forEach(button => {
     if (!button.dataset.eventAttached) {
@@ -238,8 +335,8 @@ if(stashSetting){
       const singleItemHaveCost = /\d/.test(singleItem.system.cost);
       if(singleItemHaveCost){  
         const addSellingIcon = `
-          <button class="item-browser-sold" id="${actorID}">
-            <i id="${dataType}" for="item-browser-sold" class="fa-solid fa-piggy-bank" title="${title}"></i>
+          <button class="item-browser-sold" actor-data ="${actorID}" id="${dataType}" title="${title}">
+            <i  for="item-browser-sold" class="fa-solid fa-piggy-bank" id="${dataType}" ></i>
           </button>`; 
       const hasSellingButton = iconData.querySelector(".item-browser-sold") === null;
       if (hasSellingButton) {
@@ -249,7 +346,7 @@ if(stashSetting){
     }
   })
   if(sellsSetting){
-    const buttonsSell = document.querySelectorAll(".fa-solid.fa-piggy-bank");
+    const buttonsSell = document.querySelectorAll("button.item-browser-sold");
     buttonsSell.forEach(button => {
     if (!button.dataset.eventAttached) {
         button.addEventListener("click", (event) => {
@@ -276,10 +373,19 @@ if(stashSetting){
 Hooks.on("renderChatLog", DBIBChat.addChatListeners)
 
 
+
 Hooks.on("renderChatLog", (app, html, data) => {
   const sellingInstance = new sellingItem({ itemID: null, actorID: null });
     sellingInstance.addChatListeners(app, html, data);
+  const sellingMerchantInstance = new sellingItemMerchat({ itemID: null, actorID: null });
+  sellingMerchantInstance.addChatListeners(app, html, data);
 });
+
+Hooks.on("createActor", async function (actor) { 
+  if(actor.type === "dragonbane-item-browser.merchant"){
+    actor.ownership.default = 3;
+  }
+})
 
 
 async function openItemsBrowser(event,actorID){
@@ -356,5 +462,195 @@ function registerHandlebarsHelpers() {
       return descriptionWithoutHTML
   
     })
+    Handlebars.registerHelper("isGM", () => {
+      const isGM = game.user.isGM;
+      if(isGM){
+        const localize = game.i18n.localize("DB-IB.merchant.setting")
+        const html = `<a class="settings" data-tab="settings">${localize}</a>`
+        return html
+      }
+    })
+    Handlebars.registerHelper("sellingRate",(selling_rate)=>{
+      const sellingRatePercentage = String(Math.round(selling_rate * 100))+"%";
+      const html = `  <input   id="percentage"   type="text"  value="${sellingRatePercentage}">`
+      return html
+    })
+    Handlebars.registerHelper("groupByActor", function (items) {
+      const grouped = {};
+      
+      items.forEach(item => {
+          if (item.flags["dragonbane-item-browser"]?.actor) { 
+              const actorFlag = item.flags["dragonbane-item-browser"].actor;
+              if (!grouped[actorFlag]) {
+                  grouped[actorFlag] = [];
+              }
+              grouped[actorFlag].push(item);
+          }
+      });
+  
+      let result = "";
+      const sells = game.i18n.localize("DB-IB.merchant.sells");
+      const itemName = game.i18n.localize("DB-IB.itemName");
+      const itemPrice = game.i18n.localize("DB-IB.itemPrice");
+  
+      for (const [actorId, items] of Object.entries(grouped)) {
+          const actor = game.actors.get(actorId);
+          const actorName = actor.name;
+  
+          result += `
+              <div class="actor-group">
+                  <div class="header-row" id="${actorId}">
+                      <h3>${actorName} ${sells}</h3>
+                  </div>
+                  <div class="buying-item-header">
+                      <label>${itemName}</label>
+                      <label>${itemPrice}</label>
+                  </div>
+          `;
+  
+          for (const item of items) {
+              const itemCost = item.system.cost;
+              const buyingRate = this.actor.system?.buing_rate || 1;
+             
+  
+             
+              let [costValue, currency2] = itemCost.split(" ");
+              const finalCost = Number(costValue) * buyingRate;
+              let roundedCost;
+
+              if (currency2 === "copper" || currency2 === game.i18n.translations.DoD.currency.copper.toLowerCase()) {
+                roundedCost = Math.round(finalCost);
+              } 
+              else if (currency2 === "silver" || currency2 === game.i18n.translations.DoD.currency.silver.toLowerCase()) {
+                roundedCost = finalCost.toFixed(1);
+              } 
+              else if (currency2 === "gold" || currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()) {
+                roundedCost = finalCost.toFixed(2);
+              }
+              if(roundedCost< 1){
+                const coinsTypeLocal = [game.i18n.translations.DoD.currency.gold.toLowerCase(), game.i18n.translations.DoD.currency.silver.toLowerCase(), game.i18n.translations.DoD.currency.copper.toLowerCase()];
+                const coinTypeEn = ["gold", "silver", "copper"]
+                roundedCost = roundedCost*10;
+                let coin2 = coinTypeEn.indexOf(currency2)
+                let coin3 = 0
+                if(coin2 === -1){
+                  coin3 = coinsTypeLocal.indexOf(currency2)
+                  currency2 =  coinsTypeLocal[coin3+1]
+                }
+                else {
+                  currency2 = coinTypeEn[coin2+1]
+                }
+                
+              }
+              const finalSellingPrice = `${roundedCost} ${currency2}`;
+  
+              result += `
+                  <div class="buying-item" id="${item._id}">
+                      <label>${item.name}</label>
+                      <label class="price-label">${finalSellingPrice}</label>
+                      <label><i class="fa fa-trash"></i></label>
+                  </div>
+              `;
+          }
+  
+          result += `</div>`; 
+      }
+      const newHtml = new Handlebars.SafeString(result);
+
+      return newHtml
+    });  
+    Handlebars.registerHelper('range', function(end) {
+    let result = "";
+    for (let i = 0; i <= end; i++) {
+        result += `<option value="${i}">${i}</option>`
+    }
+    return new Handlebars.SafeString(result); 
+    });
+    Handlebars.registerHelper('itemToBuy', function(items){
+      const itemName = game.i18n.localize("DB-IB.itemName");
+      const itemPrice = game.i18n.localize("DB-IB.itemPrice");
+  
+      let result = ` 
+      <div class="item-group">
+        <div class="selling-item-header">
+          <label>${itemName}</label>
+          <label>${itemPrice}</label>
+        </div>`
+  const sellingRate = this.actor.system?.selling_rate || 1;
+      items.forEach(item => {
+          if (!item.flags?.actor) { 
+            const [costValue, currency2] = item.system.cost.split(" ");
+            const finalCost = Number(costValue) * sellingRate;
+            let roundedCost;
+
+            if (currency2 === "copper" || currency2 === game.i18n.translations.DoD.currency.copper.toLowerCase()) {
+              roundedCost = Math.round(finalCost);
+            } 
+            else if (currency2 === "silver" || currency2 === game.i18n.translations.DoD.currency.silver.toLowerCase()) {
+              roundedCost = finalCost.toFixed(1);
+            } 
+            else if (currency2 === "gold" || currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()) {
+              roundedCost = finalCost.toFixed(2);
+            }
+            const isGM = game.user.isGM;
+            const finalPrice = `${roundedCost} ${currency2}`;
+            const description = item.system.description;
+            const containUUID = description.includes("@");
+            let descriptionWithoutHTML = "";
+            if (containUUID){
+              const descriptionWithRemovedUUID = description.replace(/@.*?\{(.*?)\}/, '$1');
+              descriptionWithoutHTML = descriptionWithRemovedUUID.replace(/<[^>]*>/g, '');       
+            }
+           else{
+             descriptionWithoutHTML = description.replace(/<[^>]*>/g, '');
+            }
+            if(item.system.quantity > 1 ){
+            result += `
+             <div class="selling-item" id="${item._id}">
+                <label data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
+                <label class="price-label">${finalPrice}</label>
+                <div class="merchant-icon">
+                  <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
+                  ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
+                </div>
+             </div>`;
+            }
+         else{
+          result += `
+          <div class="selling-item" id="${item._id}">
+            <label data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
+            <label class="price-label">${finalPrice}</label>
+            <div class="merchant-icon">
+              <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
+              ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
+            </div>
+          </div>`;
+         }
+      }
+          
+      });
+      result +=`</div>`  
+      const newHtml = new Handlebars.SafeString(result);
+
+      return newHtml
+      
+
+    });
+  
 }
 
+async function preloadHandlebarsTemplates() {
+  if(game.release.generation < 13){
+  return loadTemplates([
+    "modules/dragonbane-item-browser/templates/tab/settings.hbs",
+    "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
+    "modules/dragonbane-item-browser/templates/tab/to-sell.hbs"
+  ])
+  }
+  else{
+    foundry.applications.handlebars.loadTemplates([ 
+      "modules/dragonbane-item-browser/templates/tab/settings.hbs",
+      "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
+      "modules/dragonbane-item-browser/templates/tab/to-sell.hbs"])
+  }
+}

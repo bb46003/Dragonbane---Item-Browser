@@ -1,10 +1,16 @@
 {
+  "TYPES": {
+    "Actor": {
+      "dragonbane-item-browser.merchant": "Kupiec"
+    }
+  },
   "DB-IB": {
     "Any": "Dowolny",
     "addItem": "<strong>{actor}</strong> dodał do arkusza postaci <strong>{type}</strong> <strong>{item}</strong>",
     "rollForPrice": "Rzuć {formula}, aby określić koszt <strong>{item}</strong> w <strong>{currency}</strong>",
     "notEnoughMoney": "<strong>{actor}</strong> nie ma wystarczająco monet, aby kupić <strong>{item}</strong>.",
     "spendMoney": "<strong>{actor}</strong> wydał <strong>{itemPrice}</strong>, aby kupić <strong>{item}</strong>",
+    "gainMoney": "<strong>{actor}</strong> otrzymał <strong>{itemPrice}</strong> za sprzedaż <strong>{item}</strong>",
     "manualMonyRemoval": "Ustal z MG cenę <strong>{item}</strong>, określ jako <strong>{itemPrice}</strong> i zmniejsz ręcznie ilość monet.",
     "settings": {
       "rollForBarter": "Rzut na TARGOWANIE podczas zakupu lub sprzedaży przedmiotu",
@@ -15,7 +21,9 @@
       "selling": "Dodaj ikonę skarbonki do przedmiotów z ceną, umożliwiając ich sprzedaż.",
       "hintSelling": "Umożliwia sprzedaż przedmiotów domyślnie za 50% ceny. Jeśli opcja targowania jest włączona, umożliwia rzut na sprzedaż.",
       "stash": "Dodaj pole wyboru do schowania przedmiotów.",
-      "hintStash": "Schowane przedmioty nie będą wliczane do limitu obciążenia, ale nadal będą wyświetlane w ekwipunku."
+      "hintStash": "Schowane przedmioty nie będą wliczane do limitu obciążenia, ale nadal będą wyświetlane w ekwipunku.",
+      "hintSkippedFoldersForBrowser": "Foldery defnie z elementami, które nie są w przeglądarce pozycji",
+      "skippedFoldersForBrowser": "Zdefiniuj foldery do pominięcia"
     },
     "Chat": {
       "buyItem": "Kup przedmiot",
@@ -28,7 +36,9 @@
       "increasPrice": "Sprzedajesz <strong>{item}</strong> za 20% więcej.",
       "increasePriceDragon": "Sprzedajesz <strong>{item}</strong> za 50% więcej!",
       "nochangeInPriceSell": "Możesz sprzedać <strong>{item}</strong> po regularnej cenie.",
-      "sellItemButton": "Sprzedaj przedmiot"
+      "sellItemButton": "Sprzedaj przedmiot",
+      "actorSells": "{actor} sprzedał przedmioty {items} za",
+      "and": "i "
     },
     "itemName": "Nazwa przedmiotu",
     "wannaBarter": "Czy chcesz się targować?",
@@ -40,6 +50,33 @@
     "addItemToCharacter": "Dodaj przedmiot do postaci bez wydawania monet.",
     "buyItem": "Kup przedmiot. Dodaje przedmiot do postaci i wydaje monety.",
     "stashItem": "Zachowaj przedmiot w karcie postaci, ale jego waga nie będzie wliczana do limitu obciążenia.",
-    "stash": "Schowaj"
+    "stash": "Schowaj",
+    "SellWithoutBarter": "Sprzedaj bez targowanIa się",
+    "merchant": {
+      "setting": "Ustawienia",
+      "buing": "Kupiec kupuje od Ciebie",
+      "selling": "Rzeczy na sprzedarz",
+      "setSellingRate": "Ustaw stawkę sprzedaży przez kupca jako procent oryginalnej ceny.",
+      "setBuingRate": "Ustaw stawkę zakupu przez kupca jako procent ceny pierwotnej",
+      "allowedSupply": "Do jakiej dostępności przedmioty skupuje kupiec",
+      "sells": "sprzedaje",
+      "notAcceptSuply": "Ten Kupiec nie skupuje przedmiotów o tej dostępnoiści.",
+      "nonGMaddItemsToSell": "Nie jesteś MG, nie możesz dodawać przdmiotów, które sprzedaje kupiec.",
+      "youCannotSellTheSameItemTwice": "Nie możesz sprzedaćtego samego przetmiotu więcej niż raz!"
+    },
+    "warrning": {
+      "incoretInput": "Wpisz liczbę lub liczbę z symbolem %",
+      "youAreNotOwnerOfDeletedItem": "Prubujesz usunąć nie swoje przedmioty na sprzedarz!",
+      "merchantDoNotHaveMoreItem": "Kupiec nie ma już {itemName}",
+      "youDoNotSellAnything": "Twoja Postać nie sprzedaje nieczego!"
+    },
+    "itemPrice": "Cena przedmiotu",
+    "dialog": {
+      "denfieQuantity": "Zdefiniuj ilosć sprzedawanych przemiotów.",
+      "selectSellingQuantity": "Wybierz ile z {item} chcesz sprzedać",
+      "selectActor": "Wybierz Aktora który kupuje",
+      "buy": "Kup jako wybrany Aktor",
+      "sell": "Przekarz przedmiot do kupca"
+    }
   }
 }

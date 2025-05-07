@@ -1,0 +1,25 @@
+<div class="merchant-settings">
+    <div class="selling-price">
+        <label>{{localize "DB-IB.merchant.setSellingRate"}} </label>
+        <input  id="slider-selling"  type="range"  min="0"   max="2"  step="0.01"   name="system.selling_rate"  value="{{system.selling_rate}}">
+        <output id="slider-output" for="slider-selling"></output>
+        {{#sellingRate system.selling_rate}}
+        {{/sellingRate}}
+    </div>
+    <div class="buing-price">
+        <label>{{localize "DB-IB.merchant.setBuingRate"}} </label>
+        <input  id="slider-buing"  type="range"  min="0"   max="2"  step="0.01"   name="system.buing_rate"  value="{{system.buing_rate}}">
+        <output id="slider-output" for="slider-buing"></output>
+        {{#sellingRate system.buing_rate}}
+        {{/sellingRate}}
+    </div>
+     <div class="supply-element">
+                <label class="supply-label">{{localize "DB-IB.merchant.allowedSupply"}}</label>
+                <select class="supply-selection">
+                    <option  value="common" {{#if (eq system.supply "common")}}selected{{/if}}>{{localize "DoD.supplyTypes.common"}}</option>
+                    <option  value="uncommon" {{#if (eq system.supply "uncommon")}}selected{{/if}}>{{localize "DoD.supplyTypes.uncommon"}}</option>
+                    <option  value="rare" {{#if (eq system.supply "rare")}}selected{{/if}}>{{localize "DoD.supplyTypes.rare"}}</option>
+                    <option  value="any" {{#if (eq system.supply "any")}}selected{{/if}}>{{localize "DB-IB.Any"}}</option>
+                </select>
+            </div>
+</div> 

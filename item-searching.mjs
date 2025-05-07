@@ -71,12 +71,37 @@ export class itemsSearch extends Dialog {
         "spell",
         "weapon"]
         const supplyTypes = ["common", "uncommon", "rare"];
-
-    const filteredItems = game.items.filter(item => {
-        const isTypeValid = types.includes(item.type);
-        const isSupplyTypeValid = item.system.supply ? supplyTypes.includes(item.system.supply) : true;
-        return isTypeValid && isSupplyTypeValid;
-    });    
+        const skipFoldersEnabled = game.settings.get("dragonbane-item-browser", "skip-folders-for-browser");
+        
+        let filteredItems = await Promise.all(game.items.map(async item => {
+            const isTypeValid = types.includes(item.type);
+            let skippedFolders;
+            if (item.folder !== null) {
+                skippedFolders = await this.getFolderPathIds(item.folder?._id);
+            } else {
+                skippedFolders = true;
+            }
+        
+            const isSupplyTypeValid = item.system.supply ? supplyTypes.includes(item.system.supply) : true;
+            let isInSkippedFolder;
+            if(skipFoldersEnabled){
+                isInSkippedFolder =  skippedFolders;
+                }
+                else{
+                    isInSkippedFolder = true;
+                }
+            const willBeAvaliable = isTypeValid && isSupplyTypeValid && isInSkippedFolder;
+        
+            if(willBeAvaliable){
+                return item
+            }
+        
+            
+        }));
+        filteredItems = filteredItems.filter(item => item !== undefined);
+     
+        
+    
     const weaponsSkillsArray = game.items.filter(item => item.type === "skill" && item.system.skillType === "weapon");
     const weaponsSkills =weaponsSkillsArray.reduce((obj, item) => {
         obj[item.name] = item.name;
@@ -155,6 +180,17 @@ export class itemsSearch extends Dialog {
         data.chosenItems = chosenItems
         return data
 
+    }
+    async getFolderPathIds(folder) {
+        const skippedFolders = game.settings.get("dragonbane-item-browser", "selectedFolders") || []; 
+        const folderObject = game.folders.get(folder);     
+        const parentFoldersArray = folderObject?.ancestors || [];   
+        for (const parent of parentFoldersArray) {
+            if (skippedFolders.includes(parent.id) || skippedFolders.includes(folder)) { 
+                return false; 
+            }
+        }
+        return true; 
     }
     async itemFiltration(data,chosenType){
     let chosenItems = {};
@@ -324,7 +360,7 @@ export class itemsSearch extends Dialog {
         else if (isGold){
           
             while (cost > actorGC){
-                console.log(cost > actorGC)
+                
                 if (actorCC >=10){
                     actorCC = actorCC - 10;
                     actorSC = actorSC + 1;
@@ -463,11 +499,14 @@ export class itemsSearch extends Dialog {
     }
 }
 export async function addChatListeners(_app, html, _data) { 
-    html.on("click", ".chat-button.buy-item", buyFromChat);
-    html.on("click", ".barter-push-roll", barterPushRoll);
-  
-
-
+    if(game.release.generation < 13){
+        html.on("click", ".chat-button.buy-item", buyFromChat); ;
+        html.on("click", ".barter-push-roll", barterPushRoll);
+    }
+    else{
+        DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.buy-item", buyFromChat); 
+        DoD_Utility.addHtmlEventListener(html,"click", ".barter-push-roll", barterPushRoll);
+    }  
 }
 async function buyFromChat(event) {
  
@@ -514,7 +553,7 @@ async function spendMoneyWithBarter(item,actor,rollResults, isDragon){
     if(rollResults === false){
         cost = cost; 
     } 
-    else if(rollResults === true){
+    else if(rollResults === true && !isDragon){
         cost = (cost)*0.8;
         cost = Math.round(cost * 100) / 100;
     }
@@ -673,7 +712,7 @@ async function spendMoneyWithBarter(item,actor,rollResults, isDragon){
 async function addBuyButton(item,actor,sucess, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll) {
     let flavor = existingMessage.flavor;
     let newFlavor = "";
-    if(sucess){
+    if(sucess && !isDragon){
         const tekst = game.i18n.format("DB-IB.Chat.reducePrice",{item:item.name});
         const reducePrice =`<br><p> ${tekst}</p>`
         newFlavor = flavor + reducePrice  
@@ -774,14 +813,21 @@ async function creatConditionMagade(actor, choice){
         speaker: ChatMessage.getSpeaker({ actor: actor })
     });   
 }
+
 export class sellingItem {
     constructor({ itemID, actorID}) {     
         this.itemID = itemID; 
         this.actorID = actorID;
     }
     async  addChatListeners(_app, html, _data) { 
-        html.on("click", ".sell-push-roll",  this.sellPushRoll.bind(this));
-        html.on("click", ".chat-button.sell-item",  this.sellFromChat.bind(this));
+        if(game.release.generation < 13){
+            html.on("click", ".sell-push-roll",  this.sellPushRoll.bind(this));
+            html.on("click", ".chat-button.sell-item",  this.sellFromChat.bind(this))
+        }
+        else{
+            DoD_Utility.addHtmlEventListener(html,"click", ".sell-push-roll",  this.sellPushRoll.bind(this));
+            DoD_Utility.addHtmlEventListener(html,"click", ".chat-button.sell-item",  this.sellFromChat.bind(this));
+        }
 
     }
     async selling(itemID, actorID){
@@ -824,7 +870,7 @@ export class sellingItem {
                         },
                     },
                     sellWithoutRoll: {
-                        label: game.i18n.localize("DB-IB.BuyWithoutRoll"),
+                        label: game.i18n.localize("DB-IB.SellWithoutBarter"),
                         callback: async () => {
                            await this.sellItem(item,actor);
                         },
@@ -842,7 +888,6 @@ export class sellingItem {
         }
 
     }
-
     async sellItem(item,actor) {
         let itemPrice = item.system.cost;
         let actorGC= actor.system.currency.gc;
@@ -901,21 +946,62 @@ export class sellingItem {
 
         } 
 
-        goldPart = Math.floor(cost / 100); 
-        silverPart = Math.floor((cost % 100) / 10); 
-        copperPart = Math.round(cost % 10); 
 
-        await actor.update({
-            ["system.currency.gc"]: actorGC + goldPart,
-            ["system.currency.sc"]: actorSC + silverPart,
-            ["system.currency.cc"]: actorCC + copperPart,
+        const quantity = item.system.quantity;
+        if(quantity === 1){
+            goldPart = Math.floor(cost / 100); 
+            silverPart = Math.floor((cost % 100) / 10); 
+            copperPart = Math.round(cost % 10);
+            await actor.update({
+                ["system.currency.gc"]: actorGC + goldPart,
+                ["system.currency.sc"]: actorSC + silverPart,
+                ["system.currency.cc"]: actorCC + copperPart,
 
-        })
-        actor.deleteEmbeddedDocuments("Item", [item.id])
-        ChatMessage.create({
-            content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
-            speaker: ChatMessage.getSpeaker({ actor })
-        });
+            })
+            actor.deleteEmbeddedDocuments("Item", [item.id])
+            ChatMessage.create({
+                content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
+                speaker: ChatMessage.getSpeaker({ actor })
+            });
+        }
+        else{
+            const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
+            const quantityDialog =  await
+            new Dialog({
+                title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
+                content: html,
+                buttons:{ 
+                    sell:{
+                        label: game.i18n.localize("DB-IB.dialog.sell"),
+                        callback: async () =>{
+                            const selectedQuantity = Number(document.querySelector(".quantity-selector").value);
+                            goldPart = Math.floor((cost*selectedQuantity) / 100); 
+                            silverPart = Math.floor(((cost*selectedQuantity) % 100) / 10); 
+                            copperPart = Math.round((cost*selectedQuantity) % 10);
+                            await actor.update({
+                                ["system.currency.gc"]: actorGC + goldPart,
+                                ["system.currency.sc"]: actorSC + silverPart,
+                                ["system.currency.cc"]: actorCC + copperPart,
+                
+                            })
+                            const newQunatity = item.system.quantity - selectedQuantity;
+                            if(newQunatity > 0){
+                                await item.update({["system.quantity"]:newQunatity})
+                            }
+                            else{
+                                actor.deleteEmbeddedDocuments("Item", [item.id])
+                            }
+                            const sellsQunatity = `${selectedQuantity} -  ${item.name}`
+                            ChatMessage.create({
+                                content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:sellsQunatity, actor:actor.name, currency:currency2}),
+                                speaker: ChatMessage.getSpeaker({ actor })
+                            });
+                        }
+                    }
+                }
+            })
+            quantityDialog.render(true)
+        }
 
     }
     async barterSellPushButton(existingMessage) {
@@ -1050,11 +1136,11 @@ export class sellingItem {
         if(sucess === false){
             cost = cost; 
         } 
-        else if (sucess){
+        if (sucess && !isDragon){
             cost = (cost)*1.2;
             cost = Math.round(cost * 100) / 100;
         }
-        else if(isDragon){
+        if(isDragon){
             cost = (cost)*1.5;
             cost = Math.round(cost * 100) / 100;
         }
@@ -1066,7 +1152,7 @@ export class sellingItem {
                 currencyType = index;
                 break;
             }
-            index++; // Increment the index in each iteration
+            index++; 
         }
         let copperPart = 0, silverPart = 0, goldPart = 0;
         switch(currencyType){
@@ -1085,24 +1171,61 @@ export class sellingItem {
 
         } 
 
-        goldPart = Math.floor(cost / 100); 
-        silverPart = Math.floor((cost % 100) / 10); 
-        copperPart = Math.round(cost % 10) 
+        const quantity = item.system.quantity;
+        if(quantity === 1){
+            goldPart = Math.floor(cost / 100); 
+            silverPart = Math.floor((cost % 100) / 10); 
+            copperPart = Math.round(cost % 10);
+            await actor.update({
+                ["system.currency.gc"]: actorGC + goldPart,
+                ["system.currency.sc"]: actorSC + silverPart,
+                ["system.currency.cc"]: actorCC + copperPart,
 
-        await actor.update({
-            ["system.currency.gc"]: actorGC + goldPart,
-            ["system.currency.sc"]: actorSC + silverPart,
-            ["system.currency.cc"]: actorCC + copperPart,
-
-        })
-        actor.deleteEmbeddedDocuments("Item", [item._id])
-        ChatMessage.create({
-            content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
-            speaker: ChatMessage.getSpeaker({ actor })
-        });
-
-
-
+            })
+            actor.deleteEmbeddedDocuments("Item", [item._id])
+            ChatMessage.create({
+                content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:item.name, actor:actor.name, currency:currency2}),
+                speaker: ChatMessage.getSpeaker({ actor })
+            });
+        }
+        else{
+            const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
+            const quantityDialog =  
+            new Dialog({
+                title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
+                content: html,
+                buttons:{ 
+                    sell:{
+                        label: game.i18n.localize("DB-IB.dialog.sell"),
+                        callback: async () =>{
+                            const selectedQuantity = Number(document.querySelector(".quantity-selector").value);
+                            goldPart = Math.floor((cost*selectedQuantity) / 100); 
+                            silverPart = Math.floor(((cost*selectedQuantity) % 100) / 10); 
+                            copperPart = Math.round((cost*selectedQuantity) % 10);
+                            await actor.update({
+                                ["system.currency.gc"]: actorGC + goldPart,
+                                ["system.currency.sc"]: actorSC + silverPart,
+                                ["system.currency.cc"]: actorCC + copperPart,
+                
+                            })
+                            const newQunatity = item.seystem.quantity - selectedQuantity;
+                            if(newQunatity > 0){
+                                await item.update({["system.quantity"]:newQunatity})
+                            }
+                            else{
+                                actor.deleteEmbeddedDocuments("Item", [item.id])
+                            }
+                            const sellsQunatity = `${selectedQuantity} -  ${item.name}`
+                            ChatMessage.create({
+                                content: game.i18n.format("DB-IB.Chat.sellItem",{cost:finalPrice, item:sellsQunatity, actor:actor.name, currency:currency2}),
+                                speaker: ChatMessage.getSpeaker({ actor })
+                            });
+                        }
+                    }
+                }
+            })
+            quantityDialog.reder(true)
+        }
     }
 }
 
