@@ -97,7 +97,7 @@ input.input-item-name {
     top: -3px;
     right: 3px;
 }
-.image-container {
+.image-container-merchant{
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -112,7 +112,7 @@ h1.merchant-name {
 
 }
 
-.merchant-name input {
+input.merchant-name  {
     text-align: center;
     min-height: 50px;
 }
@@ -225,16 +225,7 @@ select.supply-selection {
     min-width: 420px;
 }
 
-.system-dragonbane .sheet-table-header .thumbnail-header {
-    padding: 0px;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 5px;
-}
+
 a.fa-solid.fa-magnifying-glass {
     padding-bottom: 12px;
 }
