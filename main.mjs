@@ -212,7 +212,7 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
 });
 
 
-Hooks.on("renderDoDCharacterSheet", (html) => {
+Hooks.on("renderDoDCharacterSheet", async (html) => {
   const title = game.i18n.localize("DB-IB.openItemBrowser")
   const actorID = html.object._id;
   const buttonAbilitiesHTML = `
@@ -228,7 +228,8 @@ Hooks.on("renderDoDCharacterSheet", (html) => {
   const spell =  game.i18n.translations.DoD.ui["character-sheet"].spell;
   const creatItemButton = document.querySelectorAll(".item-create");
   
-  const actorSheet = game.actors.get(actorID).sheet._element[0];
+  const actor = await game.actors.get(actorID);
+  const actorSheet = actor.sheet._element[0];
   const headers =actorSheet.querySelectorAll("th.text-header");
 
   let targetHeader = null;
