@@ -9,12 +9,12 @@ export class merchantData extends DragonbaneDataModel  {
         return this.mergeSchema(super.defineSchema(), {
             selling_rate:   new fields.NumberField({
                 required: true,
-                initial: 0.5,
+                initial: 1,
                 min: 0.01,
             }),
             buing_rate:  new fields.NumberField({
                 required: true,
-                initial: 1,
+                initial: 0.5,
                 min: 0,
             }),
             supply:  new fields.StringField({ required: true, initial: "any" }),
@@ -1366,6 +1366,12 @@ export class DB_BI_Actor extends DoDActor {
                     });
                     break;
                 case "dragonbane-item-browser.merchant":
+                     await this.updateSource({
+                     "prototypeToken.actorLink": true,
+                        "prototypeToken.disposition": 1, // Friendly
+                        "prototypeToken.bar1.attribute": 0,
+                        "prototypeToken.sight.enabled": true, // Vision enabled
+                     })
                         break;
             }
         }
