@@ -75,7 +75,9 @@
       "selectSellingQuantity": "Selesct how many of {item} you want to sell",
       "selectActor": "Select Actor who is buying",
       "buy": "Buy for selected Actore",
-      "sell": "Pass item to merchant"
+      "sell": "Pass item to merchant",
+      "openMerchantSheet": "Open Merchant character sheet",
+      "youAttempToOpenMerchantSheet": "Do you want to open Merchant character sheet?"
     }
   }
 }

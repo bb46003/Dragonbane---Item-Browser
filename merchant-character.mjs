@@ -77,6 +77,15 @@ export class merchant extends BaseActorSheet{
           }
         return context
     }
+    _updateEncumbrance(sheetData) {
+        if(sheetData.actor.type !== "dragonbane-item-browser.merchant"){
+        sheetData.encumbrance = Math.round(100 * this.actor.system.encumbrance.value) / 100;
+
+        if (this.actor.type === "character") {
+            sheetData.overEncumbered = sheetData.encumbrance > sheetData.actor.system.maxEncumbrance.value;
+        }
+        }
+    }
     activateListeners(html) {
         super.activateListeners(html);
         if(game.release.generation < 13){

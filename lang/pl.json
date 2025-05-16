@@ -76,7 +76,9 @@
       "selectSellingQuantity": "Wybierz ile z {item} chcesz sprzedać",
       "selectActor": "Wybierz Aktora który kupuje",
       "buy": "Kup jako wybrany Aktor",
-      "sell": "Przekarz przedmiot do kupca"
+      "sell": "Przekarz przedmiot do kupca",
+      "openMerchantSheet": "Otwórz kartę postaci Kupca",
+      "youAttempToOpenMerchantSheet": "Czy chcesz otworzyć kartę Kupca?"
     }
   }
 }

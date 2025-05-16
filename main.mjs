@@ -2,6 +2,8 @@
 import {itemsSearch, sellingItem} from  "./item-searching.mjs"
 import * as DBIBChat from "./item-searching.mjs"
 import { merchant, merchantData, DB_BI_Actor, sellingItemMerchat } from "./merchant-character.mjs";
+import { SocketHandler } from "./socketHandler.mjs";
+
 
 Hooks.once("init", function () {
 
@@ -62,7 +64,8 @@ game.settings.register("dragonbane-item-browser", "selectedFolders", {
 });
 
   registerHandlebarsHelpers()
-
+ const myPackage = game.modules.get("dragonbane-item-browser") // or just game.system if you're a system
+  myPackage.socketHandler = new SocketHandler()
 
   const ActorsElemet = game.release.generation < 13 ? Actors         : foundry.documents.collections.Actors;
   ActorsElemet.registerSheet("merchant", merchant ,{
@@ -123,7 +126,42 @@ game.settings.register("dragonbane-item-browser", "selectedFolders", {
 
 
 
+Hooks.on('hoverToken', async (token, ev) => {
+  const actor = token.actor;  
 
+    if(actor.type === "dragonbane-item-browser.merchant" && ev && game.users.activeGM !== null && !actor.sheet.rendered && !game.user.isGM){
+      const title = game.i18n.localize("DB-IB.dialog.openMerchantSheet")
+      const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/open-merchant-sheet.hbs")
+      const dialogId = "open-merchant-sheet-dialog";
+    if (document.getElementById(dialogId)) return;
+    const dialog = new Dialog({
+      title: title,
+      content: html,
+      buttons:{
+        renderMerchangt:{
+          label: game.i18n.localize("CONTROLS.CommonOpenSheet"),
+          callback: async () => {
+            game.modules.get("dragonbane-item-browser").socketHandler.emit( {
+              type: "ownMerchant",
+              userId: game.user.id,
+              actorId: actor.id
+            }); 
+          }
+          },
+        cancel:{label: game.i18n.localize("Cancel")}
+      },
+      
+    },
+    {appId:dialogId}) 
+    
+    dialog.render(true)
+    setTimeout(() => {
+  if (dialog.element) dialog.element[0].id = dialogId;
+}, 100);
+ 
+     
+}
+});
 Hooks.on("renderSettingsConfig", (app, html, data) => {
   const barterRollEnabled = game.settings.get("dragonbane-item-browser", "barter-roll-when-buys");
   const $html = $(html);
@@ -210,7 +248,16 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
   });
   
 });
-
+Hooks.on("closemerchant",async (token)=>{
+ const actor = token.actor;  
+if(!game.user.isGM){
+   game.modules.get("dragonbane-item-browser").socketHandler.emit( {
+      type: "ownMerchantRemove",
+      userId: game.user.id,
+      actorId: actor.id
+    }); 
+    }
+})
 
 Hooks.on("renderDoDCharacterSheet", async (html) => {
   const title = game.i18n.localize("DB-IB.openItemBrowser")
@@ -579,7 +626,7 @@ function registerHandlebarsHelpers() {
         </div>`
   const sellingRate = this.actor.system?.selling_rate || 1;
       items.forEach(item => {
-          if (!item.flags?.actor) { 
+          if (!item.flags?.actor && item.flags?.actor !== undefined) { 
             const [costValue, currency2] = item.system.cost.split(" ");
             const finalCost = Number(costValue) * sellingRate;
             let roundedCost;
