@@ -17,21 +17,10 @@ export class SocketHandler{
                             [data.userId]: 3
                             }
                         });
-                        this.emit({
-                            type: "renderMerchant",
-                            actorId: data.actorId,
-                            userId: data.userId
-                        })
+                        
                     }
                 break;
-                case "renderMerchant":
-                    if(game.user.id === data.userId){
-                        const actor = game.actors.get(data.actorId);
-                        if (!actor.sheet.rendered) {
-                            actor.sheet.render(true);
-                        }
-                    }
-                break;
+                
                 case "ownMerchantRemove":
                      if(game.user.isGM){
                         const actor = game.actors.get(data.actorId);
@@ -41,9 +30,17 @@ export class SocketHandler{
                             [data.userId]: 0
                             }
                         });
+                    }
+                break;
+
+                case "setTemporaryOwner":
+                    if(game.user.isGM){
+                        const actor = game.actors.get(data.actorId);
+                        actor.setFlag( "dragonbane-item-browser","temporary", true)
+                    }
                 break;
                  
-                }
+                
             }
         })
     }

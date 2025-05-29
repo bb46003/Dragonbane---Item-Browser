@@ -38,7 +38,7 @@ export class itemsSearch extends Dialog {
         this.filterData.filters[filter]=event.target.value;
         }
         this.filterData.chosenItems =await this.itemFiltration( this.filterData,this.filterData.chosenType);
-        const template = await renderTemplate(
+        const template = await DoD_Utility.renderTemplate(
             "modules/dragonbane-item-browser/templates/items-search.hbs",
             {data: this.filterData }
         );       
@@ -48,7 +48,7 @@ export class itemsSearch extends Dialog {
     async openBrowser(filterData,actorID) {
     const title = "Items Browser";
     filterData = { ...filterData, ...(await this._prepareWorldsItems(filterData.chosenType,actorID)) };
-    const template = await renderTemplate(
+    const template = await DoD_Utility.renderTemplate(
         "modules/dragonbane-item-browser/templates/items-search.hbs",
         {data:filterData }
     );
@@ -480,7 +480,7 @@ export class itemsSearch extends Dialog {
         value: inputField?.value || "",
         cursorPosition: inputField?.selectionStart || 0
     };
-        const template = await renderTemplate(
+        const template = await DoD_Utility.renderTemplate(
             "modules/dragonbane-item-browser/templates/items-search.hbs",
             {data: this.filterData }
         );       
@@ -965,7 +965,7 @@ export class sellingItem {
             });
         }
         else{
-            const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
+            const html = await DoD_Utility.renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
             const quantityDialog =  await
             new Dialog({
                 title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
@@ -1189,7 +1189,7 @@ export class sellingItem {
             });
         }
         else{
-            const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
+            const html = await DoD_Utility.renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
             const quantityDialog =  
             new Dialog({
                 title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),

@@ -1,8 +1,9 @@
 
 import {itemsSearch, sellingItem} from  "./item-searching.mjs"
 import * as DBIBChat from "./item-searching.mjs"
-import { merchant, merchantData, DB_BI_Actor, sellingItemMerchat } from "./merchant-character.mjs";
+import { merchant, merchantData, sellingItemMerchat } from "./merchant-character.mjs";
 import { SocketHandler } from "./socketHandler.mjs";
+import DoD_Utility from "/systems/dragonbane/modules/utility.js";
 
 
 Hooks.once("init", function () {
@@ -95,7 +96,7 @@ game.settings.register("dragonbane-item-browser", "selectedFolders", {
     }
   })
 
-  CONFIG.Actor.documentClass = DB_BI_Actor;
+
 
 
   
@@ -127,40 +128,38 @@ game.settings.register("dragonbane-item-browser", "selectedFolders", {
 
 
 Hooks.on('hoverToken', async (token, ev) => {
-  const actor = token.actor;  
+  const actor = token.actor; 
+  if(actor.ownership[game.user._id] !== 3 && actor.type === "dragonbane-item-browser.merchant"){
+    game.modules.get("dragonbane-item-browser").socketHandler.emit( {
+        type: "setTemporaryOwner",
+        userId: game.user.id,
+        actorId: actor.id
+      }); 
+    
+  }
+   const temporaryOwner = actor.flags["dragonbane-item-browser"]?.temporary || false 
+  if(actor.ownership[game.user._id] === 3 && actor.type === "dragonbane-item-browser.merchant" && !temporaryOwner){
+    actor.setFlag( "dragonbane-item-browser","temporary", false)
+  }
+ 
+  
+  if(actor.type === "dragonbane-item-browser.merchant" && temporaryOwner){
 
     if(actor.type === "dragonbane-item-browser.merchant" && ev && game.users.activeGM !== null && !actor.sheet.rendered && !game.user.isGM){
-      const title = game.i18n.localize("DB-IB.dialog.openMerchantSheet")
-      const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/open-merchant-sheet.hbs")
-      const dialogId = "open-merchant-sheet-dialog";
-    if (document.getElementById(dialogId)) return;
-    const dialog = new Dialog({
-      title: title,
-      content: html,
-      buttons:{
-        renderMerchangt:{
-          label: game.i18n.localize("CONTROLS.CommonOpenSheet"),
-          callback: async () => {
-            game.modules.get("dragonbane-item-browser").socketHandler.emit( {
-              type: "ownMerchant",
-              userId: game.user.id,
-              actorId: actor.id
-            }); 
-          }
-          },
-        cancel:{label: game.i18n.localize("Cancel")}
-      },
-      
-    },
-    {appId:dialogId}) 
-    
-    dialog.render(true)
-    setTimeout(() => {
-  if (dialog.element) dialog.element[0].id = dialogId;
-}, 100);
- 
-     
-}
+      game.modules.get("dragonbane-item-browser").socketHandler.emit( {
+        type: "ownMerchant",
+        userId: game.user.id,
+        actorId: actor.id
+      });      
+    }
+    if(actor.type === "dragonbane-item-browser.merchant" && !ev && game.users.activeGM !== null && !actor.sheet.rendered && !game.user.isGM){
+      game.modules.get("dragonbane-item-browser").socketHandler.emit( {
+        type: "ownMerchantRemove",
+        userId: game.user.id,
+        actorId: actor.id
+      }); 
+    }
+  }
 });
 Hooks.on("renderSettingsConfig", (app, html, data) => {
   const barterRollEnabled = game.settings.get("dragonbane-item-browser", "barter-roll-when-buys");
@@ -249,8 +248,9 @@ Hooks.on("renderSettingsConfig", (app, html, data) => {
   
 });
 Hooks.on("closemerchant",async (token)=>{
- const actor = token.actor;  
-if(!game.user.isGM){
+ const actor = token.actor;
+   const temporaryOwner = actor.flags["dragonbane-item-browser"]?.temporary || false   
+if(!game.user.isGM && temporaryOwner){
    game.modules.get("dragonbane-item-browser").socketHandler.emit( {
       type: "ownMerchantRemove",
       userId: game.user.id,
@@ -258,7 +258,29 @@ if(!game.user.isGM){
     }); 
     }
 })
-
+Hooks.on("renderDocumentOwnershipConfig",  (app, html, data) => {
+ const actor = data.document;
+ if(actor.type === "dragonbane-item-browser.merchant"){
+ const selects = html.querySelectorAll('select[data-dtype="Number"]');
+  selects.forEach(select => {
+    select.addEventListener("change", async (event) => {
+      const selectedValue = event.target.value;
+      if (selectedValue === "3") {
+        await actor.setFlag("dragonbane-item-browser", "temporary", false);
+      }
+      else{
+        await actor.setFlag("dragonbane-item-browser", "temporary", true);
+      }
+    })
+  })
+}
+})
+Hooks.on("createActor",async (actor)=>{
+  if(actor.type === "dragonbane-item-browser.merchant" && game.user.isGM){
+    await actor.updateSource({"prototypeToken.actorLink": true})
+     await actor.setFlag("dragonbane-item-browser", "temporary", true);
+  }
+})
 Hooks.on("renderDoDCharacterSheet", async (html) => {
   const title = game.i18n.localize("DB-IB.openItemBrowser")
   const actorID = html.object._id;
@@ -276,7 +298,7 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
   const creatItemButton = document.querySelectorAll(".item-create");
   
   const actor = await game.actors.get(actorID);
-  const actorSheet = actor.sheet._element[0];
+  const actorSheet = actor?.sheet?._element?.[0] || html?._element?.[0];
   const headers =actorSheet.querySelectorAll("th.text-header");
 
   let targetHeader = null;
@@ -429,11 +451,7 @@ Hooks.on("renderChatLog", (app, html, data) => {
   sellingMerchantInstance.addChatListeners(app, html, data);
 });
 
-Hooks.on("createActor", async function (actor) { 
-  if(actor.type === "dragonbane-item-browser.merchant"){
-    actor.ownership.default = 3;
-  }
-})
+
 
 
 async function openItemsBrowser(event,actorID){

@@ -69,12 +69,14 @@ export class merchant extends BaseActorSheet{
               return html;
             }
           }
-          async function deleteSkill(actorData) {
-            const items = actorData.items;
-            const filteredItem = items.filter(item => item.type !== "skill")
-            actorData.items=filteredItem;
-            return actorData
-          }
+        async function deleteSkill(actorData) {
+            const actor = game.actors.get(actorData._id);
+            const skillsToDelete = actor.items.filter(item => item.type === "skill");
+            const skillIds = skillsToDelete.map(item => item.id);
+            await actor.deleteEmbeddedDocuments("Item", skillIds);
+            return actor.toObject();
+        }
+
         return context
     }
     _updateEncumbrance(sheetData) {
@@ -229,7 +231,7 @@ export class merchant extends BaseActorSheet{
                     else{
                     if(itemSuply <= index){
                         if(itemData.system.quantity > 1){
-                            const html = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:itemData.name, quantity:Number(itemData.system.quantity)})
+                            const html = await DoD_Utility.renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:itemData.name, quantity:Number(itemData.system.quantity)})
                             new Dialog({
                                 title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
                                 content: html,
@@ -378,7 +380,7 @@ export class merchant extends BaseActorSheet{
                 ["system.currency.cc"]: actorCC + copperPart,
     
             })
-            const content = await renderTemplate("modules/dragonbane-item-browser/templates/chat/sell-with-merchant.hbs",{copperPart:copperPart, silverPart:silverPart, goldPart:goldPart, actor:sellingActor.name, items:allItemName})
+            const content = await DoD_Utility.renderTemplate("modules/dragonbane-item-browser/templates/chat/sell-with-merchant.hbs",{copperPart:copperPart, silverPart:silverPart, goldPart:goldPart, actor:sellingActor.name, items:allItemName})
             ChatMessage.create({
                 content: content
             });
@@ -406,7 +408,7 @@ export class merchant extends BaseActorSheet{
         if (user.isGM) {
             const characters = game.actors.filter(actor => actor.type === "character")
             
-            const content = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/chose-actor.hbs", { actors:characters });
+            const content = await DoD_Utility.renderTemplate("modules/dragonbane-item-browser/templates/dialog/chose-actor.hbs", { actors:characters });
             userActor = await new Promise((resolve) => {               
     
                 new Dialog({
@@ -600,7 +602,7 @@ export class merchant extends BaseActorSheet{
                 characters[headerID] = game.actors.get(headerID)
             })
             if(Object.keys(characters).length > 1){
-            const content = await renderTemplate("modules/dragonbane-item-browser/templates/dialog/chose-actor.hbs", { actors:characters });
+            const content = await DoD_Utility.renderTemplate("modules/dragonbane-item-browser/templates/dialog/chose-actor.hbs", { actors:characters });
             userActor = await new Promise((resolve) => {               
     
                 new Dialog({
@@ -1323,91 +1325,3 @@ async sellFromChat(event){
   
 }
 
-import {DoDActor} from "/systems/dragonbane/modules/actor.js"
-export class DB_BI_Actor extends DoDActor {
-
-
-     /** @override */
-    async  _preCreate(data, options, user) {
-
-        await super._preCreate(data, options, user);
-        if (this.type === "dragonbane-item-browser.merchant"){
-            if (this.items.size !== 0){
-                data.items = [];
-                await this.updateSource(data);
-            }
-        }
-        // If the created actor has items (only applicable to duplicated actors) bypass the new actor creation logic
-        if (!data.items?.length)
-        {
-            if (this.type !== "monster" && this.type !== "dragonbane-item-browser.merchant") {
-                let baseSkills = await DoD_Utility.getBaseSkills();
-                if (baseSkills) {
-                    data.items = baseSkills;
-                    this.updateSource(data);
-                }
-            }
-            switch (this.type) {
-                case "character":
-                    await this.updateSource({
-                        "system.age": data.system ? data.system.age : "adult",
-                        "prototypeToken.actorLink": true,
-                        "prototypeToken.disposition": 1, // Friendly
-                        "prototypeToken.bar1.attribute": "hitPoints",
-                        "prototypeToken.bar2.attribute": "willPoints",
-                        "prototypeToken.displayBars": 30, // Hovered by Anyone
-                        "prototypeToken.sight.enabled": true, // Vision enabled
-                    });
-                    break;
-                case "npc":
-                    await this.updateSource({
-                        "prototypeToken.disposition": 0, // Neutral
-                        "prototypeToken.bar1.attribute": "hitPoints",
-                        "prototypeToken.displayBars": 20, // Hovered by Owner
-                    });
-                    break;
-                case "monster":
-                    await this.updateSource({
-                        "system.size": data.system ? data.system.size : "normal",
-                        "prototypeToken.disposition": -1, // Hostile
-                        "prototypeToken.bar1.attribute": "hitPoints",
-                        "prototypeToken.displayBars": 20, // Hovered by Owner
-                    });
-                    break;
-                case "dragonbane-item-browser.merchant":
-                     await this.updateSource({
-                     "prototypeToken.actorLink": true,
-                        "prototypeToken.disposition": 1, // Friendly
-                        "prototypeToken.bar1.attribute": 0,
-                        "prototypeToken.sight.enabled": true, // Vision enabled
-                     })
-                        break;
-            }
-        }
-    }
-
-    prepareBaseData() {
-        if(this.type !== "dragonbane-item-browser.merchant"){
-        super.prepareBaseData();
-
-        // reset attributes
-        for (const attribute in this.system.attributes) {
-            this.system.attributes[attribute].value = this.system.attributes[attribute].base;
-        }
-        // reset ferocity
-        if (this.system.ferocity) {
-            this.system.ferocity.value = this.system.ferocity.base;
-        }
-
-        // prepare skills
-        this._prepareSkills();
-        this._prepareBaseChances();
-        this._prepareKin();
-        this._prepareProfession();
-    }
-    
-       
-    
-    }
-
-}
