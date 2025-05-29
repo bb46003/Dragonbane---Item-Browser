@@ -1375,14 +1375,12 @@ export class DB_BI_Actor extends DoDActor {
                     });
                     break;
                 case "dragonbane-item-browser.merchant":
-                    await this.updateSource({
-                    "prototypeToken.actorLink": true,
-                    "prototypeToken.disposition": 1, // Friendly
-                    "prototypeToken.bar1.attribute": 0,
-                    "prototypeToken.bar2.attribute": 0,
-                    "prototypeToken.displayBars": 30, // Hovered by Anyone
-                    "prototypeToken.sight.enabled": true, // Vision enable
-                    });
+                     await this.updateSource({
+                     "prototypeToken.actorLink": true,
+                        "prototypeToken.disposition": 1, // Friendly
+                        "prototypeToken.bar1.attribute": 0,
+                        "prototypeToken.sight.enabled": true, // Vision enabled
+                     })
                         break;
             }
         }
