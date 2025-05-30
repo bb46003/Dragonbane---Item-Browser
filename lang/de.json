@@ -1,0 +1,83 @@
+{
+  "TYPES": {
+    "Actor": {
+      "dragonbane-item-browser.merchant": "Merchant"
+    }
+  },
+  "DB-IB": {
+    "Any": "Beliebig",
+    "addItem": "<strong>{actor}</strong> fügt zum Charakterbogen <strong>{type}</strong> <strong>{item}</strong> hinzu",
+    "rollForPrice": "Würfle {formula} um die Kosten von {item} in {currency} zu bestimmen",
+    "notEnoughMoney": "<strong>{actor}</strong> hat nicht genug Münzen um <strong>{item}</strong> zu kaufen.",
+    "spendMoney": "<strong>{actor}</strong> gibt <strong>{itemPrice}</strong> aus um <strong>{item}</strong> zu kaufen",
+    "gainMoney": "<strong>{actor}</strong> erhält <strong>{itemPrice}</strong> vom Verkauf von <strong>{item}</strong>",
+    "manualMonyRemoval": "Bestimme mit dem SL den Preis von <strong>{item}</strong>. Definiere als <strong>{itemPrice}</strong> und reduziere den Preis manuell.",
+    "settings": {
+      "rollForBarter": "Handelswurf beim Kauf oder Verkauf eines Gegenstands",
+      "hintRollForBarter": "Wenn du einen Gegenstand aus dem Gegenstandsbrowser-Dialog kaufst oder verkaufst, öffnet sich ein Fenster, das den Spieler fragt, ob er für HANDELN würfeln möchte, um den Preis gemäß den im Regelbuch definierten Regeln anzupassen.",
+      "nonCoreSkill": "Namen der Nicht-Grundfertigkeit für HANDELN eingeben",
+      "hintSkillBarter": "Der hier eingegebene Fertigkeitsname wird auf dem Charakterbogen gesucht, um ihn für den Handelswurf zu verwenden.",
+      "selling": "Sparschwein-Symbol zu Gegenständen mit Kosten hinzufügen, damit sie verkauft werden können.",
+      "hintSelling": "Erlaube standardmäßig den Verkauf von Gegenständen für 50% der Kosten. Wenn die Handelsoption aktiviert ist, ermöglicht es auch das Würfeln beim Verkauf.",
+      "stash": "Kontrollkästchen zum Verstecken von Gegenständen hinzufügen.",
+      "hintStash": "Versteckte Gegenstände werden nicht zur Traglastgrenze hinzugefügt, aber trotzdem im Inventar angezeigt.",
+      "hintSkippedFoldersForBrowser": "Ordner mit Gegenständen definieren, die nicht im Gegenstandsbrowser erscheinen sollen",
+      "skippedFoldersForBrowser": "Zu überspringende Ordner definieren"
+    },
+    "Chat": {
+      "buyItem": "Gegenstand kaufen",
+      "reducePrice": "Du reduzierst den Preis von {item} um 20%!",
+      "cannotBuy": "Du beleidigst den Verkäufer, was dazu führt, dass du {item} nicht kaufen kannst",
+      "cannotSell": "Du beleidigst den Verkäufer, was dazu führt, dass du {item} nicht verkaufen kannst",
+      "reducePriceDragon": "Du reduzierst den Preis von {item} um 50%!",
+      "nochangeInPrice": "Du kannst {item} zum regulären Preis kaufen.",
+      "sellItem": "<b>{actor}</b> verkauft <b>{item}</b> für <b>{cost} {currency}</b>.",
+      "increasPrice": "Du verkaufst {item} für 20% mehr.",
+      "increasePriceDragon": "Du verkaufst {item} für 50% mehr!",
+      "nochangeInPriceSell": "Du kannst {item} zum regulären Preis verkaufen.",
+      "sellItemButton": "Gegenstand verkaufen",
+      "actorSells": "{actor} verkauft Gegenstände {items} für",
+      "and": "und"
+    },
+    "itemName": "Gegenstandsname",
+    "wannaBarter": "Möchtest du handeln?",
+    "pickIfYouWantToRollForBartering": "Wähle, ob du für das Handeln würfeln möchtest oder nicht.",
+    "rollForBarter": "Für Handeln würfeln",
+    "BuyWithoutRoll": "Ohne Wurf kaufen",
+    "openItemBrowser": "Gegenstandsbrowser öffnen",
+    "sellItem": "Gegenstand verkaufen",
+    "addItemToCharacter": "Gegenstand zum Charakter hinzufügen ohne Münzen auszugeben.",
+    "buyItem": "Gegenstand kaufen. Es wird den Gegenstand zum Charakter hinzufügen und Münzen ausgeben.",
+    "stashItem": "Gegenstand im Charakterbogen behalten, aber das Gewicht wird nicht zur Traglastgrenze hinzugefügt.",
+    "stash": "Verstecken",
+    "SellWithoutBarter": "Ohne Handeln verkaufen",
+    "merchant": {
+      "setting": "Einstellungen",
+      "selling": "Waren zum Verkauf",
+      "buing": "Händler kauft von dir",
+      "setSellingRate": "Verkaufsrate des Händlers als Prozentsatz des ursprünglichen Preises festlegen",
+      "setBuingRate": "Ankaufsrate des Händlers als Prozentsatz des ursprünglichen Preises festlegen",
+      "allowedSupply": "Bis zu welcher Art von Warenvorrat der Händler akzeptiert",
+      "sells": "verkauft",
+      "notAcceptSuply": "Dieser Händler akzeptiert diese Art von Waren nicht.",
+      "nonGMaddItemsToSell": "Du bist kein SL, du kannst keine Gegenstände hinzufügen, die der Händler verkauft.",
+      "youCannotSellTheSameItemTwice": "Du kannst einen Gegenstand nicht mehr als einmal verkaufen!"
+    },
+    "warrning": {
+      "incoretInput": "Bitte gib eine Zahl oder Zahl mit %-Symbol ein",
+      "youAreNotOwnerOfDeletedItem": "Du hast versucht, Verkaufsgegenstände zu löschen, die dir nicht gehören!",
+      "merchantDoNotHaveMoreItem": "Händler hat nicht mehr von {itemName}",
+      "youDoNotSellAnything": "Dein Charakter verkauft nichts!"
+    },
+    "itemPrice": "Gegenstandspreis",
+    "dialog": {
+      "denfieQuantity": "Verkaufsmenge definieren.",
+      "selectSellingQuantity": "Wähle wie viele von {item} du verkaufen möchtest",
+      "selectActor": "Akteur auswählen, der kauft",
+      "buy": "Für ausgewählten Akteur kaufen",
+      "sell": "Gegenstand an Händler übergeben",
+      "openMerchantSheet": "Händler-Charakterbogen öffnen",
+      "youAttempToOpenMerchantSheet": "Möchtest du den Händler-Charakterbogen öffnen?"
+    }
+  }
+}
