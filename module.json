@@ -48,6 +48,11 @@
       "lang": "sv",
       "name": "Svenska",
       "path": "lang/sv.json"
+    },
+     {
+      "lang": "de",
+      "name": "Deutschland",
+      "path": "lang/de.json"
     }
   ],
   "documentTypes": {
