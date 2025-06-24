@@ -2,7 +2,14 @@
 import DoDSkillTest from "/systems/dragonbane/modules/tests/skill-test.js";
 import DoD_Utility from "/systems/dragonbane/modules/utility.js";
 
-export class itemsSearch extends Dialog {
+export class itemsSearch extends foundry.applications.api.ApplicationV2  {
+     static DEFAULT_OPTIONS = { 
+        position: {
+            width: 700,
+            height: 500,
+            }
+     }
+     
     constructor({ title, content, buttons, filterData, actorID}) {
        
         super({
@@ -16,18 +23,42 @@ export class itemsSearch extends Dialog {
         this.actorID = actorID;
     }
     activateListeners(html) {
-        super.activateListeners(html);
+        
         const rollForBarter =  game.settings.get("dragonbane-item-browser", "barter-roll-when-buys")
-        html.on("change", ".filter", this.changeitemType.bind(this)); 
+        const filers = html.querySelectorAll(".filter");
+        filers.forEach(filter =>{
+            filter.addEventListener("change",(ev) =>  this.changeitemType(ev)); 
+        })
         if (!rollForBarter){
-        html.on("click", ".fas.fa-coins", this.buyItem.bind(this));
+            const barterRolls = html.querySelectorAll(".fas.fa-coins");
+            if(barterRolls !== null){
+                barterRolls.forEach(barterRoll =>{
+                    barterRoll.addEventListener("click",(ev) =>  this.buyItem(ev));
+                })
+            }
         }
         else{
-            html.on("click", ".fas.fa-coins", this.rollForBarter.bind(this)); 
+            const barterRolls = html.querySelectorAll(".fas.fa-coins");
+             if(barterRolls !== null){
+                barterRolls.forEach(barterRoll =>{
+                    barterRoll.addEventListener("click",(ev) => this.rollForBarter(ev));
+                }); 
+            }
         } 
-        html.on("click", ".fas.fa-plus", this.addItem.bind(this)); 
-        html.on("click",".item-name-browser", this.openItem.bind(this))
-        html.on("input",".input-item-name", this.itemFilter.bind(this))
+        const addItems= html.querySelectorAll(".fas.fa-plus");
+        if(addItems !== null){
+            addItems.forEach(addItem =>{
+                addItem.addEventListener("click", (ev) => this.addItem(ev)); 
+            })
+        }
+        const openItems = html.querySelectorAll(".item-name-browser")
+         if(openItems !== null){
+            openItems.forEach(openItem =>{
+                openItem.addEventListener("click", (ev) => this.openItem(ev))
+            });
+        const inputChange = html.querySelector(".input-item-name")
+        inputChange.addEventListener("input", (ev) => this.itemFilter(ev))
+         }
     }
     async changeitemType(event) {
         const filter = event.target.classList[1];
@@ -38,30 +69,62 @@ export class itemsSearch extends Dialog {
         this.filterData.filters[filter]=event.target.value;
         }
         this.filterData.chosenItems =await this.itemFiltration( this.filterData,this.filterData.chosenType);
-        const template = await DoD_Utility.renderTemplate(
-            "modules/dragonbane-item-browser/templates/items-search.hbs",
-            {data: this.filterData }
-        );       
-        this.data.content = template;
-        this.render(true,{width:700,height:500})
+        //const template = await DoD_Utility.renderTemplate(
+         //   "modules/dragonbane-item-browser/templates/items-search.hbs",
+//{data: this.filterData }
+       // );       
+      // this.element = template;
+        this.render(true)
     }
     async openBrowser(filterData,actorID) {
     const title = "Items Browser";
     filterData = { ...filterData, ...(await this._prepareWorldsItems(filterData.chosenType,actorID)) };
-    const template = await DoD_Utility.renderTemplate(
+   
+       const template = await DoD_Utility.renderTemplate(
         "modules/dragonbane-item-browser/templates/items-search.hbs",
-        {data:filterData }
-    );
-
+        {data:filterData });
    const browser = new itemsSearch({
         title:title,
         content: template,
-        filterData: filterData,  
-        buttons: {},
+        filterData: filterData,
+        actorID: actorID   
     })
-    browser.render(true,{width:700, height:500});
-    browser.element.find('.dialog-button').addClass('hidden-button')
+   await browser.render(true);
+
     }
+
+     async render(force = false, options = {}) {
+        await super.render(force, options);
+    const el = this.element
+    this.activateListeners(el);
+
+     }
+      async _renderHTML() {
+    try {
+       const template = await DoD_Utility.renderTemplate(
+        "modules/dragonbane-item-browser/templates/items-search.hbs",
+        {data:this.filterData }
+    );
+      return template;
+    } catch (e) {
+      console.error("_renderHTML error:", e);
+      throw e;
+    }
+  }
+    async _replaceHTML(result, html) {
+    html.innerHTML = result;
+  }
+    getData() {
+    const data = super.getData();
+    return {
+      ...data,
+      ...this.filterData,
+      ...this.actorID
+    };
+  }
+  
+
+
     async _prepareWorldsItems(chosenType, actorID){
     let types = [
         "ability",
@@ -232,7 +295,7 @@ export class itemsSearch extends Dialog {
 
     }
     async buyItem(event){
-        const actor = game.actors.get(this.data.filterData.actor);
+        const actor = game.actors.get(this.filterData.actor);
         const item = game.items.get(event.target.id);
         const itemData = item.toObject();          
         const buyIitem = await this.spendMoney(item,actor);
@@ -243,7 +306,7 @@ export class itemsSearch extends Dialog {
 
     }
     async addItem(event){
-        const actor = game.actors.get(this.data.filterData.actor);
+        const actor = game.actors.get(this.filterData.actor);
         const item = game.items.get(event.target.id);
         const itemData = item.toObject(); 
         await actor.createEmbeddedDocuments("Item", [itemData])
@@ -480,12 +543,8 @@ export class itemsSearch extends Dialog {
         value: inputField?.value || "",
         cursorPosition: inputField?.selectionStart || 0
     };
-        const template = await DoD_Utility.renderTemplate(
-            "modules/dragonbane-item-browser/templates/items-search.hbs",
-            {data: this.filterData }
-        );       
-        this.data.content = template;
-        this.render(true,{width:700,height:500})
+        
+        this.render(true)
         setTimeout(() => {
             const newInputField = document.querySelector(".input-item-name");
             if (newInputField) {

@@ -65,10 +65,12 @@ a.item-name-browser {
 }
 
 .right-side {
-    flex: 1;  
-    overflow-y: auto; /* Allow vertical scrolling */
-    overflow-x: hidden; /* Prevent horizontal scrolling */
-    max-height: 100%; /* Ensure it respects the container height */
+    display: flex;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 430px;
+    flex-direction: column;
+
 }
 .form-container .item-browser{
     height: 100%; /* Allow form to inherit the full height */
