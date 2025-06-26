@@ -494,11 +494,11 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2  {
         const test = new DoDSkillTest(actor, skill, options);
     
         // Create Dialog
-        const d = new Dialog({
-            title: game.i18n.localize("DB-IB.wannaBarter"),
+        const d = new foundry.applications.api.DialogV2({
+            window:{title: game.i18n.localize("DB-IB.wannaBarter")},
             content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
-            buttons: {
-                buyWithRoll: {
+            buttons: [{
+                action: "buyWithRoll",
                     label: game.i18n.localize("DB-IB.rollForBarter"),
                     callback: async () => {
                         const barterSkillRoll = await test.roll();
@@ -517,18 +517,17 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2  {
                             await addBuyButton(item, actor, success, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll);
                         }
                     },
+                    default: true,
                 },
-                buyWithoutRoll: {
+                {action: "buyWithoutRoll",
                     label: game.i18n.localize("DB-IB.BuyWithoutRoll"),
                     callback: async () => {
                        await this.buyItem(event);
                     },
-                },
-            },
-            default: "buyWithRoll", // Default button when hitting Enter
+                }],
+            
+           
         });
-    
-        // Render the Dialog
         d.render(true);
     }
     async itemFilter(event){
@@ -904,11 +903,11 @@ export class sellingItem {
             }
             const options = {};
             const test = new DoDSkillTest(actor, skill, options);
-            const d = new Dialog({
-                title: game.i18n.localize("DB-IB.wannaBarter"),
+            const d = new foundry.applications.api.DialogV2({
+                window:{title: game.i18n.localize("DB-IB.wannaBarter")},
                 content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
-                buttons: {
-                    sellWithRoll: {
+                buttons: [{
+                    action: "sellWithRoll",
                         label: game.i18n.localize("DB-IB.rollForBarter"),
                         callback: async () => {
                             const barterSkillRoll = await test.roll();
@@ -927,18 +926,15 @@ export class sellingItem {
                                 await this.addSellButton(item, actor, success, isDemon, isDragon, existingMessage, ChatMessage, barterSkillRoll);
                             }
                         },
+                        default: true
                     },
-                    sellWithoutRoll: {
+                    { action: "sellWithoutRoll",
                         label: game.i18n.localize("DB-IB.SellWithoutBarter"),
                         callback: async () => {
                            await this.sellItem(item,actor);
                         },
-                    },
-                },
-                default: "sellWithRoll", // Default button when hitting Enter
+                    }] 
             });
-        
-            // Render the Dialog
             d.render(true);
 
         }
@@ -1026,11 +1022,11 @@ export class sellingItem {
         else{
             const html = await DoD_Utility.renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
             const quantityDialog =  await
-            new Dialog({
-                title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
+            new foundry.applications.api.DialogV2({
+                window: {title: game.i18n.localize("DB-IB.dialog.denfieQuantity")},
                 content: html,
-                buttons:{ 
-                    sell:{
+                buttons:[{ 
+                     action: "sell",
                         label: game.i18n.localize("DB-IB.dialog.sell"),
                         callback: async () =>{
                             const selectedQuantity = Number(document.querySelector(".quantity-selector").value);
@@ -1056,8 +1052,7 @@ export class sellingItem {
                                 speaker: ChatMessage.getSpeaker({ actor })
                             });
                         }
-                    }
-                }
+                    }]
             })
             quantityDialog.render(true)
         }
@@ -1250,11 +1245,11 @@ export class sellingItem {
         else{
             const html = await DoD_Utility.renderTemplate("modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs", {item:item.name, quantity:Number(item.system.quantity)})
             const quantityDialog =  
-            new Dialog({
-                title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
+            new foundry.applications.api.DialogV2({
+                window:{title: game.i18n.localize("DB-IB.dialog.denfieQuantity")},
                 content: html,
-                buttons:{ 
-                    sell:{
+                buttons:[{ 
+                     action: "sell",
                         label: game.i18n.localize("DB-IB.dialog.sell"),
                         callback: async () =>{
                             const selectedQuantity = Number(document.querySelector(".quantity-selector").value);
@@ -1280,8 +1275,8 @@ export class sellingItem {
                                 speaker: ChatMessage.getSpeaker({ actor })
                             });
                         }
-                    }
-                }
+                    }]
+                
             })
             quantityDialog.reder(true)
         }
