@@ -78,6 +78,7 @@
       "sell": "Pass item to merchant",
       "openMerchantSheet": "Open merchant character sheet",
       "youAttempToOpenMerchantSheet": "Do you want to open merchant character sheet?"
-    }
+    },
+    "title": "Item Browser"
   }
 }

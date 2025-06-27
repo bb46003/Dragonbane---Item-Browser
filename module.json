@@ -16,10 +16,8 @@
       }
     ]
   },
-  "esmodules": [
-    "main.mjs"
-  ],
-  "styles":[ "items-browser.css"],
+  "esmodules": ["main.mjs"],
+  "styles": ["items-browser.css"],
 
   "authors": [
     {
@@ -49,20 +47,19 @@
       "name": "Svenska",
       "path": "lang/sv.json"
     },
-     {
+    {
       "lang": "de",
       "name": "Deutschland",
       "path": "lang/de.json"
     }
   ],
   "documentTypes": {
-    "Actor":{
-      "merchant":{}
+    "Actor": {
+      "merchant": {}
     }
   },
   "socket": true,
   "url": "Filled in by the release workflow",
-  "manifest":"Filled in by the release workflow",
+  "manifest": "Filled in by the release workflow",
   "download": "Filled in by the release workflow"
-
 }

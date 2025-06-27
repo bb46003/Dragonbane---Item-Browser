@@ -1,19 +1,19 @@
 <div class="selled-items">
-<label>{{localize "DB-IB.Chat.actorSells" actor=actor items=items}}</label>
+  <label>{{localize "DB-IB.Chat.actorSells" actor=actor items=items}}</label>
 
+  {{#if (ne copperPart 0)}}
+    <label>{{copperPart}} {{localize "DoD.currency.copper"}}</label>
+  {{/if}}
+  {{#if (ne silverPart 0)}}
     {{#if (ne copperPart 0)}}
-        <label>{{copperPart}} {{localize "DoD.currency.copper"}}</label>
+      <label>{{localize "DB-IB.Chat.and"}}</label>
     {{/if}}
-     {{#if (ne silverPart 0)}}
-         {{#if (ne copperPart 0)}}
-            <label>{{localize "DB-IB.Chat.and"}}</label>
-         {{/if}}
-        <label>{{silverPart}} {{localize "DoD.currency.silver"}}</label>
+    <label>{{silverPart}} {{localize "DoD.currency.silver"}}</label>
+  {{/if}}
+  {{#if (ne goldPart 0)}}
+    {{#if (or (ne copperPart 0) (ne silverPart 0))}}
+      <label>{{localize "DB-IB.Chat.and"}}</label>
     {{/if}}
-     {{#if (ne goldPart 0)}}
-        {{#if (or (ne copperPart 0) (ne silverPart 0))}}
-            <label>{{localize "DB-IB.Chat.and"}}</label>
-        {{/if}}
-        <label>{{goldPart}} {{localize "DoD.currency.gold"}}</label>
-    {{/if}}
+    <label>{{goldPart}} {{localize "DoD.currency.gold"}}</label>
+  {{/if}}
 </div>

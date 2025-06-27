@@ -79,6 +79,7 @@
       "sell": "Przekarz przedmiot do kupca",
       "openMerchantSheet": "Otwórz kartę postaci Kupca",
       "youAttempToOpenMerchantSheet": "Czy chcesz otworzyć kartę Kupca?"
-    }
+    },
+    "title": "Przeglądarka przedmiotów"
   }
 }
