@@ -514,7 +514,6 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
   }
 });
 
-
 async function openItemsBrowser(event, actorID) {
   event.preventDefault();
   const element = event.currentTarget;
@@ -592,7 +591,7 @@ function registerHandlebarsHelpers() {
     const isGM = game.user.isGM;
     if (isGM) {
       const localize = game.i18n.localize("DB-IB.merchant.setting");
-      const html = `<a class="settings" data-tab="settings">${localize}</a>`;
+      const html = `<a class="settings" data-action="tab"  data-tab="settings">${localize}</a>`;
       return html;
     }
   });
@@ -601,10 +600,11 @@ function registerHandlebarsHelpers() {
     const html = `  <input   id="percentage"   type="text"  value="${sellingRatePercentage}">`;
     return html;
   });
-  Handlebars.registerHelper("groupByActor", function (items) {
+  Handlebars.registerHelper("groupByActor", function (items,actor) {
     const grouped = {};
-
-    items.forEach((item) => {
+    const itemsMerchant = actor.data.root.actor.items;
+    if(itemsMerchant !== undefined){
+    itemsMerchant.forEach((item) => {
       if (item.flags["dragonbane-item-browser"]?.actor) {
         const actorFlag = item.flags["dragonbane-item-browser"].actor;
         if (!grouped[actorFlag]) {
@@ -634,7 +634,7 @@ function registerHandlebarsHelpers() {
                   </div>
           `;
 
-      for (const item of items) {
+      for (const item of itemsMerchant) {
         const itemCost = item.system.cost;
         const buyingRate = this.actor.system?.buing_rate || 1;
 
@@ -691,6 +691,7 @@ function registerHandlebarsHelpers() {
     const newHtml = new Handlebars.SafeString(result);
 
     return newHtml;
+  }
   });
   Handlebars.registerHelper("range", function (end) {
     let result = "";
@@ -699,7 +700,7 @@ function registerHandlebarsHelpers() {
     }
     return new Handlebars.SafeString(result);
   });
-  Handlebars.registerHelper("itemToBuy", function (items) {
+  Handlebars.registerHelper("itemToBuy", async function (items, actor) {
     const itemName = game.i18n.localize("DB-IB.itemName");
     const itemPrice = game.i18n.localize("DB-IB.itemPrice");
 
@@ -709,8 +710,9 @@ function registerHandlebarsHelpers() {
           <label>${itemName}</label>
           <label>${itemPrice}</label>
         </div>`;
-    const sellingRate = this.actor.system?.selling_rate || 1;
-    items.forEach((item) => {
+  
+    const itemsMerchant = actor.data.root.actor.items
+    itemsMerchant.forEach((item) => {
       if (!item.flags?.actor && item.flags?.actor !== undefined) {
         const [costValue, currency2] = item.system.cost.split(" ");
         const finalCost = Number(costValue) * sellingRate;
@@ -776,6 +778,9 @@ function registerHandlebarsHelpers() {
     const newHtml = new Handlebars.SafeString(result);
 
     return newHtml;
+  });
+  Handlebars.registerHelper("log", function (element) {
+    console.log(element);
   });
 }
 

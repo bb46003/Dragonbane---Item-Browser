@@ -2,8 +2,6 @@ import DoDSkillTest from "/systems/dragonbane/modules/tests/skill-test.js";
 import DoD_Utility from "/systems/dragonbane/modules/utility.js";
 
 export class itemsSearch extends foundry.applications.api.ApplicationV2 {
-
-
   constructor({ title, content, buttons, filterData, actorID }) {
     super({
       title,
@@ -15,9 +13,9 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
     this.filterData = filterData;
     this.actorID = actorID;
   }
- 
-    static DEFAULT_OPTIONS = {
-    window:{title: "DB-IB.title"},
+
+  static DEFAULT_OPTIONS = {
+    window: { title: "DB-IB.title" },
     position: {
       width: 700,
       height: 500,
@@ -81,7 +79,7 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
     this.render(true);
   }
   async openBrowser(filterData, actorID) {
-    const title = game.i18n.localize('DB-IB.title');
+    const title = game.i18n.localize("DB-IB.title");
     filterData = {
       ...filterData,
       ...(await this._prepareWorldsItems(filterData.chosenType, actorID)),
@@ -97,7 +95,7 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
       filterData: filterData,
       actorID: actorID,
     });
- 
+
     await browser.render(true);
   }
 
@@ -548,7 +546,7 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
           label: game.i18n.localize("DB-IB.rollForBarter"),
           callback: async () => {
             const barterSkillRoll = await test.roll();
-            console.log(barterSkillRoll)
+            console.log(barterSkillRoll);
             if (barterSkillRoll !== undefined) {
               const success = barterSkillRoll.postRollData.success;
               const isDemon = barterSkillRoll.postRollData.isDemon;
@@ -571,7 +569,6 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
                 ChatMessage,
                 barterSkillRoll,
               );
-
             }
           },
           default: true,
@@ -620,20 +617,18 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
   }
 }
 export async function addChatListeners(_app, html, _data) {
-  
-    DoD_Utility.addHtmlEventListener(
-      html,
-      "click",
-      ".chat-button.buy-item",
-      buyFromChat,
-    );
-    DoD_Utility.addHtmlEventListener(
-      html,
-      "click",
-      ".barter-push-roll",
-      barterPushRoll,
-    );
-  
+  DoD_Utility.addHtmlEventListener(
+    html,
+    "click",
+    ".chat-button.buy-item",
+    buyFromChat,
+  );
+  DoD_Utility.addHtmlEventListener(
+    html,
+    "click",
+    ".barter-push-roll",
+    barterPushRoll,
+  );
 }
 async function buyFromChat(event) {
   const ChatMessage = game.messages.get(
@@ -860,7 +855,7 @@ async function addBuyButton(
   isDragon,
   existingMessage,
   ChatMessage,
-  barterSkillRoll
+  barterSkillRoll,
 ) {
   let flavor = existingMessage.flavor;
   let newFlavor = "";
@@ -915,9 +910,7 @@ async function addBuyButton(
       system: { actor, item, barterSkillRoll },
     });
   }
- console.log(barterSkillRoll)
-    
-
+  console.log(barterSkillRoll);
 }
 async function barterPushButton(existingMessage) {
   let tempDiv = document.createElement("div");
@@ -967,7 +960,7 @@ async function barterPushRoll(event) {
   let options = { canPush: false, skipDialog: true, formula: formula };
   const test = new DoDSkillTest(actor, skill, options);
   const barterSkillRoll = await test.roll();
-  console.log(barterSkillRoll.rollMessage)
+  console.log(barterSkillRoll.rollMessage);
   const sucess = barterSkillRoll.postRollData.success;
   const isDemon = barterSkillRoll.postRollData.isDemon;
   const isDragon = barterSkillRoll.postRollData.isDragon;
@@ -983,7 +976,6 @@ async function barterPushRoll(event) {
     ChatMessage,
     barterSkillRoll,
   );
-  
 }
 async function creatConditionMagade(actor, choice) {
   const msg = game.i18n.format("DoD.ui.chat.takeCondition", {
@@ -1343,20 +1335,20 @@ export class sellingItem {
         flavor: newFlavor,
         system: { actor, item, barterSkillRoll },
       });
-          barterSkillRoll.rollMessage.update({
-      content: updatedContent,
-      flavor: newFlavor,
-      system: { actor, item, barterSkillRoll },
-    });
+      barterSkillRoll.rollMessage.update({
+        content: updatedContent,
+        flavor: newFlavor,
+        system: { actor, item, barterSkillRoll },
+      });
     } else {
       existingMessage.update({
         flavor: newFlavor,
         system: { actor, item, barterSkillRoll },
       });
-          barterSkillRoll.rollMessage.update({
-      flavor: newFlavor,
-      system: { actor, item, barterSkillRoll },
-    });
+      barterSkillRoll.rollMessage.update({
+        flavor: newFlavor,
+        system: { actor, item, barterSkillRoll },
+      });
     }
   }
   async sellFromChat(event) {

@@ -32,38 +32,92 @@ const BaseActorSheet =
   typeof foundry?.appv1?.sheets?.ActorSheet !== "undefined"
     ? foundry.appv1.sheets.ActorSheet
     : ActorSheet;
-
-export class merchant extends BaseActorSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["merchant"],
-      template: "modules/dragonbane-item-browser/templates/merchant.hbs",
+const { api, sheets } = foundry.applications;
+export class merchant extends api.HandlebarsApplicationMixin(
+  sheets.ActorSheetV2,
+) {
+  
+  /** @inheritDoc */
+  static DEFAULT_OPTIONS = {
+    classes: ["merchant"],
+    position: {
       width: 800,
       height: "auto",
-      tabs: [
-        {
-          navSelector: ".sheet-tabs",
-          contentSelector: ".sheet-body",
-          initial: "glowna",
-        },
-      ],
-    });
+    },
+    actor: {
+      type: "merchant",
+    },
+  };
+  /** @override */
+  static PARTS = {
+    
+    body: {
+      id: "body",
+      template: "modules/dragonbane-item-browser/templates/merchant.hbs",
+    },
+     tabs: {
+      id: "tabs",
+      template: "modules/dragonbane-item-browser/templates/tab/tabs.hbs",
+    },
+    settings: {
+      id: "settings",
+      template: "modules/dragonbane-item-browser/templates/tab/settings.hbs",
+    },
+    sellingStuff: {
+      id: "sellingStuff",
+      template: "modules/dragonbane-item-browser/templates/tab/to-sell.hbs",
+    },
+    buingStuff: {
+      id: "buingStuff",
+      template: "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
+    },
+   
+  };
+  static TABS = {
+    sheet: [
+      { id: "settings", group: "sheet", label: "DB-IB.merchant.setting" },
+      { id: "buingStuff", group: "sheet", label: "DB-IB.merchant.buing" },
+      { id: "sellingStuff", group: "sheet", label: "DB-IB.merchant.selling" },
+    ],
+  };
+
+  tabGroups = {
+    sheet: "buingStuff",
+  };
+   #getTabs() {
+    const tabs = {};
+    for ( const [groupId, config] of Object.entries(this.constructor.TABS) ) {
+      const group = {};
+      for ( const t of config ) {
+        const active = this.tabGroups[t.group] === t.id;
+        group[t.id] = Object.assign({active, cssClass: active ? "active" : ""}, t);
+      }
+      tabs[groupId] = group;
+    }
+    return tabs;
   }
+  /** @override */
+  async _prepareContext(options) {
+
+    const actorData = await this.getData();
+    return actorData
+  }
+
   async getData() {
-    const source = super.getData();
+    //const source = super.getData();
     const actorData = this.actor.toObject(false);
     const updateActoprData = await deleteSkill(actorData);
+    const tabGroups = this.#getTabs();
     const context = {
+      tabs: tabGroups.sheet,
       actor: updateActoprData,
-      editable: this.isEditable,
-      items: updateActoprData.items,
-      limited: this.actor.limited,
-      options: this.options,
-      owner: this.actor.isOwner,
-      source: source.system,
-      system: actorData.system,
-      type: this.actor.type,
-      useKgs: this.actor.useKgs,
+      system: updateActoprData.system,
+       fields: this.document.system.schema.fields,
+        isEditable: this.isEditable,
+        source: this.document.toObject(),
+         tabGroups,
+      tabs: tabGroups.sheet,
+      items: updateActoprData.items
     };
     async function enrich(html) {
       if (html) {
@@ -99,7 +153,6 @@ export class merchant extends BaseActorSheet {
     }
   }
   activateListeners(html) {
-    super.activateListeners(html);
     if (game.release.generation < 13) {
       html.on("input", "#slider-selling", (ev) => this.updateSliderOutput(ev));
       html.on("change", "#slider-selling", (ev) => {

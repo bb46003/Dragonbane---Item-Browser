@@ -1,33 +1,22 @@
 <form class="{{cssClass}}" autocomplete="off">
-    <header class="sheet-header character-header">
-        <div class="image-container-merchant">
-            <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
-            <h1 class="merchant-name">
-                <input name="name" type="text" value="{{actor.name}}" placeholder="Name"/>
-            </h1>
-        </div>
-    </header>
-    <h1></h1>
-        <nav class="sheet-tabs tabs" data-group="primary">
-        {{#isGM}}
-        {{/isGM}}
-        <a class="selling-stuff" data-tab="selling-stuff">{{localize "DB-IB.merchant.selling"}}</a>
-        <a class="buing-stuff" data-tab="buing-stuff">{{localize "DB-IB.merchant.buing"}}</a>     
-    </nav>
-<section class="sheet-body">
-    <section class="bottom-section">
-   
-         <div class="tab settings flexcol" data-group="primary" data-tab="settings">
-           {{> "modules/dragonbane-item-browser/templates/tab/settings.hbs"}}
- 
-        </div>
-         <div class="tab selling-stuff flexcol" data-group="primary" data-tab="selling-stuff">
-            {{> "modules/dragonbane-item-browser/templates/tab/to-sell.hbs"}}
-        </div>
-         <div class="tab buing-stuff flexcol" data-group="primary" data-tab="buing-stuff">
-           {{> "modules/dragonbane-item-browser/templates/tab/to-buy.hbs"}}
-        </div>
+  <header class="sheet-header character-header">
+    <div class="image-container-merchant">
+      <img
+        class="profile-img"
+        src="{{actor.img}}"
+        data-edit="img"
+        title="{{actor.name}}"
+      />
+      <h1 class="merchant-name">
+        <input
+          name="name"
+          type="text"
+          value="{{actor.name}}"
+          placeholder="Name"
+        />
+      </h1>
+    </div>
+  </header>
+  <h1></h1>
 
-    </section>
- </section>
 </form>
