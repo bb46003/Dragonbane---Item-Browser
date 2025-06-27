@@ -241,3 +241,14 @@ a.fa-solid.fa-magnifying-glass {
 .merchant {
   min-height: 380px;
 }
+.merchant-name {
+  height: 100%;
+}
+
+.tab.sellingStuff {
+  margin-top: 10px;
+}
+.item-actions {
+  display: flex;
+  justify-content: space-evenly;
+}

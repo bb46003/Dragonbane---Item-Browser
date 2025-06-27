@@ -28,15 +28,11 @@ export class merchantData extends DragonbaneDataModel {
     });
   }
 }
-const BaseActorSheet =
-  typeof foundry?.appv1?.sheets?.ActorSheet !== "undefined"
-    ? foundry.appv1.sheets.ActorSheet
-    : ActorSheet;
+
 const { api, sheets } = foundry.applications;
 export class merchant extends api.HandlebarsApplicationMixin(
   sheets.ActorSheetV2,
 ) {
-  
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
     classes: ["merchant"],
@@ -44,18 +40,21 @@ export class merchant extends api.HandlebarsApplicationMixin(
       width: 800,
       height: "auto",
     },
+    actions: {
+      sellWithBarter: merchant.#rollForBarter,
+      sellWithOutBarter: merchant.#sellWithOutBarter,
+    },
     actor: {
       type: "merchant",
     },
   };
   /** @override */
   static PARTS = {
-    
     body: {
       id: "body",
       template: "modules/dragonbane-item-browser/templates/merchant.hbs",
     },
-     tabs: {
+    tabs: {
       id: "tabs",
       template: "modules/dragonbane-item-browser/templates/tab/tabs.hbs",
     },
@@ -71,7 +70,6 @@ export class merchant extends api.HandlebarsApplicationMixin(
       id: "buingStuff",
       template: "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
     },
-   
   };
   static TABS = {
     sheet: [
@@ -81,16 +79,23 @@ export class merchant extends api.HandlebarsApplicationMixin(
     ],
   };
 
-  tabGroups = {
-    sheet: "buingStuff",
-  };
-   #getTabs() {
+  #getTabs() {
     const tabs = {};
-    for ( const [groupId, config] of Object.entries(this.constructor.TABS) ) {
+    for (const [groupId, config] of Object.entries(this.constructor.TABS)) {
       const group = {};
-      for ( const t of config ) {
-        const active = this.tabGroups[t.group] === t.id;
-        group[t.id] = Object.assign({active, cssClass: active ? "active" : ""}, t);
+      for (const t of config) {
+        const isGM = game.user.isGM;
+        let active = false;
+        if (isGM && t.id === "settings") {
+          active = true;
+        }
+        if (!isGM && t.id === "buingStuff") {
+          active = true;
+        }
+        group[t.id] = Object.assign(
+          { active, cssClass: active ? "active" : "" },
+          t,
+        );
       }
       tabs[groupId] = group;
     }
@@ -98,9 +103,8 @@ export class merchant extends api.HandlebarsApplicationMixin(
   }
   /** @override */
   async _prepareContext(options) {
-
     const actorData = await this.getData();
-    return actorData
+    return actorData;
   }
 
   async getData() {
@@ -112,12 +116,12 @@ export class merchant extends api.HandlebarsApplicationMixin(
       tabs: tabGroups.sheet,
       actor: updateActoprData,
       system: updateActoprData.system,
-       fields: this.document.system.schema.fields,
-        isEditable: this.isEditable,
-        source: this.document.toObject(),
-         tabGroups,
+      fields: this.document.system.schema.fields,
+      isEditable: this.isEditable,
+      source: this.document.toObject(),
+      tabGroups,
       tabs: tabGroups.sheet,
-      items: updateActoprData.items
+      items: updateActoprData.items,
     };
     async function enrich(html) {
       if (html) {
@@ -153,86 +157,44 @@ export class merchant extends api.HandlebarsApplicationMixin(
     }
   }
   activateListeners(html) {
-    if (game.release.generation < 13) {
-      html.on("input", "#slider-selling", (ev) => this.updateSliderOutput(ev));
-      html.on("change", "#slider-selling", (ev) => {
-        const newValue = parseFloat(ev.target.value);
-        this.actor.update({ "system.selling_rate": newValue });
-        const slider = ev.target;
-        slider.blur();
+    const selingSlider = html.querySelector("#slider-selling");
+    selingSlider.addEventListener("input", (ev) => this.updateSliderOutput(ev));
+    selingSlider.addEventListener("change", (ev) => {
+      const newValue = parseFloat(ev.target.value);
+      this.actor.update({ "system.selling_rate": newValue });
+      const slider = ev.target;
+      slider.blur();
+    });
+    const buyingSlider = html.querySelector("#slider-buing");
+    buyingSlider.addEventListener("input", (ev) => this.updateSliderOutput(ev));
+    buyingSlider.addEventListener("change", async (ev) => {
+      const newValue = parseFloat(ev.target.value);
+      await this.actor.update({ "system.buing_rate": newValue });
+      const slider = ev.target;
+      slider.blur();
+    });
+    const percentage = html.querySelector("#percentage");
+    percentage.addEventListener("change", (ev) => this.textInput(ev));
+    const supplySelection = html.querySelector(".supply-selection");
+    supplySelection.addEventListener("change", (ev) => this.changeSupply(ev));
+    const trash = html.querySelectorAll(".fa.fa-trash");
+    if (trash !== null) {
+      trash.forEach((icon) => {
+        icon.addEventListener("click", (ev) => this.removeFromSelling(ev));
       });
-      html.on("input", "#slider-buing", (ev) => this.updateSliderOutput(ev));
-      html.on("change", "#slider-buing", async (ev) => {
-        const newValue = parseFloat(ev.target.value);
-        await this.actor.update({ "system.buing_rate": newValue });
-        const slider = ev.target;
-        slider.blur();
-      });
-      html.on("change", "#percentage", (ev) => this.textInput(ev));
-      html.on("change", ".supply-selection", (ev) => this.changeSupply(ev));
-      html.on("click", ".fa.fa-trash", (ev) => this.removeFromSelling(ev));
-      html.on("click", "button.sell-button", (ev) =>
-        this.sellWithOutBarter(ev),
-      );
-      html.on("click", "button.barter-button", (ev) => this.rollForBarter(ev));
-      html.on("click", ".fas.fa-coins", (ev) => this.buyItem(ev));
-    } else {
-      DoD_Utility.addHtmlEventListener(html, "input", "#slider-selling", (ev) =>
-        this.updateSliderOutput(ev),
-      );
-      DoD_Utility.addHtmlEventListener(
-        html,
-        "change",
-        "#slider-selling",
-        (ev) => {
-          const newValue = parseFloat(ev.target.value);
-          this.actor.update({ "system.selling_rate": newValue });
-          const slider = ev.target;
-          slider.blur();
-        },
-      );
-      DoD_Utility.addHtmlEventListener(html, "input", "#slider-buing", (ev) =>
-        this.updateSliderOutput(ev),
-      );
-      DoD_Utility.addHtmlEventListener(
-        html,
-        "change",
-        "#slider-buing",
-        async (ev) => {
-          const newValue = parseFloat(ev.target.value);
-          await this.actor.update({ "system.buing_rate": newValue });
-          const slider = ev.target;
-          slider.blur();
-        },
-      );
-      DoD_Utility.addHtmlEventListener(html, "change", "#percentage", (ev) =>
-        this.textInput(ev),
-      );
-      DoD_Utility.addHtmlEventListener(
-        html,
-        "change",
-        ".supply-selection",
-        (ev) => this.changeSupply(ev),
-      );
-      DoD_Utility.addHtmlEventListener(html, "click", ".fa.fa-trash", (ev) =>
-        this.removeFromSelling(ev),
-      );
-      DoD_Utility.addHtmlEventListener(
-        html,
-        "click",
-        "button.sell-button",
-        (ev) => this.sellWithOutBarter(ev),
-      );
-      DoD_Utility.addHtmlEventListener(
-        html,
-        "click",
-        "button.barter-button",
-        (ev) => this.rollForBarter(ev),
-      );
-      DoD_Utility.addHtmlEventListener(html, "click", ".fas.fa-coins", (ev) =>
-        this.buyItem(ev),
-      );
     }
+
+    const coins = html.querySelectorAll(".fas.fa-coins");
+    if (coins !== null) {
+      coins.forEach((icon) => {
+        icon.addEventListener("click", (ev) => this.buyItem(ev));
+      });
+    }
+  }
+  async render(force = false, options = {}) {
+    await super.render(force, options);
+    const el = this.element;
+    this.activateListeners(el);
   }
   updateSliderOutput(ev) {
     const slider = ev.target;
@@ -287,10 +249,10 @@ export class merchant extends api.HandlebarsApplicationMixin(
     }
   }
   async changeSupply(ev) {
-    const value = ev.currentTarget.value;
+    const value = ev.target.value;
     await this.actor.update({ ["system.supply"]: value });
   }
-  async _onDrop(event) {
+  async _onDropItem(event) {
     event.preventDefault();
     const data = event.dataTransfer;
     const merchant = this.actor;
@@ -454,7 +416,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
       await this.actor.deleteEmbeddedDocuments("Item", [itemID]);
     }
   }
-  async sellWithOutBarter(ev) {
+  static async #sellWithOutBarter(ev) {
     const actorGroups = document.querySelectorAll(".actor-group");
     const result = {};
     const coinsType = [
@@ -792,7 +754,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
       });
     }
   }
-  async rollForBarter(ev) {
+  static async #rollForBarter(ev) {
     let userActor;
     let characters = {};
     if (game.user.isGM) {
@@ -1291,7 +1253,7 @@ export class sellingItemMerchat {
     const currentMessage = game.messages.get(ChatMessageID);
     const formula = currentMessage.rolls[0]._formula;
     let options = currentMessage.rolls[0].options;
-    const userActor = game.actors.get(currentMessage.system.userActor._id);
+    const userActor = game.actors.get(currentMessage.system.actor._id);
     const priceLabel = currentMessage.system.priceLabel;
     const element = event.currentTarget;
     const parent = element.parentElement;
@@ -1338,7 +1300,7 @@ export class sellingItemMerchat {
     const merchantActor = game.actors.get(
       currentMessage.system.merchantActor._id,
     );
-    const items = currentMessage.system.items;
+    const items = currentMessage.system.item;
     let existingMessage = game.messages.get(ChatMessage);
     await addSellButton(
       items,

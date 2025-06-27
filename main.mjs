@@ -129,17 +129,24 @@ Hooks.once("init", function () {
   });
   preloadHandlebarsTemplates();
   if (game.release.generation < 13) {
-    Hooks.on(
-      "renderChatLog",
-      addChatListeners,
-      sellingItemMerchat.addChatListeners,
-    );
+    Hooks.on("renderChatLog", addChatListeners);
+    Hooks.on("renderChatMessageHTML", (app, html, data) => {
+      const sellingMerchantInstance = new sellingItemMerchat({
+        itemID: null,
+        actorID: null,
+      });
+      sellingMerchantInstance.addChatListeners(app, html, data);
+    });
   } else {
-    Hooks.on(
-      "renderChatMessageHTML",
-      addChatListeners,
-      sellingItemMerchat.addChatListeners,
-    );
+    Hooks.on("renderChatMessageHTML", addChatListeners);
+
+    Hooks.on("renderChatMessageHTML", (app, html, data) => {
+      const sellingMerchantInstance = new sellingItemMerchat({
+        itemID: null,
+        actorID: null,
+      });
+      sellingMerchantInstance.addChatListeners(app, html, data);
+    });
   }
 });
 Hooks.on("hoverToken", async (token, ev) => {
@@ -591,7 +598,7 @@ function registerHandlebarsHelpers() {
     const isGM = game.user.isGM;
     if (isGM) {
       const localize = game.i18n.localize("DB-IB.merchant.setting");
-      const html = `<a class="settings" data-action="tab"  data-tab="settings">${localize}</a>`;
+      const html = `<a class="settings" data-action="tab" data-group="sheet" data-tab="settings">${localize}</a>`;
       return html;
     }
   });
@@ -600,30 +607,30 @@ function registerHandlebarsHelpers() {
     const html = `  <input   id="percentage"   type="text"  value="${sellingRatePercentage}">`;
     return html;
   });
-  Handlebars.registerHelper("groupByActor", function (items,actor) {
+  Handlebars.registerHelper("groupByActor", function (items, actor) {
     const grouped = {};
     const itemsMerchant = actor.data.root.actor.items;
-    if(itemsMerchant !== undefined){
-    itemsMerchant.forEach((item) => {
-      if (item.flags["dragonbane-item-browser"]?.actor) {
-        const actorFlag = item.flags["dragonbane-item-browser"].actor;
-        if (!grouped[actorFlag]) {
-          grouped[actorFlag] = [];
+    if (itemsMerchant !== undefined) {
+      itemsMerchant.forEach((item) => {
+        if (item.flags["dragonbane-item-browser"]?.actor) {
+          const actorFlag = item.flags["dragonbane-item-browser"].actor;
+          if (!grouped[actorFlag]) {
+            grouped[actorFlag] = [];
+          }
+          grouped[actorFlag].push(item);
         }
-        grouped[actorFlag].push(item);
-      }
-    });
+      });
 
-    let result = "";
-    const sells = game.i18n.localize("DB-IB.merchant.sells");
-    const itemName = game.i18n.localize("DB-IB.itemName");
-    const itemPrice = game.i18n.localize("DB-IB.itemPrice");
+      let result = "";
+      const sells = game.i18n.localize("DB-IB.merchant.sells");
+      const itemName = game.i18n.localize("DB-IB.itemName");
+      const itemPrice = game.i18n.localize("DB-IB.itemPrice");
 
-    for (const [actorId, items] of Object.entries(grouped)) {
-      const actor = game.actors.get(actorId);
-      const actorName = actor.name;
+      for (const [actorId, items] of Object.entries(grouped)) {
+        const actor = game.actors.get(actorId);
+        const actorName = actor.name;
 
-      result += `
+        result += `
               <div class="actor-group">
                   <div class="header-row" id="${actorId}">
                       <h3>${actorName} ${sells}</h3>
@@ -634,64 +641,66 @@ function registerHandlebarsHelpers() {
                   </div>
           `;
 
-      for (const item of itemsMerchant) {
-        const itemCost = item.system.cost;
-        const buyingRate = this.actor.system?.buing_rate || 1;
+        for (const item of items) {
+          const itemCost = item.system.cost;
+          const buyingRate = this.actor.system?.buing_rate || 1;
 
-        let [costValue, currency2] = itemCost.split(" ");
-        const finalCost = Number(costValue) * buyingRate;
-        let roundedCost;
+          let [costValue, currency2] = itemCost.split(" ");
+          const finalCost = Number(costValue) * buyingRate;
+          let roundedCost;
 
-        if (
-          currency2 === "copper" ||
-          currency2 === game.i18n.translations.DoD.currency.copper.toLowerCase()
-        ) {
-          roundedCost = Math.round(finalCost);
-        } else if (
-          currency2 === "silver" ||
-          currency2 === game.i18n.translations.DoD.currency.silver.toLowerCase()
-        ) {
-          roundedCost = finalCost.toFixed(1);
-        } else if (
-          currency2 === "gold" ||
-          currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()
-        ) {
-          roundedCost = finalCost.toFixed(2);
-        }
-        if (roundedCost < 1) {
-          const coinsTypeLocal = [
-            game.i18n.translations.DoD.currency.gold.toLowerCase(),
-            game.i18n.translations.DoD.currency.silver.toLowerCase(),
-            game.i18n.translations.DoD.currency.copper.toLowerCase(),
-          ];
-          const coinTypeEn = ["gold", "silver", "copper"];
-          roundedCost = roundedCost * 10;
-          let coin2 = coinTypeEn.indexOf(currency2);
-          let coin3 = 0;
-          if (coin2 === -1) {
-            coin3 = coinsTypeLocal.indexOf(currency2);
-            currency2 = coinsTypeLocal[coin3 + 1];
-          } else {
-            currency2 = coinTypeEn[coin2 + 1];
+          if (
+            currency2 === "copper" ||
+            currency2 ===
+              game.i18n.translations.DoD.currency.copper.toLowerCase()
+          ) {
+            roundedCost = Math.round(finalCost);
+          } else if (
+            currency2 === "silver" ||
+            currency2 ===
+              game.i18n.translations.DoD.currency.silver.toLowerCase()
+          ) {
+            roundedCost = finalCost.toFixed(1);
+          } else if (
+            currency2 === "gold" ||
+            currency2 === game.i18n.translations.DoD.currency.gold.toLowerCase()
+          ) {
+            roundedCost = finalCost.toFixed(2);
           }
-        }
-        const finalSellingPrice = `${roundedCost} ${currency2}`;
+          if (roundedCost < 1) {
+            const coinsTypeLocal = [
+              game.i18n.translations.DoD.currency.gold.toLowerCase(),
+              game.i18n.translations.DoD.currency.silver.toLowerCase(),
+              game.i18n.translations.DoD.currency.copper.toLowerCase(),
+            ];
+            const coinTypeEn = ["gold", "silver", "copper"];
+            roundedCost = roundedCost * 10;
+            let coin2 = coinTypeEn.indexOf(currency2);
+            let coin3 = 0;
+            if (coin2 === -1) {
+              coin3 = coinsTypeLocal.indexOf(currency2);
+              currency2 = coinsTypeLocal[coin3 + 1];
+            } else {
+              currency2 = coinTypeEn[coin2 + 1];
+            }
+          }
+          const finalSellingPrice = `${roundedCost} ${currency2}`;
 
-        result += `
+          result += `
                   <div class="buying-item" id="${item._id}">
                       <label>${item.name}</label>
                       <label class="price-label">${finalSellingPrice}</label>
                       <label><i class="fa fa-trash"></i></label>
                   </div>
               `;
+        }
+
+        result += `</div>`;
       }
+      const newHtml = new Handlebars.SafeString(result);
 
-      result += `</div>`;
+      return newHtml;
     }
-    const newHtml = new Handlebars.SafeString(result);
-
-    return newHtml;
-  }
   });
   Handlebars.registerHelper("range", function (end) {
     let result = "";
@@ -700,7 +709,7 @@ function registerHandlebarsHelpers() {
     }
     return new Handlebars.SafeString(result);
   });
-  Handlebars.registerHelper("itemToBuy", async function (items, actor) {
+  Handlebars.registerHelper("itemToBuy", function (items, actor) {
     const itemName = game.i18n.localize("DB-IB.itemName");
     const itemPrice = game.i18n.localize("DB-IB.itemPrice");
 
@@ -710,10 +719,12 @@ function registerHandlebarsHelpers() {
           <label>${itemName}</label>
           <label>${itemPrice}</label>
         </div>`;
-  
-    const itemsMerchant = actor.data.root.actor.items
+
+    const itemsMerchant = actor.data.root.actor.items;
+    const sellingRate = actor.data.root.actor.system.selling_rate;
     itemsMerchant.forEach((item) => {
-      if (!item.flags?.actor && item.flags?.actor !== undefined) {
+      const flag = item?.flags["dragonbane-item-browser"]?.actor;
+      if (flag === undefined) {
         const [costValue, currency2] = item.system.cost.split(" ");
         const finalCost = Number(costValue) * sellingRate;
         let roundedCost;
