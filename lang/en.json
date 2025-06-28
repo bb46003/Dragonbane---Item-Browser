@@ -27,8 +27,8 @@
     "Chat": {
       "buyItem": "Buy Item",
       "reducePrice": "You reduce the price of {item} by 20%!",
-      "cannotBuy": "You offend the seller, which ends up with no possibility to buy {item}",
-      "cannotSell": "You offend the seller, which ends up with no possibility to sell {item}",
+      "cannotBuy": "You offend your opponent, which ends up with no possibility to buy {item}",
+      "cannotSell": "You offend your opponent, which ends up with no possibility to sell {item}",
       "reducePriceDragon": "You reduce the price of {item} by 50%!",
       "nochangeInPrice": "You can buy {item} at the regular price.",
       "sellItem": "<b>{actor}</b> sells <b>{item}</b> for <b>{cost} {currency}</b>.",

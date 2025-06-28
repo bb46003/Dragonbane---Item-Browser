@@ -80,16 +80,29 @@ export class merchant extends api.HandlebarsApplicationMixin(
   };
 
   #getTabs() {
+    const element = this?.element;
+    let activeTab = "";
+    if (element !== undefined && element !== null) {
+      const tabsElements = element.querySelector(".tab.active");
+      if(tabsElements !== null){
+        activeTab = tabsElements.dataset.tab;
+      }
+      
+    }
+
     const tabs = {};
     for (const [groupId, config] of Object.entries(this.constructor.TABS)) {
       const group = {};
       for (const t of config) {
         const isGM = game.user.isGM;
         let active = false;
-        if (isGM && t.id === "settings") {
+        if (isGM && t.id === "settings" && activeTab === "") {
           active = true;
         }
-        if (!isGM && t.id === "buingStuff") {
+        if (!isGM && t.id === "buingStuff" && activeTab === "") {
+          active = true;
+        }
+        if (activeTab !== "" && t.id === activeTab) {
           active = true;
         }
         group[t.id] = Object.assign(
@@ -312,15 +325,15 @@ export class merchant extends api.HandlebarsApplicationMixin(
                     quantity: Number(itemData.system.quantity),
                   },
                 );
-                new Dialog({
-                  title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
+                new api.DialogV2({
+                  window :{title: game.i18n.localize("DB-IB.dialog.denfieQuantity")},
                   content: html,
-                  buttons: {
-                    sell: {
+                  buttons: [{
+                      action: "sell",
                       label: game.i18n.localize("DB-IB.dialog.sell"),
-                      callback: async () => {
+                      callback: async (event) => {
                         const selectedQuantity =
-                          document.querySelector(".quantity-selector").value;
+                          event.currentTarget.querySelector(".quantity-selector").value;
                         const newName = itemData.name + `(${selectedQuantity})`;
                         const oldCost =
                           itemData.system.cost.match(/(\d+)\s*(\w+)/);
@@ -335,16 +348,16 @@ export class merchant extends api.HandlebarsApplicationMixin(
                         ]);
                         const merchantItem = this.actor.items.find(
                           (item) =>
-                            item.flags.actor === actorID &&
+                            item.flags["dragonbane-item-browser"].actor === actorID &&
                             item.name === itemData.name,
                         );
                         await merchantItem.update({
                           ["system.cost"]: newPrice,
                           ["name"]: newName,
+                          ['system.quantity']:selectedQuantity
                         });
                       },
-                    },
-                  },
+                    }],
                 }).render(true);
               } else {
                 await this.actor.createEmbeddedDocuments("Item", [itemData]);
@@ -468,13 +481,21 @@ export class merchant extends api.HandlebarsApplicationMixin(
             allItemName += ", ";
           }
           allItemName += item.name;
-          const sellingItem = item.name;
+          const sellingItem =  await this.actor.items.find(
+              (element) => element.id === item.id,
+            );
           if (sellingActor.ownership[user] === 3) {
             this.actor.deleteEmbeddedDocuments("Item", [item.id]);
             const removerdItem = await sellingActor.items.find(
-              (item) => item.name === sellingItem,
+              (item) => item.id === sellingItem.flags["dragonbane-item-browser"].originalID,
             );
-            sellingActor.deleteEmbeddedDocuments("Item", [removerdItem._id]);
+
+            if(sellingItem.system.quantity === removerdItem.system.quantity){
+              sellingActor.deleteEmbeddedDocuments("Item", [removerdItem._id]);
+            }
+            else{
+              removerdItem.update({['system.quantity']:removerdItem.system.quantity - sellingItem.system.quantity})
+            }
           }
         }
       });
@@ -541,20 +562,19 @@ export class merchant extends api.HandlebarsApplicationMixin(
         { actors: characters },
       );
       userActor = await new Promise((resolve) => {
-        new Dialog({
-          title: game.i18n.localize("DB-IB.dialog.selectActor"),
+        new api.DialogV2({
+          window: {title: game.i18n.localize("DB-IB.dialog.selectActor")},
           content: content,
-          buttons: {
-            select: {
+          buttons: [{
+            action: "select",
               label: game.i18n.localize("DB-IB.dialog.buy"),
-              callback: async (html) => {
-                const selectedActorId = html.find("select").val();
+              callback: async (event) => {
+                const selectedActorId = event.currentTarget.querySelector("select").value;
                 const selectedActor = game.actors.get(selectedActorId);
                 resolve(selectedActor);
               },
-            },
-          },
-          close: () => resolve(null),
+            }],
+          
         }).render(true);
       });
 
@@ -584,11 +604,11 @@ export class merchant extends api.HandlebarsApplicationMixin(
       }
       const options = {};
       const test = new DoDSkillTest(userActor, skill, options);
-      const d = new Dialog({
-        title: game.i18n.localize("DB-IB.wannaBarter"),
+      const d = new api.DialogV2({
+        window: {title: game.i18n.localize("DB-IB.wannaBarter")},
         content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
-        buttons: {
-          buyWithRoll: {
+        buttons: [{
+            action: "buyWithRoll",
             label: game.i18n.localize("DB-IB.rollForBarter"),
             callback: async () => {
               const barterSkillRoll = await test.roll();
@@ -618,8 +638,9 @@ export class merchant extends api.HandlebarsApplicationMixin(
                 );
               }
             },
+            default: true
           },
-          buyWithoutRoll: {
+          {action: "buyWithoutRoll",
             label: game.i18n.localize("DB-IB.BuyWithoutRoll"),
             callback: async () => {
               await this.spendMony(
@@ -632,9 +653,8 @@ export class merchant extends api.HandlebarsApplicationMixin(
                 priceLabel,
               );
             },
-          },
-        },
-        default: "buyWithRoll",
+          }],
+       
       });
       d.render(true);
     } else {
@@ -770,20 +790,18 @@ export class merchant extends api.HandlebarsApplicationMixin(
           { actors: characters },
         );
         userActor = await new Promise((resolve) => {
-          new Dialog({
-            title: game.i18n.localize("DB-IB.dialog.selectActor"),
+          new api.DialogV2({
+            window: {title: game.i18n.localize("DB-IB.dialog.selectActor")},
             content: content,
-            buttons: {
-              select: {
+            buttons: [{
+              action: "select",
                 label: game.i18n.localize("DB-IB.dialog.buy"),
-                callback: async (html) => {
-                  const selectedActorId = html.find("select").val();
+                callback: async (event) => {
+                  const selectedActorId = event.currentTarget.querySelector("select").value;
                   const selectedActor = game.actors.get(selectedActorId);
                   resolve(selectedActor);
                 },
-              },
-            },
-            close: () => resolve(null),
+              }]        
           }).render(true);
         });
 
