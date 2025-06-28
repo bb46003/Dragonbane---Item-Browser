@@ -1,3 +1,4 @@
+<section class="tab settings flexcol {{tabs.settings.cssClass}}" data-group="sheet" data-tab="settings" action-data="tab">
 <div class="merchant-settings">
     <div class="selling-price">
         <label>{{localize "DB-IB.merchant.setSellingRate"}} </label>
@@ -13,13 +14,14 @@
         {{#sellingRate system.buing_rate}}
         {{/sellingRate}}
     </div>
-     <div class="supply-element">
-                <label class="supply-label">{{localize "DB-IB.merchant.allowedSupply"}}</label>
-                <select class="supply-selection">
-                    <option  value="common" {{#if (eq system.supply "common")}}selected{{/if}}>{{localize "DoD.supplyTypes.common"}}</option>
-                    <option  value="uncommon" {{#if (eq system.supply "uncommon")}}selected{{/if}}>{{localize "DoD.supplyTypes.uncommon"}}</option>
-                    <option  value="rare" {{#if (eq system.supply "rare")}}selected{{/if}}>{{localize "DoD.supplyTypes.rare"}}</option>
-                    <option  value="any" {{#if (eq system.supply "any")}}selected{{/if}}>{{localize "DB-IB.Any"}}</option>
-                </select>
-            </div>
+    <div class="supply-element">
+        <label class="supply-label">{{localize "DB-IB.merchant.allowedSupply"}}</label>
+        <select class="supply-selection" data-action="changeSupply">
+            <option  value="common" {{#if (eq system.supply "common")}}selected{{/if}}>{{localize "DoD.supplyTypes.common"}}</option>
+            <option  value="uncommon" {{#if (eq system.supply "uncommon")}}selected{{/if}}>{{localize "DoD.supplyTypes.uncommon"}}</option>
+            <option  value="rare" {{#if (eq system.supply "rare")}}selected{{/if}}>{{localize "DoD.supplyTypes.rare"}}</option>
+            <option  value="any" {{#if (eq system.supply "any")}}selected{{/if}}>{{localize "DB-IB.Any"}}</option>
+        </select>
+    </div>
 </div> 
+</section>

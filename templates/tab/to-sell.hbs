@@ -1,5 +1,10 @@
-<div class="selling-items">
-    {{#itemToBuy items}}
-    {{/itemToBuy}}
-
-</div>
+<section
+  class="tab sellingStuff flexcol {{tabs.sellingStuff.cssClass}}"
+  action-data="tab"
+  data-group="sheet"
+  data-tab="sellingStuff"
+>
+  <div class="selling-items">
+    {{#itemToBuy items}}{{/itemToBuy}}
+  </div>
+</section>

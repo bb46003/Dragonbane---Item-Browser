@@ -1,3 +1,1 @@
-export class merchantDialog extends Dialog {
-
-}
+export class merchantDialog extends Dialog {}

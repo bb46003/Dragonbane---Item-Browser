@@ -1,6 +1,6 @@
 {
-    "Actor": {
-      "types":["merchant"],
-      "merchant":{}
-    }
+  "Actor": {
+    "types": ["merchant"],
+    "merchant": {}
+  }
 }

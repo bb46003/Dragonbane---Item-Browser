@@ -1,8 +1,18 @@
-<div class="buing-items">
-    {{#groupByActor items}}
-    {{/groupByActor}}
-</div>
-<div class="item-actions">
-    <button class="sell-button" >{{localize "DB-IB.SellWithoutBarter"}}</button>
-    <button class="barter-button" >{{localize "DB-IB.rollForBarter"}}</button>
-</div>
+<section
+  class="tab buingStuff flexcol {{tabs.buingStuff.cssClass}}"
+  action-data="tab"
+  data-group="sheet"
+  data-tab="buingStuff"
+>
+  <div class="buing-items">
+    {{#groupByActor items}}{{/groupByActor}}
+  </div>
+  <div class="item-actions">
+    <button class="sell-button" data-action="sellWithOutBarter">{{localize
+        "DB-IB.SellWithoutBarter"
+      }}</button>
+    <button class="barter-button" data-action="sellWithBarter">{{localize
+        "DB-IB.rollForBarter"
+      }}</button>
+  </div>
+</section>
