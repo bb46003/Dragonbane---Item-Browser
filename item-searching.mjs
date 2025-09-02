@@ -546,7 +546,6 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
           label: game.i18n.localize("DB-IB.rollForBarter"),
           callback: async () => {
             const barterSkillRoll = await test.roll();
-            console.log(barterSkillRoll);
             if (barterSkillRoll !== undefined) {
               const success = barterSkillRoll.postRollData.success;
               const isDemon = barterSkillRoll.postRollData.isDemon;
@@ -910,7 +909,6 @@ async function addBuyButton(
       system: { actor, item, barterSkillRoll },
     });
   }
-  console.log(barterSkillRoll);
 }
 async function barterPushButton(existingMessage) {
   let tempDiv = document.createElement("div");
@@ -960,7 +958,6 @@ async function barterPushRoll(event) {
   let options = { canPush: false, skipDialog: true, formula: formula };
   const test = new DoDSkillTest(actor, skill, options);
   const barterSkillRoll = await test.roll();
-  console.log(barterSkillRoll.rollMessage);
   const sucess = barterSkillRoll.postRollData.success;
   const isDemon = barterSkillRoll.postRollData.isDemon;
   const isDragon = barterSkillRoll.postRollData.isDragon;
@@ -1010,7 +1007,7 @@ export class sellingItem {
         "click",
         ".chat-button.sell-item",
         this.sellFromChat.bind(this),
-      );
+      )
     }
   }
   async selling(itemID, actorID) {

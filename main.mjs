@@ -138,9 +138,15 @@ Hooks.once("init", function () {
       sellingMerchantInstance.addChatListeners(app, html, data);
     });
   } else {
-    Hooks.on("renderChatMessageHTML", addChatListeners);
+    Hooks.on("renderChatMessageHTML",  (app, html, data) => {
+      addChatListeners(app, html, data)
+      const sellingElements = new sellingItem({
+        itemID: null,
+        actorID: null,
+      });
+      sellingElements.addChatListeners(app, html, data);
 
-    Hooks.on("renderChatMessageHTML", (app, html, data) => {
+
       const sellingMerchantInstance = new sellingItemMerchat({
         itemID: null,
         actorID: null,
