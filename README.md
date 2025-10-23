@@ -11,7 +11,9 @@
 <div style="margin: 20px;">
     <img src="https://raw.githubusercontent.com/bb46003/Dragonbane---Item-Browser/refs/heads/main/art/Zrzut ekranu 2025-10-23 125730.png" width="500" />
 </div>
+<br>
 <p> Here is YouTube movie which show what is possible by this module https://www.youtube.com/watch?v=wP-QuUha-eI by Matthias Weeks</p>
+<br>
 <p>The module works with localization (any language other than English), as long as you use the exact names for gold, silver, and copper as in the Inventory tab under the coin section. Capitalization does not matter.</p>
 <p>In the tabs for Heroic Abilities, Magic Tricks, Spells, Equipped Weapons, Equipped Armor, Equipped Helmets, and Items, you will find a magnifying glass icon:</p>
 <div style="margin: 20px;">
