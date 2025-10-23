@@ -8,6 +8,9 @@
     <li>Ability</li>
 </ul>
 <p>It also adds a new type of actor – Merchant.</p>
+<p> Here is YouTube movie which show what is possible by this module https://www.youtube.com/watch?v=wP-QuUha-eI by Matthias Weeks</p>
+
+
 <div style="margin: 20px;">
     <img src="https://raw.githubusercontent.com/bb46003/Dragonbane---Item-Browser/refs/heads/main/art/Zrzut ekranu 2025-10-23 125730.png" width="500" />
 </div>
