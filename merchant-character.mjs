@@ -318,11 +318,12 @@ export class merchant extends api.HandlebarsApplicationMixin(
           } else {
             if (itemSuply <= index) {
               if (itemData.system.quantity > 1) {
+                const quantity = Array.from({ length: Number(item.system.quantity) }, (_, i) => i + 1);
                 const html = await DoD_Utility.renderTemplate(
                   "modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs",
                   {
                     item: itemData.name,
-                    quantity: Number(itemData.system.quantity),
+                    quantity: quantity,
                   },
                 );
                 new api.DialogV2({

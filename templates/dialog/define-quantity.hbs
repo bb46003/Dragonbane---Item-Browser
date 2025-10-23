@@ -1,6 +1,8 @@
 <div class="quantity-dialog">
   <label>{{localize "DB-IB.dialog.selectSellingQuantity" item=item}}</label>
   <select class="quantity-selector">
-    {{#range quantity}}{{/range}}
+    {{#each quantity as |number|}}
+      <option value='{{number}}'>{{number}}</option>
+    {{/each}}
   </select>
 </div>

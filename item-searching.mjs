@@ -1170,9 +1170,10 @@ export class sellingItem {
         speaker: ChatMessage.getSpeaker({ actor }),
       });
     } else {
+      const quantity = Array.from({ length: Number(item.system.quantity) }, (_, i) => i + 1);
       const html = await DoD_Utility.renderTemplate(
         "modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs",
-        { item: item.name, quantity: Number(item.system.quantity) },
+        { item: item.name, quantity: quantity },
       );
       const quantityDialog = await new foundry.applications.api.DialogV2({
         window: { title: game.i18n.localize("DB-IB.dialog.denfieQuantity") },
@@ -1202,7 +1203,7 @@ export class sellingItem {
               const sellsQunatity = `${selectedQuantity} -  ${item.name}`;
               ChatMessage.create({
                 content: game.i18n.format("DB-IB.Chat.sellItem", {
-                  cost: finalPrice,
+                  cost: finalPrice * Number(selectedQuantity),
                   item: sellsQunatity,
                   actor: actor.name,
                   currency: currency2,
@@ -1353,7 +1354,7 @@ export class sellingItem {
     const data = game.messages.get(mesageID).system;
     const roll = data.barterSkillRoll;
     const actor = game.actors.get(data.actor._id);
-    const item = data.item;
+    const item  = actor.items.get(data.item._id);
     let actorGC = actor.system.currency.gc;
     let actorSC = actor.system.currency.sc;
     let actorCC = actor.system.currency.cc;
@@ -1456,9 +1457,10 @@ export class sellingItem {
         speaker: ChatMessage.getSpeaker({ actor }),
       });
     } else {
+      const quantity = Array.from({ length: Number(item.system.quantity) }, (_, i) => i + 1);
       const html = await DoD_Utility.renderTemplate(
         "modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs",
-        { item: item.name, quantity: Number(item.system.quantity) },
+        { item: item.name, quantity: quantity },
       );
       const quantityDialog = new foundry.applications.api.DialogV2({
         window: { title: game.i18n.localize("DB-IB.dialog.denfieQuantity") },
@@ -1479,7 +1481,7 @@ export class sellingItem {
                 ["system.currency.sc"]: actorSC + silverPart,
                 ["system.currency.cc"]: actorCC + copperPart,
               });
-              const newQunatity = item.seystem.quantity - selectedQuantity;
+              const newQunatity = item.system.quantity - selectedQuantity;
               if (newQunatity > 0) {
                 await item.update({ ["system.quantity"]: newQunatity });
               } else {
@@ -1488,7 +1490,7 @@ export class sellingItem {
               const sellsQunatity = `${selectedQuantity} -  ${item.name}`;
               ChatMessage.create({
                 content: game.i18n.format("DB-IB.Chat.sellItem", {
-                  cost: finalPrice,
+                  cost: finalPrice * Number(selectedQuantity),
                   item: sellsQunatity,
                   actor: actor.name,
                   currency: currency2,
@@ -1499,7 +1501,7 @@ export class sellingItem {
           },
         ],
       });
-      quantityDialog.reder(true);
+      quantityDialog.render(true);
     }
   }
 }

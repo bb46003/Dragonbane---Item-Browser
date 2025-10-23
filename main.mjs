@@ -708,13 +708,6 @@ function registerHandlebarsHelpers() {
       return newHtml;
     }
   });
-  Handlebars.registerHelper("range", function (end) {
-    let result = "";
-    for (let i = 0; i <= end; i++) {
-      result += `<option value="${i}">${i}</option>`;
-    }
-    return new Handlebars.SafeString(result);
-  });
   Handlebars.registerHelper("itemToBuy", function (items, actor) {
     const itemName = game.i18n.localize("DB-IB.itemName");
     const itemPrice = game.i18n.localize("DB-IB.itemPrice");
