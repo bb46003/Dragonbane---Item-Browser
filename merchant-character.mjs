@@ -1,6 +1,7 @@
 import DragonbaneDataModel from "/systems/dragonbane/modules/data/DragonbaneDataModel.js";
 import DoD_Utility from "/systems/dragonbane/modules/utility.js";
 import DoDSkillTest from "/systems/dragonbane/modules/tests/skill-test.js";
+import { itemsSearch } from "./item-searching.mjs";
 
 export class merchantData extends DragonbaneDataModel {
   static defineSchema() {
@@ -43,9 +44,16 @@ export class merchant extends api.HandlebarsApplicationMixin(
     actions: {
       sellWithBarter: merchant.#rollForBarter,
       sellWithOutBarter: merchant.#sellWithOutBarter,
+      openBrowser: merchant.#openBrowser,
+      showSortOption: merchant.#showSortOption,
+      sort: merchant.#sort,
     },
     actor: {
       type: "merchant",
+    },
+    form: {
+      handler: merchant.myFormHandler,
+      submitOnChange: true,
     },
   };
   /** @override */
@@ -84,10 +92,9 @@ export class merchant extends api.HandlebarsApplicationMixin(
     let activeTab = "";
     if (element !== undefined && element !== null) {
       const tabsElements = element.querySelector(".tab.active");
-      if(tabsElements !== null){
+      if (tabsElements !== null) {
         activeTab = tabsElements.dataset.tab;
       }
-      
     }
 
     const tabs = {};
@@ -135,6 +142,8 @@ export class merchant extends api.HandlebarsApplicationMixin(
       tabGroups,
       tabs: tabGroups.sheet,
       items: updateActoprData.items,
+      actorID: this.actor._id,
+      dataType: "item",
     };
     async function enrich(html) {
       if (html) {
@@ -318,7 +327,10 @@ export class merchant extends api.HandlebarsApplicationMixin(
           } else {
             if (itemSuply <= index) {
               if (itemData.system.quantity > 1) {
-                const quantity = Array.from({ length: Number(item.system.quantity) }, (_, i) => i + 1);
+                const quantity = Array.from(
+                  { length: Number(item.system.quantity) },
+                  (_, i) => i + 1,
+                );
                 const html = await DoD_Utility.renderTemplate(
                   "modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs",
                   {
@@ -327,14 +339,19 @@ export class merchant extends api.HandlebarsApplicationMixin(
                   },
                 );
                 new api.DialogV2({
-                  window :{title: game.i18n.localize("DB-IB.dialog.denfieQuantity")},
+                  window: {
+                    title: game.i18n.localize("DB-IB.dialog.denfieQuantity"),
+                  },
                   content: html,
-                  buttons: [{
+                  buttons: [
+                    {
                       action: "sell",
                       label: game.i18n.localize("DB-IB.dialog.sell"),
                       callback: async (event) => {
                         const selectedQuantity =
-                          event.currentTarget.querySelector(".quantity-selector").value;
+                          event.currentTarget.querySelector(
+                            ".quantity-selector",
+                          ).value;
                         const newName = itemData.name + `(${selectedQuantity})`;
                         const oldCost =
                           itemData.system.cost.match(/(\d+)\s*(\w+)/);
@@ -349,16 +366,17 @@ export class merchant extends api.HandlebarsApplicationMixin(
                         ]);
                         const merchantItem = this.actor.items.find(
                           (item) =>
-                            item.flags["dragonbane-item-browser"].actor === actorID &&
-                            item.name === itemData.name,
+                            item.flags["dragonbane-item-browser"].actor ===
+                              actorID && item.name === itemData.name,
                         );
                         await merchantItem.update({
                           ["system.cost"]: newPrice,
                           ["name"]: newName,
-                          ['system.quantity']:selectedQuantity
+                          ["system.quantity"]: selectedQuantity,
                         });
                       },
-                    }],
+                    },
+                  ],
                 }).render(true);
               } else {
                 await this.actor.createEmbeddedDocuments("Item", [itemData]);
@@ -482,20 +500,24 @@ export class merchant extends api.HandlebarsApplicationMixin(
             allItemName += ", ";
           }
           allItemName += item.name;
-          const sellingItem =  await this.actor.items.find(
-              (element) => element.id === item.id,
-            );
+          const sellingItem = await this.actor.items.find(
+            (element) => element.id === item.id,
+          );
           if (sellingActor.ownership[user] === 3) {
             this.actor.deleteEmbeddedDocuments("Item", [item.id]);
             const removerdItem = await sellingActor.items.find(
-              (item) => item.id === sellingItem.flags["dragonbane-item-browser"].originalID,
+              (item) =>
+                item.id ===
+                sellingItem.flags["dragonbane-item-browser"].originalID,
             );
 
-            if(sellingItem.system.quantity === removerdItem.system.quantity){
+            if (sellingItem.system.quantity === removerdItem.system.quantity) {
               sellingActor.deleteEmbeddedDocuments("Item", [removerdItem._id]);
-            }
-            else{
-              removerdItem.update({['system.quantity']:removerdItem.system.quantity - sellingItem.system.quantity})
+            } else {
+              removerdItem.update({
+                ["system.quantity"]:
+                  removerdItem.system.quantity - sellingItem.system.quantity,
+              });
             }
           }
         }
@@ -564,18 +586,20 @@ export class merchant extends api.HandlebarsApplicationMixin(
       );
       userActor = await new Promise((resolve) => {
         new api.DialogV2({
-          window: {title: game.i18n.localize("DB-IB.dialog.selectActor")},
+          window: { title: game.i18n.localize("DB-IB.dialog.selectActor") },
           content: content,
-          buttons: [{
-            action: "select",
+          buttons: [
+            {
+              action: "select",
               label: game.i18n.localize("DB-IB.dialog.buy"),
               callback: async (event) => {
-                const selectedActorId = event.currentTarget.querySelector("select").value;
+                const selectedActorId =
+                  event.currentTarget.querySelector("select").value;
                 const selectedActor = game.actors.get(selectedActorId);
                 resolve(selectedActor);
               },
-            }],
-          
+            },
+          ],
         }).render(true);
       });
 
@@ -606,9 +630,10 @@ export class merchant extends api.HandlebarsApplicationMixin(
       const options = {};
       const test = new DoDSkillTest(userActor, skill, options);
       const d = new api.DialogV2({
-        window: {title: game.i18n.localize("DB-IB.wannaBarter")},
+        window: { title: game.i18n.localize("DB-IB.wannaBarter") },
         content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
-        buttons: [{
+        buttons: [
+          {
             action: "buyWithRoll",
             label: game.i18n.localize("DB-IB.rollForBarter"),
             callback: async () => {
@@ -639,9 +664,10 @@ export class merchant extends api.HandlebarsApplicationMixin(
                 );
               }
             },
-            default: true
+            default: true,
           },
-          {action: "buyWithoutRoll",
+          {
+            action: "buyWithoutRoll",
             label: game.i18n.localize("DB-IB.BuyWithoutRoll"),
             callback: async () => {
               await this.spendMony(
@@ -654,8 +680,8 @@ export class merchant extends api.HandlebarsApplicationMixin(
                 priceLabel,
               );
             },
-          }],
-       
+          },
+        ],
       });
       d.render(true);
     } else {
@@ -792,17 +818,20 @@ export class merchant extends api.HandlebarsApplicationMixin(
         );
         userActor = await new Promise((resolve) => {
           new api.DialogV2({
-            window: {title: game.i18n.localize("DB-IB.dialog.selectActor")},
+            window: { title: game.i18n.localize("DB-IB.dialog.selectActor") },
             content: content,
-            buttons: [{
-              action: "select",
+            buttons: [
+              {
+                action: "select",
                 label: game.i18n.localize("DB-IB.dialog.buy"),
                 callback: async (event) => {
-                  const selectedActorId = event.currentTarget.querySelector("select").value;
+                  const selectedActorId =
+                    event.currentTarget.querySelector("select").value;
                   const selectedActor = game.actors.get(selectedActorId);
                   resolve(selectedActor);
                 },
-              }]        
+              },
+            ],
           }).render(true);
         });
 
@@ -878,6 +907,101 @@ export class merchant extends api.HandlebarsApplicationMixin(
         game.i18n.localize("DB-IB.warrning.youDoNotSellAnything"),
       );
     }
+  }
+  static async myFormHandler(ev, b, object) {
+    const target = ev.target;
+    const edit = target.dataset.edit;
+    const newValue = target.value;
+    if (edit === "name") {
+      await this.actor.update({ [edit]: newValue });
+    }
+    const img = object.object.img;
+    if (img !== "") {
+      await this.actor.update({ img: img });
+    }
+  }
+  static async #openBrowser(ev) {
+    const target = ev.target;
+    const itemType = target.dataset.type;
+    const actorID = target.id;
+    const filterData = { chosenType: itemType };
+    const browser = new itemsSearch(filterData, actorID);
+    browser.openBrowser(filterData, actorID, "merchant");
+  }
+  static async #showSortOption(ev) {
+    const target = ev.target;
+    const sortOption = target.nextElementSibling;
+    sortOption.style.display = "inherit";
+  }
+  static async #sort(ev) {
+    const target = ev.target;
+    const sortType = target.dataset.sort;
+    const form = target.closest("form");
+    const items = Array.from(form.querySelectorAll(".selling-item"));
+    const priceToCopper = (priceString) => {
+      if (!priceString) return 0;
+      const text = priceString.toLowerCase();
+
+      const coins = [
+        {
+          words: [
+            game.i18n.translations.DoD.currency.gold.toLowerCase(),
+            "gold",
+          ],
+          value: 10000,
+        },
+        {
+          words: [
+            game.i18n.translations.DoD.currency.silver.toLowerCase(),
+            "silver",
+          ],
+          value: 100,
+        },
+        {
+          words: [
+            game.i18n.translations.DoD.currency.copper.toLowerCase(),
+            "copper",
+          ],
+          value: 1,
+        },
+      ];
+
+      let total = 0;
+      for (const { words, value } of coins) {
+        const regex = new RegExp(
+          `(\\d+(?:\\.\\d+)?)\\s*(${words.join("|")})`,
+          "i",
+        );
+        const match = text.match(regex);
+        if (match) total += parseFloat(match[1]) * value;
+      }
+      return total;
+    };
+
+    const compare = (a, b) => {
+      switch (sortType) {
+        case "name":
+          return a.dataset.name.localeCompare(b.dataset.name, undefined, {
+            sensitivity: "base",
+          });
+        case "type":
+          return a.dataset.type.localeCompare(b.dataset.type, undefined, {
+            sensitivity: "base",
+          });
+        case "cost":
+          return (
+            priceToCopper(b.dataset.price) - priceToCopper(a.dataset.price)
+          );
+        default:
+          return 0;
+      }
+    };
+
+    const sorted = items.sort(compare);
+    const container = form.querySelector(".item-group");
+    sorted.forEach((el) => container.appendChild(el));
+    const sortOption = form.querySelector(".dropdown-list");
+    sortOption.style.display = "none";
   }
 }
 

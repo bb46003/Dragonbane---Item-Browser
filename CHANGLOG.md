@@ -1,4 +1,20 @@
 
+
+# Version 1.4
+
+<h3>New Features</h3>
+<ul>
+    <li>Sorting item in Merchant actor that merchants is selling</li>
+    <li>Add buton to open Item Browser from Merchant sheet for easier whey to add items</li>
+</ul>
+<h3>Bug Fix</h3>
+<ul>
+    <li>Fix bug in Merchant actor in saving actor name and image</li>
+</ul>
+
+
+
+
 # Version 1.3
 
 <h3>New Features</h3>
@@ -10,7 +26,6 @@
     <li>Fix englis translation thantks to @phenomen</li>
     <li> Small fixis at Merchant Actor</li>
 </ul>
-
 
 # Version 1.0.9
 

@@ -78,11 +78,16 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
     // this.element = template;
     this.render(true);
   }
-  async openBrowser(filterData, actorID) {
+  async openBrowser(filterData, actorID, actorType) {
     const title = game.i18n.localize("DB-IB.title");
     filterData = {
       ...filterData,
-      ...(await this._prepareWorldsItems(filterData.chosenType, actorID)),
+      ...(await this._prepareWorldsItems(
+        filterData.chosenType,
+        actorID,
+        actorType,
+      )),
+      ...actorType,
     };
 
     const template = await DoD_Utility.renderTemplate(
@@ -128,8 +133,11 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
     };
   }
 
-  async _prepareWorldsItems(chosenType, actorID) {
+  async _prepareWorldsItems(chosenType, actorID, actorType) {
     let types = ["ability", "armor", "helmet", "item", "spell", "weapon"];
+    if (actorType === "merchant") {
+      types = ["armor", "helmet", "item", "weapon"];
+    }
     const supplyTypes = ["common", "uncommon", "rare"];
     const skipFoldersEnabled = game.settings.get(
       "dragonbane-item-browser",
@@ -221,14 +229,23 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
       supply: "any",
       itemName: "",
     };
-    types = {
-      ability: game.i18n.translations.TYPES.Item.ability,
-      armor: game.i18n.translations.TYPES.Item.armor,
-      helmet: game.i18n.translations.TYPES.Item.helmet,
-      item: game.i18n.translations.TYPES.Item.item,
-      spell: game.i18n.translations.TYPES.Item.spell,
-      weapon: game.i18n.translations.TYPES.Item.weapon,
-    };
+    if (actorType === "merchant") {
+      types = {
+        armor: game.i18n.translations.TYPES.Item.armor,
+        helmet: game.i18n.translations.TYPES.Item.helmet,
+        item: game.i18n.translations.TYPES.Item.item,
+        weapon: game.i18n.translations.TYPES.Item.weapon,
+      };
+    } else {
+      types = {
+        ability: game.i18n.translations.TYPES.Item.ability,
+        armor: game.i18n.translations.TYPES.Item.armor,
+        helmet: game.i18n.translations.TYPES.Item.helmet,
+        item: game.i18n.translations.TYPES.Item.item,
+        spell: game.i18n.translations.TYPES.Item.spell,
+        weapon: game.i18n.translations.TYPES.Item.weapon,
+      };
+    }
     const data = {
       types: types,
       items: filteredItems,
@@ -1007,7 +1024,7 @@ export class sellingItem {
         "click",
         ".chat-button.sell-item",
         this.sellFromChat.bind(this),
-      )
+      );
     }
   }
   async selling(itemID, actorID) {
@@ -1170,7 +1187,10 @@ export class sellingItem {
         speaker: ChatMessage.getSpeaker({ actor }),
       });
     } else {
-      const quantity = Array.from({ length: Number(item.system.quantity) }, (_, i) => i + 1);
+      const quantity = Array.from(
+        { length: Number(item.system.quantity) },
+        (_, i) => i + 1,
+      );
       const html = await DoD_Utility.renderTemplate(
         "modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs",
         { item: item.name, quantity: quantity },
@@ -1354,7 +1374,7 @@ export class sellingItem {
     const data = game.messages.get(mesageID).system;
     const roll = data.barterSkillRoll;
     const actor = game.actors.get(data.actor._id);
-    const item  = actor.items.get(data.item._id);
+    const item = actor.items.get(data.item._id);
     let actorGC = actor.system.currency.gc;
     let actorSC = actor.system.currency.sc;
     let actorCC = actor.system.currency.cc;
@@ -1457,7 +1477,10 @@ export class sellingItem {
         speaker: ChatMessage.getSpeaker({ actor }),
       });
     } else {
-      const quantity = Array.from({ length: Number(item.system.quantity) }, (_, i) => i + 1);
+      const quantity = Array.from(
+        { length: Number(item.system.quantity) },
+        (_, i) => i + 1,
+      );
       const html = await DoD_Utility.renderTemplate(
         "modules/dragonbane-item-browser/templates/dialog/define-quantity.hbs",
         { item: item.name, quantity: quantity },

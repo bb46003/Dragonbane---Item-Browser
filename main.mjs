@@ -138,14 +138,13 @@ Hooks.once("init", function () {
       sellingMerchantInstance.addChatListeners(app, html, data);
     });
   } else {
-    Hooks.on("renderChatMessageHTML",  (app, html, data) => {
-      addChatListeners(app, html, data)
+    Hooks.on("renderChatMessageHTML", (app, html, data) => {
+      addChatListeners(app, html, data);
       const sellingElements = new sellingItem({
         itemID: null,
         actorID: null,
       });
       sellingElements.addChatListeners(app, html, data);
-
 
       const sellingMerchantInstance = new sellingItemMerchat({
         itemID: null,
@@ -533,7 +532,7 @@ async function openItemsBrowser(event, actorID) {
   const type = element.dataset.type;
   const filterData = { chosenType: type };
   const browser = new itemsSearch(filterData, actorID);
-  browser.openBrowser(filterData, actorID);
+  browser.openBrowser(filterData, actorID, "character");
 }
 
 async function selliItem(event, actorID) {
@@ -571,9 +570,13 @@ function registerHandlebarsHelpers() {
       return Array.prototype.slice.call(arguments, 0, -1).some(Boolean);
     },
   });
-  Handlebars.registerHelper("havePrice", (item) => {
+  Handlebars.registerHelper("havePrice", (item, actorType) => {
     let html = ";";
-    if (item.system?.cost !== "" && item.system?.cost !== undefined) {
+    if (
+      item.system?.cost !== "" &&
+      item.system?.cost !== undefined &&
+      actorType === "character"
+    ) {
       html = `<i class="cost">${item.system.cost}</i>
                 <i class="fas fa-plus" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.addItemToCharacter")}"></i>
                 <i class="fas fa-coins" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>`;
@@ -709,16 +712,7 @@ function registerHandlebarsHelpers() {
     }
   });
   Handlebars.registerHelper("itemToBuy", function (items, actor) {
-    const itemName = game.i18n.localize("DB-IB.itemName");
-    const itemPrice = game.i18n.localize("DB-IB.itemPrice");
-
-    let result = ` 
-      <div class="item-group">
-        <div class="selling-item-header">
-          <label>${itemName}</label>
-          <label>${itemPrice}</label>
-        </div>`;
-
+    let result = ``;
     const itemsMerchant = actor.data.root.actor.items;
     const sellingRate = actor.data.root.actor.system.selling_rate;
     itemsMerchant.forEach((item) => {
@@ -763,7 +757,7 @@ function registerHandlebarsHelpers() {
         }
         if (item.system.quantity > 1) {
           result += `
-             <div class="selling-item" id="${item._id}">
+             <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
                 <label data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
                 <label class="price-label">${finalPrice}</label>
                 <div class="merchant-icon">
@@ -773,7 +767,7 @@ function registerHandlebarsHelpers() {
              </div>`;
         } else {
           result += `
-          <div class="selling-item" id="${item._id}">
+             <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
             <label data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
             <label class="price-label">${finalPrice}</label>
             <div class="merchant-icon">
@@ -784,7 +778,7 @@ function registerHandlebarsHelpers() {
         }
       }
     });
-    result += `</div>`;
+
     const newHtml = new Handlebars.SafeString(result);
 
     return newHtml;

@@ -79,6 +79,10 @@
       "openMerchantSheet": "Open merchant character sheet",
       "youAttempToOpenMerchantSheet": "Do you want to open merchant character sheet?"
     },
-    "title": "Item Browser"
+    "title": "Item Browser",
+    "Sort": "Sort by:",
+    "SortByName": "By item Name",
+    "SortByType": "By item Type",
+    "SortByCost": "By item Cost"
   }
 }

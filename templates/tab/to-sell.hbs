@@ -5,6 +5,42 @@
   data-tab="sellingStuff"
 >
   <div class="selling-items">
-    {{#itemToBuy items}}{{/itemToBuy}}
+    <div class="item-group">
+      <div class="selling-item-header">
+        <div class="dropdown">
+          <button class="sort-btn" id="sort-btn" data-action="showSortOption">
+            <span>{{localize "DB-IB.Sort"}}</span>
+            <i class="fa-solid fa-sort"></i>
+          </button>
+          <div class="dropdown-list" id="sort-menu">
+            <button data-sort="name" data-action="sort">
+              <i class="fa-solid fa-font"></i>
+              {{localize "DB-IB.SortByName"}}
+            </button>
+            <button data-sort="type" data-action="sort">
+              <i class="fa-solid fa-tag"></i>
+              {{localize "DB-IB.SortByType"}}
+            </button>
+            <button data-sort="cost" data-action="sort">
+              <i class="fa-solid fa-coins"></i>
+              {{localize "DB-IB.SortByCost"}}
+            </button>
+          </div>
+        </div>
+        <label>{{localize "DB-IB.itemName"}}</label>
+        <label>{{localize "DB-IB.itemPrice"}}</label>
+        {{log actorID}}
+        <button
+          class="item-browser"
+          id="{{actorID}}"
+          title="{{localize 'DB-IB.openItemBrowser'}}"
+          data-type="{{dataType}}"
+          data-action="openBrowser"
+        >
+          <a class="fa-solid fa-magnifying-glass"></a>
+        </button>
+      </div>
+      {{#itemToBuy items}}{{/itemToBuy}}
+    </div>
   </div>
 </section>

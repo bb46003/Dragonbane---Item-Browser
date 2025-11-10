@@ -252,3 +252,45 @@ a.fa-solid.fa-magnifying-glass {
   display: flex;
   justify-content: space-evenly;
 }
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.sort-btn {
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.dropdown-list {
+  display: none;
+  position: absolute;
+  top: 110%;
+  left: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.dropdown.show .dropdown-list {
+  display: block;
+}
+
+.dropdown-list button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  cursor: pointer;
+}
