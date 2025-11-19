@@ -186,8 +186,7 @@ input#percentage {
 select.supply-selection {
   text-align: center;
 }
-.buying-item-header,
-.selling-item-header {
+.buying-item-header {
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -268,6 +267,14 @@ a.fa-solid.fa-magnifying-glass {
   gap: 6px;
   font-size: 14px;
 }
+.selling-item-header {
+    display: grid;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    grid-template-columns: 3fr 5fr 5fr 1fr;
+}
 
 .dropdown-list {
   display: none;
@@ -293,4 +300,26 @@ a.fa-solid.fa-magnifying-glass {
   background: none;
   font-size: 14px;
   cursor: pointer;
+}
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltiptext {
+  visibility: hidden;
+  background: #222;
+  color: white;
+  padding: 6px;
+  border-radius: 5px;
+  width: 200px;
+  position: absolute;
+  z-index: 10;
+  top: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
 }

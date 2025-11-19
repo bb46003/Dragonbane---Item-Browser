@@ -931,7 +931,13 @@ export class merchant extends api.HandlebarsApplicationMixin(
   static async #showSortOption(ev) {
     const target = ev.target;
     const sortOption = target.nextElementSibling;
-    sortOption.style.display = "inherit";
+    if( sortOption.style.display === "flex"){
+       sortOption.style.display = "none";
+    }
+    else{
+    sortOption.style.display = "flex";
+    sortOption.style.flexDirection = "column"
+    }
   }
   static async #sort(ev) {
     const target = ev.target;

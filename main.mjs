@@ -641,8 +641,8 @@ function registerHandlebarsHelpers() {
 
         result += `
               <div class="actor-group">
-                  <div class="header-row" id="${actorId}">
-                      <h3>${actorName} ${sells}</h3>
+                  <div class="header-row" id="${actorId}" style="display: flex;justify-content: center;">
+                      <h3 style="max-width: fit-content">${actorName} ${sells}</h3>
                   </div>
                   <div class="buying-item-header">
                       <label>${itemName}</label>
@@ -744,16 +744,16 @@ function registerHandlebarsHelpers() {
         const containUUID = description.includes("@");
         let descriptionWithoutHTML = "";
         if (containUUID) {
-          const descriptionWithRemovedUUID = description.replace(
+          descriptionWithoutHTML = description.replace(
             /@.*?\{(.*?)\}/,
             "$1",
           );
-          descriptionWithoutHTML = descriptionWithRemovedUUID.replace(
-            /<[^>]*>/g,
-            "",
-          );
+          //descriptionWithoutHTML = descriptionWithRemovedUUID.replace(
+        ///   /<[^>]*>/g,
+       //     "",
+         // );
         } else {
-          descriptionWithoutHTML = description.replace(/<[^>]*>/g, "");
+          descriptionWithoutHTML = description
         }
         if (item.system.quantity > 1) {
           result += `
