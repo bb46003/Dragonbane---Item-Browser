@@ -1007,11 +1007,13 @@ export class merchant extends api.HandlebarsApplicationMixin(
     sortOption.style.display = "none";
   }
   static async #openItem(ev){
+    if(game.user.isGM){
     const target = ev.target;
     const itemDiv = target.closest("div");
     const itemID = itemDiv.id
     const item = this.actor.items.get(itemID);
     item.sheet.render(true)
+    }
   }
   static async #changeQuantity(ev){
     const target = ev.target;

@@ -755,6 +755,7 @@ function registerHandlebarsHelpers() {
         } else {
           descriptionWithoutHTML = description
         }
+        if(game.user.isGM){
         if (item.system.quantity > 1) {
           result += `
              <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
@@ -777,6 +778,30 @@ function registerHandlebarsHelpers() {
               ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
             </div>
           </div>`;
+        }
+        }
+        else{
+          if (item.system.quantity > 1) {
+          result += `
+             <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
+                <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
+                <label class="price-label">${finalPrice}</label>
+                <div class="merchant-icon">
+                  <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
+                  ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}s
+                </div>
+             </div>`;
+        } else {
+          result += `
+             <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
+             <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
+            <label class="price-label">${finalPrice}</label>
+            <div class="merchant-icon">
+              <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
+              ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
+            </div>
+          </div>`;
+        }
         }
       }
     });
