@@ -47,6 +47,8 @@ export class merchant extends api.HandlebarsApplicationMixin(
       openBrowser: merchant.#openBrowser,
       showSortOption: merchant.#showSortOption,
       sort: merchant.#sort,
+      openItem: merchant.#openItem,
+      changeQunatity: merchant.#changeQuantity,
     },
     actor: {
       type: "merchant",
@@ -391,12 +393,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
           if (game.user.isGM) {
             const existingItem = this.actor.items.filter((item) => {
               if (item.type === "item" && item.name === itemData.name) {
-                const itemTemplate = { ...itemData.system };
-                delete itemTemplate.quantity;
-                return foundry.utils.objectsEqual(
-                  foundry.utils.filterObject(item.system, itemTemplate),
-                  itemTemplate,
-                );
+                return item
               }
               return false;
             });
@@ -1009,8 +1006,32 @@ export class merchant extends api.HandlebarsApplicationMixin(
     const sortOption = form.querySelector(".dropdown-list");
     sortOption.style.display = "none";
   }
+  static async #openItem(ev){
+    const target = ev.target;
+    const itemDiv = target.closest("div");
+    const itemID = itemDiv.id
+    const item = this.actor.items.get(itemID);
+    item.sheet.render(true)
+  }
+  static async #changeQuantity(ev){
+    const target = ev.target;
+    const itemDiv = target.closest("div");
+    const itemID = itemDiv.id
+    const action = target.dataset.type;
+    const item = this.actor.items.get(itemID);
+    const quantity = item.system.quantity;
+    if(action === "up"){
+      await item.update({["system.quantity"]:quantity + 1})
+    }
+    else{
+      if((quantity - 1) === 0 ){
+          await this.actor.deleteEmbeddedDocuments("Item", [item.id]);
+      }else{
+        await item.update({["system.quantity"]:quantity - 1})
+      }
+  }
 }
-
+}
 async function barterPushButton(existingMessage) {
   let tempDiv = document.createElement("div");
   tempDiv.innerHTML = existingMessage.content;

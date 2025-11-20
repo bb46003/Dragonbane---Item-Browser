@@ -83,6 +83,8 @@
     "Sort": "Sort by:",
     "SortByName": "By item Name",
     "SortByType": "By item Type",
-    "SortByCost": "By item Cost"
+    "SortByCost": "By item Cost",
+    "increaseQuantity": "Increase item quantity",
+    "decreseQuantity": "Decrese item quantity"
   }
 }

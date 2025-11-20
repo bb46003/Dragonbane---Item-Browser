@@ -80,6 +80,8 @@
       "openMerchantSheet": "Otwórz kartę postaci Kupca",
       "youAttempToOpenMerchantSheet": "Czy chcesz otworzyć kartę Kupca?"
     },
-    "title": "Przeglądarka przedmiotów"
+    "title": "Przeglądarka przedmiotów",
+    "increaseQuantity": "Zwiększ ilość artykułów",
+    "decreseQuantity": "Zmniejsz ilość pozycji"
   }
 }
