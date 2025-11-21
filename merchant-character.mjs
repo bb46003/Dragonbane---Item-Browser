@@ -624,6 +624,10 @@ export class merchant extends api.HandlebarsApplicationMixin(
       if (skill === undefined && skillName !== "Bartering") {
         skill = userActor.findSkill("Bartering");
       }
+      let selector = "";
+      if(item.system.quantity >1){
+        
+      }
       const options = {};
       const test = new DoDSkillTest(userActor, skill, options);
       const d = new api.DialogV2({
