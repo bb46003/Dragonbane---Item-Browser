@@ -758,7 +758,7 @@ function registerHandlebarsHelpers() {
         if(game.user.isGM){
         if (item.system.quantity > 1) {
           result += `
-             <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
+             <div class="selling-item-gm" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
                 <span><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
                 <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
                 <label class="price-label">${finalPrice}</label>
@@ -769,7 +769,7 @@ function registerHandlebarsHelpers() {
              </div>`;
         } else {
           result += `
-             <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
+             <div class="selling-item-gm" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
             <span><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
              <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
             <label class="price-label">${finalPrice}</label>
