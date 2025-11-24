@@ -1,5 +1,3 @@
-
-
 # Version 1.4
 
 <h3>New Features</h3>
@@ -11,9 +9,6 @@
 <ul>
     <li>Fix bug in Merchant actor in saving actor name and image</li>
 </ul>
-
-
-
 
 # Version 1.3
 

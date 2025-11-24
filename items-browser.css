@@ -211,8 +211,8 @@ select.supply-selection {
   grid-template-columns: 2fr 2fr 1fr;
   margin-left: 20%;
 }
-.selling-item-gm{
-    display: grid;
+.selling-item-gm {
+  display: grid;
   grid-template-columns: 2fr 2fr 1fr;
   margin-left: 20%;
   grid-template-columns: 0.3fr 2fr 2fr 1fr !important;
@@ -274,12 +274,12 @@ a.fa-solid.fa-magnifying-glass {
   font-size: 14px;
 }
 .selling-item-header {
-    display: grid;
-    justify-content: space-around;
-    align-items: center;
-    margin-top: -10px;
-    margin-bottom: 10px;
-    grid-template-columns: 3fr 5fr 5fr 1fr;
+  display: grid;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  grid-template-columns: 3fr 5fr 5fr 1fr;
 }
 
 .dropdown-list {

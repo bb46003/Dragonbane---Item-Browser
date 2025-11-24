@@ -85,6 +85,10 @@
     "SortByType": "By item Type",
     "SortByCost": "By item Cost",
     "increaseQuantity": "Increase item quantity",
-    "decreseQuantity": "Decrese item quantity"
+    "decreseQuantity": "Decrese item quantity",
+    "buy": "Buy"
+  },
+  "DB_IB": {
+    "selectQuantity": "Select quantity"
   }
 }

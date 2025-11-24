@@ -29,7 +29,6 @@
         </div>
         <label>{{localize "DB-IB.itemName"}}</label>
         <label>{{localize "DB-IB.itemPrice"}}</label>
-        {{log actorID}}
         <button
           class="item-browser"
           id="{{actorID}}"
@@ -40,7 +39,7 @@
           <a class="fa-solid fa-magnifying-glass"></a>
         </button>
       </div>
-      {{#itemToBuy items}}{{/itemToBuy}}
+      {{#itemToBuy actorID}}{{/itemToBuy}}
     </div>
   </div>
 </section>

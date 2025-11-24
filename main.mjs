@@ -711,10 +711,11 @@ function registerHandlebarsHelpers() {
       return newHtml;
     }
   });
-  Handlebars.registerHelper("itemToBuy", function (items, actor) {
+  Handlebars.registerHelper("itemToBuy", function (actor) {
     let result = ``;
-    const itemsMerchant = actor.data.root.actor.items;
-    const sellingRate = actor.data.root.actor.system.selling_rate;
+    const actorMerchant = game.actors.get(actor);
+    const itemsMerchant = actorMerchant.items;
+    const sellingRate = actorMerchant.system.selling_rate;
     itemsMerchant.forEach((item) => {
       const flag = item?.flags["dragonbane-item-browser"]?.actor;
       if (flag === undefined) {
@@ -744,31 +745,29 @@ function registerHandlebarsHelpers() {
         const containUUID = description.includes("@");
         let descriptionWithoutHTML = "";
         if (containUUID) {
-          descriptionWithoutHTML = description.replace(
-            /@.*?\{(.*?)\}/,
-            "$1",
-          );
+          descriptionWithoutHTML = description.replace(/@.*?\{(.*?)\}/, "$1");
           //descriptionWithoutHTML = descriptionWithRemovedUUID.replace(
-        ///   /<[^>]*>/g,
-       //     "",
-         // );
+          ///   /<[^>]*>/g,
+          //     "",
+          // );
         } else {
-          descriptionWithoutHTML = description
+          descriptionWithoutHTML = description;
         }
-        if(game.user.isGM){
-        if (item.system.quantity > 1) {
-          result += `
+        if (game.user.isGM) {
+          console.log(item.system.quantity);
+          if (item.system.quantity > 1) {
+            result += `
              <div class="selling-item-gm" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
                 <span><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
                 <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
                 <label class="price-label">${finalPrice}</label>
                 <div class="merchant-icon">
                   <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
-                  ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}s
+                  ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
                 </div>
              </div>`;
-        } else {
-          result += `
+          } else {
+            result += `
              <div class="selling-item-gm" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
             <span><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
              <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
@@ -778,11 +777,10 @@ function registerHandlebarsHelpers() {
               ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
             </div>
           </div>`;
-        }
-        }
-        else{
+          }
+        } else {
           if (item.system.quantity > 1) {
-          result += `
+            result += `
              <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
                 <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
                 <label class="price-label">${finalPrice}</label>
@@ -791,8 +789,8 @@ function registerHandlebarsHelpers() {
                   ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}s
                 </div>
              </div>`;
-        } else {
-          result += `
+          } else {
+            result += `
              <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
              <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
             <label class="price-label">${finalPrice}</label>
@@ -801,7 +799,7 @@ function registerHandlebarsHelpers() {
               ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
             </div>
           </div>`;
-        }
+          }
         }
       }
     });

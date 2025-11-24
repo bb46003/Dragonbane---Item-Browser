@@ -393,7 +393,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
           if (game.user.isGM) {
             const existingItem = this.actor.items.filter((item) => {
               if (item.type === "item" && item.name === itemData.name) {
-                return item
+                return item;
               }
               return false;
             });
@@ -556,7 +556,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
     const user = game.user;
     const itemID = ev.target.id;
     const item = this.actor.items.get(itemID);
-    const itemDiv = ev.target.closest(".selling-item");
+    const itemDiv = ev.target.closest(".selling-item, .selling-item-gm");
     const priceLabel = itemDiv.querySelector(".price-label").textContent.trim();
     const coinsType = [
       game.i18n.translations.DoD.currency.gold.toLowerCase(),
@@ -624,20 +624,30 @@ export class merchant extends api.HandlebarsApplicationMixin(
       if (skill === undefined && skillName !== "Bartering") {
         skill = userActor.findSkill("Bartering");
       }
-      let selector = "";
-      if(item.system.quantity >1){
-        
+      let selector = game.i18n.localize(
+        "DB-IB.pickIfYouWantToRollForBartering",
+      );
+      if (item.system.quantity > 1) {
+        selector +=
+          game.i18n.localize("DB_IB.selectQuantity") +
+          '<br><select class="quantity">';
+        for (let i = 1; i <= item.system.quantity; i++) {
+          selector += `<option value="${i}">${i}</option>`;
+        }
+        selector += "</select>";
       }
       const options = {};
       const test = new DoDSkillTest(userActor, skill, options);
       const d = new api.DialogV2({
         window: { title: game.i18n.localize("DB-IB.wannaBarter") },
-        content: game.i18n.localize("DB-IB.pickIfYouWantToRollForBartering"),
+        content: selector,
         buttons: [
           {
             action: "buyWithRoll",
             label: game.i18n.localize("DB-IB.rollForBarter"),
-            callback: async () => {
+            callback: async (ev) => {
+              const quantity = ev.currentTarget.querySelector(".quantity");
+              const sellQuantity = quantity ? quantity.value : 1;
               const barterSkillRoll = await test.roll();
               if (barterSkillRoll !== undefined) {
                 const success = barterSkillRoll.postRollData.success;
@@ -662,6 +672,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
                   barterSkillRoll,
                   priceLabel,
                   merchantActor,
+                  sellQuantity,
                 );
               }
             },
@@ -670,7 +681,9 @@ export class merchant extends api.HandlebarsApplicationMixin(
           {
             action: "buyWithoutRoll",
             label: game.i18n.localize("DB-IB.BuyWithoutRoll"),
-            callback: async () => {
+            callback: async (ev) => {
+              const quantity = ev.currentTarget.querySelector(".quantity");
+              const sellQuantity = quantity ? quantity.value : 1;
               await this.spendMony(
                 currencyType,
                 sellingPrice,
@@ -679,6 +692,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
                 merchantActor,
                 itemID,
                 priceLabel,
+                sellQuantity,
               );
             },
           },
@@ -686,15 +700,52 @@ export class merchant extends api.HandlebarsApplicationMixin(
       });
       d.render(true);
     } else {
-      await this.spendMony(
-        currencyType,
-        sellingPrice,
-        userActor,
-        item,
-        merchantActor,
-        itemID,
-        priceLabel,
-      );
+      if (item.system.quantity > 1) {
+        let selector =
+          game.i18n.localize("DB_IB.selectQuantity") +
+          '<br><select class="quantity">';
+        for (let i = 1; i <= item.system.quantity; i++) {
+          selector += `<option value="${i}">${i}</option>`;
+        }
+        selector += "</select>";
+        const d = new api.DialogV2({
+          window: { title: game.i18n.localize("DB-IB.wannaBarter") },
+          content: selector,
+          buttons: [
+            {
+              action: "buyWithoutRoll",
+              label: game.i18n.localize("DB-IB.buy"),
+              callback: async (ev) => {
+                const quantity = ev.currentTarget.querySelector(".quantity");
+                const sellQuantity = quantity ? quantity.value : 1;
+                await this.spendMony(
+                  currencyType,
+                  sellingPrice,
+                  userActor,
+                  item,
+                  merchantActor,
+                  itemID,
+                  priceLabel,
+                  sellQuantity,
+                );
+              },
+            },
+          ],
+        });
+        d.render(true);
+      } else {
+        const sellQuantity = 1;
+        await this.spendMony(
+          currencyType,
+          sellingPrice,
+          userActor,
+          item,
+          merchantActor,
+          itemID,
+          priceLabel,
+          sellQuantity,
+        );
+      }
     }
   }
   async spendMony(
@@ -705,6 +756,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
     merchantActor,
     itemID,
     priceLabel,
+    sellQuantity,
   ) {
     switch (currencyType) {
       case 0:
@@ -720,10 +772,10 @@ export class merchant extends api.HandlebarsApplicationMixin(
         sellingPrice = sellingPrice;
         break;
     }
-
-    const goldPart = Math.floor(sellingPrice / 100);
-    const silverPart = Math.floor((sellingPrice % 100) / 10);
-    const copperPart = Math.round(sellingPrice % 10);
+    const quantity = Number(sellQuantity);
+    const goldPart = quantity * Math.floor(sellingPrice / 100);
+    const silverPart = quantity * Math.floor((sellingPrice % 100) / 10);
+    const copperPart = quantity * Math.round(sellingPrice % 10);
 
     let actorGC = userActor.system.currency.gc;
     let actorSC = userActor.system.currency.sc;
@@ -784,10 +836,25 @@ export class merchant extends api.HandlebarsApplicationMixin(
         "system.currency.cc": actorCC - copperPart,
       });
 
-      await userActor.createEmbeddedDocuments("Item", [item]);
-
-      if (item.system.quantity > 1) {
-        await item.update({ "system.quantity": item.system.quantity - 1 });
+      const created = await userActor.createEmbeddedDocuments("Item", [item]);
+      const newItem = created[0];
+      await newItem.update({ ["system.quantity"]: quantity });
+      let itemPrice = priceLabel;
+      let nameItem = item.name;
+      const merchantItem = await this.actor.items.get(itemID);
+      if (merchantItem.system.quantity > 1) {
+        if (merchantItem.system.quantity === quantity) {
+          await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
+        } else {
+          await merchantItem.update({
+            "system.quantity": item.system.quantity - quantity,
+          });
+        }
+        const [priceString, currency] = priceLabel.split(" ");
+        const price = quantity * parseFloat(priceString);
+        const formatted = price.toFixed(2);
+        itemPrice = `${formatted} ${currency}`;
+        nameItem = item.name + `(${quantity})`;
       } else {
         await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
       }
@@ -795,8 +862,8 @@ export class merchant extends api.HandlebarsApplicationMixin(
       ChatMessage.create({
         content: game.i18n.format("DB-IB.spendMoney", {
           actor: userActor.name,
-          item: item.name,
-          itemPrice: priceLabel,
+          item: nameItem,
+          itemPrice: itemPrice,
         }),
         speaker: ChatMessage.getSpeaker({ actor: userActor }),
       });
@@ -932,12 +999,11 @@ export class merchant extends api.HandlebarsApplicationMixin(
   static async #showSortOption(ev) {
     const target = ev.target;
     const sortOption = target.nextElementSibling;
-    if( sortOption.style.display === "flex"){
-       sortOption.style.display = "none";
-    }
-    else{
-    sortOption.style.display = "flex";
-    sortOption.style.flexDirection = "column"
+    if (sortOption.style.display === "flex") {
+      sortOption.style.display = "none";
+    } else {
+      sortOption.style.display = "flex";
+      sortOption.style.flexDirection = "column";
     }
   }
   static async #sort(ev) {
@@ -1010,33 +1076,32 @@ export class merchant extends api.HandlebarsApplicationMixin(
     const sortOption = form.querySelector(".dropdown-list");
     sortOption.style.display = "none";
   }
-  static async #openItem(ev){
-    if(game.user.isGM){
-    const target = ev.target;
-    const itemDiv = target.closest("div");
-    const itemID = itemDiv.id
-    const item = this.actor.items.get(itemID);
-    item.sheet.render(true)
+  static async #openItem(ev) {
+    if (game.user.isGM) {
+      const target = ev.target;
+      const itemDiv = target.closest("div");
+      const itemID = itemDiv.id;
+      const item = this.actor.items.get(itemID);
+      item.sheet.render(true);
     }
   }
-  static async #changeQuantity(ev){
+  static async #changeQuantity(ev) {
     const target = ev.target;
     const itemDiv = target.closest("div");
-    const itemID = itemDiv.id
+    const itemID = itemDiv.id;
     const action = target.dataset.type;
     const item = this.actor.items.get(itemID);
     const quantity = item.system.quantity;
-    if(action === "up"){
-      await item.update({["system.quantity"]:quantity + 1})
-    }
-    else{
-      if((quantity - 1) === 0 ){
-          await this.actor.deleteEmbeddedDocuments("Item", [item.id]);
-      }else{
-        await item.update({["system.quantity"]:quantity - 1})
+    if (action === "up") {
+      await item.update({ ["system.quantity"]: quantity + 1 });
+    } else {
+      if (quantity - 1 === 0) {
+        await this.actor.deleteEmbeddedDocuments("Item", [item.id]);
+      } else {
+        await item.update({ ["system.quantity"]: quantity - 1 });
       }
+    }
   }
-}
 }
 async function barterPushButton(existingMessage) {
   let tempDiv = document.createElement("div");
@@ -1061,6 +1126,7 @@ async function addBuyButton(
   barterSkillRoll,
   priceLabel,
   merchantActor,
+  selluQantity,
 ) {
   let flavor = existingMessage.flavor;
   let newFlavor = "";
@@ -1097,12 +1163,19 @@ async function addBuyButton(
     existingMessage.update({
       content: updatedContent,
       flavor: newFlavor,
-      system: { actor, item, barterSkillRoll, priceLabel, merchantActor },
+      system: {
+        actor,
+        item,
+        barterSkillRoll,
+        priceLabel,
+        merchantActor,
+        selluQantity,
+      },
     });
   } else {
     existingMessage.update({
       flavor: newFlavor,
-      system: { actor, item, barterSkillRoll, priceLabel },
+      system: { actor, item, barterSkillRoll, priceLabel, selluQantity },
     });
   }
 }
@@ -1375,6 +1448,7 @@ export class sellingItemMerchat {
     ChatMessage,
     barterSkillRoll,
     priceLabel,
+    selluQantity,
   ) {
     let flavor = existingMessage.flavor;
     let newFlavor = "";
@@ -1413,12 +1487,12 @@ export class sellingItemMerchat {
       existingMessage.update({
         content: updatedContent,
         flavor: newFlavor,
-        system: { actor, item, barterSkillRoll, priceLabel },
+        system: { actor, item, barterSkillRoll, priceLabel, selluQantity },
       });
     } else {
       existingMessage.update({
         flavor: newFlavor,
-        system: { actor, item, barterSkillRoll, priceLabel },
+        system: { actor, item, barterSkillRoll, priceLabel, selluQantity },
       });
     }
   }
@@ -1533,6 +1607,7 @@ export class sellingItemMerchat {
     const userActor = game.actors.get(ChatMessage.system.actor._id);
     const merchantActor = game.actors.get(ChatMessage.system.merchantActor._id);
     const item = merchantActor.items.get(ChatMessage.system.item._id);
+    const selluQantity = ChatMessage.system.selluQantity;
     if (item === undefined) {
       DoD_Utility.WARNING(
         game.i18n.format("DB-IB.warrning.merchantDoNotHaveMoreItem", {
@@ -1549,6 +1624,7 @@ export class sellingItemMerchat {
         merchantActor,
         itemID,
         priceLabel,
+        selluQantity,
       );
     }
   }
@@ -1560,6 +1636,7 @@ export class sellingItemMerchat {
     merchantActor,
     itemID,
     priceLabel,
+    sellQuantity,
   ) {
     switch (currencyType) {
       case 0:
@@ -1576,9 +1653,10 @@ export class sellingItemMerchat {
         break;
     }
 
-    const goldPart = Math.floor(sellingPrice / 100);
-    const silverPart = Math.floor((sellingPrice % 100) / 10);
-    const copperPart = Math.round(sellingPrice % 10);
+    const quantity = Number(sellQuantity);
+    const goldPart = quantity * Math.floor(sellingPrice / 100);
+    const silverPart = quantity * Math.floor((sellingPrice % 100) / 10);
+    const copperPart = quantity * Math.round(sellingPrice % 10);
     priceLabel = "";
     if (goldPart !== 0) {
       priceLabel =
@@ -1687,10 +1765,25 @@ export class sellingItemMerchat {
       "system.currency.cc": actorCC - copperPart,
     });
 
-    await userActor.createEmbeddedDocuments("Item", [item]);
-
-    if (item.system.quantity > 1) {
-      await item.update({ "system.quantity": item.system.quantity - 1 });
+    const created = await userActor.createEmbeddedDocuments("Item", [item]);
+    const newItem = created[0];
+    await newItem.update({ ["system.quantity"]: quantity });
+    let itemPrice = priceLabel;
+    let nameItem = item.name;
+    const merchantItem = await merchantActor.items.get(itemID);
+    if (merchantItem.system.quantity > 1) {
+      if (merchantItem.system.quantity === quantity) {
+        await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
+      } else {
+        await merchantItem.update({
+          "system.quantity": item.system.quantity - quantity,
+        });
+      }
+      const [priceString, currency] = priceLabel.split(" ");
+      const price = quantity * parseFloat(priceString);
+      const formatted = price.toFixed(2);
+      itemPrice = `${formatted} ${currency}`;
+      nameItem = item.name + `(${quantity})`;
     } else {
       await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
     }
@@ -1698,8 +1791,8 @@ export class sellingItemMerchat {
     ChatMessage.create({
       content: game.i18n.format("DB-IB.spendMoney", {
         actor: userActor.name,
-        item: item.name,
-        itemPrice: priceLabel,
+        item: nameItem,
+        itemPrice: itemPrice,
       }),
       speaker: ChatMessage.getSpeaker({ actor: userActor }),
     });
