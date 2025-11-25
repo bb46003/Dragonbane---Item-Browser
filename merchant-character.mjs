@@ -1010,7 +1010,9 @@ export class merchant extends api.HandlebarsApplicationMixin(
     const target = ev.target;
     const sortType = target.dataset.sort;
     const form = target.closest("form");
-    const items = Array.from(form.querySelectorAll(".selling-item"));
+    const items = Array.from(
+      form.querySelectorAll(".selling-item, .selling-item-gm"),
+    );
     const priceToCopper = (priceString) => {
       if (!priceString) return 0;
       const text = priceString.toLowerCase();

@@ -1,17 +1,19 @@
 # Version 1.7
+
 <h3>Bug Fix</h3>
 <ul>
     <li>Now, when a player buys items from a merchant, if the quantity is greater than 1, the user can select how many items they want to buy. The cost is calculated correctly, and the chosen number of items is deducted from the merchant and added to the player's character.</li>
 </ul>
 
-
 # Version 1.6
+
 <h3>Bug Fix</h3>
 <ul>
     <li>Fix manifext</li>
 </ul>
 
 # Version 1.5
+
 <h3>New` Features</h3>
 <ul>
     <li>Items sold by the Merchant now have buttons for quickly changing quantity  only for GM.</li>
