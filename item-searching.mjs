@@ -85,11 +85,9 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
       ...(await this._prepareWorldsItems(
         filterData.chosenType,
         actorID,
-        actorType,
       )),
-      ...actorType,
     };
-
+    filterData.actorType = actorType;
     const template = await DoD_Utility.renderTemplate(
       "modules/dragonbane-item-browser/templates/items-search.hbs",
       { data: filterData },

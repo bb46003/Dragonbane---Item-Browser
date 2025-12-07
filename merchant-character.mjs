@@ -49,6 +49,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
       sort: merchant.#sort,
       openItem: merchant.#openItem,
       changeQunatity: merchant.#changeQuantity,
+      setflagToItem : merchant.#setflagToItem
     },
     actor: {
       type: "merchant",
@@ -557,6 +558,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
     const itemID = ev.target.id;
     const item = this.actor.items.get(itemID);
     const itemDiv = ev.target.closest(".selling-item, .selling-item-gm");
+
     const priceLabel = itemDiv.querySelector(".price-label").textContent.trim();
     const coinsType = [
       game.i18n.translations.DoD.currency.gold.toLowerCase(),
@@ -869,6 +871,16 @@ export class merchant extends api.HandlebarsApplicationMixin(
       });
     }
   }
+  static #setflagToItem(ev){
+    const itemDiv = target.closest("div").parentElement;
+    const item = this.actor.items.get(itemDiv.id);
+    const infinityQunatity = itemDiv.querySelector("#infinity").checked;
+    const doNotCreatItem = itemDiv.querySelector("#notaddtobuyer").checked
+    item.setFlag("dragonbane-item-browser", "infinity", infinityQunatity)
+    item.setFlag("dragonbane-item-browser", "notaddtobuyer", doNotCreatItem)
+    item.setFlag("dragonbane-item-browser", "infinity", infinityQunatity)
+  }
+
   static async #rollForBarter(ev) {
     let userActor;
     let characters = {};

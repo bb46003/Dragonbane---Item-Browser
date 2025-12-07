@@ -213,9 +213,9 @@ select.supply-selection {
 }
 .selling-item-gm {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr;
   margin-left: 20%;
-  grid-template-columns: 0.3fr 2fr 2fr 1fr !important;
+  grid-template-columns: 0.3fr 0.6fr 2fr 2fr 1fr;
+  align-items: center;
 }
 .buing-items {
   min-height: 7em;
