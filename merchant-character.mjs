@@ -167,7 +167,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
       await actor.deleteEmbeddedDocuments("Item", skillIds);
       return actor.toObject();
     }
-
+    context.isGM = game.user.isGM;
     return context;
   }
   _updateEncumbrance(sheetData) {
@@ -837,13 +837,18 @@ export class merchant extends api.HandlebarsApplicationMixin(
         "system.currency.sc": actorSC - silverPart,
         "system.currency.cc": actorCC - copperPart,
       });
-
+     const merchantItem = await this.actor.items.get(itemID);
+     const doNotAddToBouyer = merchantItem?.flags["dragonbane-item-browser"]?.notaddtobuyer;
+     if(!doNotAddToBouyer){
       const created = await userActor.createEmbeddedDocuments("Item", [item]);
       const newItem = created[0];
       await newItem.update({ ["system.quantity"]: quantity });
+     }
       let itemPrice = priceLabel;
       let nameItem = item.name;
-      const merchantItem = await this.actor.items.get(itemID);
+ 
+      const infinityQunatity = merchantItem?.flags["dragonbane-item-browser"]?.infinity;
+      if(!infinityQunatity){
       if (merchantItem.system.quantity > 1) {
         if (merchantItem.system.quantity === quantity) {
           await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
@@ -852,15 +857,15 @@ export class merchant extends api.HandlebarsApplicationMixin(
             "system.quantity": item.system.quantity - quantity,
           });
         }
-        const [priceString, currency] = priceLabel.split(" ");
+      } else {
+        await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
+      }
+    }
+            const [priceString, currency] = priceLabel.split(" ");
         const price = quantity * parseFloat(priceString);
         const formatted = price.toFixed(2);
         itemPrice = `${formatted} ${currency}`;
         nameItem = item.name + `(${quantity})`;
-      } else {
-        await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
-      }
-
       ChatMessage.create({
         content: game.i18n.format("DB-IB.spendMoney", {
           actor: userActor.name,
@@ -871,14 +876,11 @@ export class merchant extends api.HandlebarsApplicationMixin(
       });
     }
   }
-  static #setflagToItem(ev){
+  static async #setflagToItem(ev){
+    const target = ev.target;
     const itemDiv = target.closest("div").parentElement;
     const item = this.actor.items.get(itemDiv.id);
-    const infinityQunatity = itemDiv.querySelector("#infinity").checked;
-    const doNotCreatItem = itemDiv.querySelector("#notaddtobuyer").checked
-    item.setFlag("dragonbane-item-browser", "infinity", infinityQunatity)
-    item.setFlag("dragonbane-item-browser", "notaddtobuyer", doNotCreatItem)
-    item.setFlag("dragonbane-item-browser", "infinity", infinityQunatity)
+    await item.setFlag("dragonbane-item-browser", target.id, target.checked)
   }
 
   static async #rollForBarter(ev) {
@@ -1778,13 +1780,18 @@ export class sellingItemMerchat {
       "system.currency.sc": actorSC - silverPart,
       "system.currency.cc": actorCC - copperPart,
     });
-
+     const merchantItem = await this.actor.items.get(itemID);
+     const doNotAddToBouyer = merchantItem?.flags["dragonbane-item-browser"]?.notaddtobuyer;
+     if(!doNotAddToBouyer){
     const created = await userActor.createEmbeddedDocuments("Item", [item]);
     const newItem = created[0];
     await newItem.update({ ["system.quantity"]: quantity });
+     }
     let itemPrice = priceLabel;
     let nameItem = item.name;
-    const merchantItem = await merchantActor.items.get(itemID);
+
+    const infinityQunatity = item?.flags["dragonbane-item-browser"]?.infinity;
+    if(!infinityQunatity){
     if (merchantItem.system.quantity > 1) {
       if (merchantItem.system.quantity === quantity) {
         await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
@@ -1793,15 +1800,16 @@ export class sellingItemMerchat {
           "system.quantity": item.system.quantity - quantity,
         });
       }
-      const [priceString, currency] = priceLabel.split(" ");
+
+    } else {
+      await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
+    }
+  }
+          const [priceString, currency] = priceLabel.split(" ");
       const price = quantity * parseFloat(priceString);
       const formatted = price.toFixed(2);
       itemPrice = `${formatted} ${currency}`;
       nameItem = item.name + `(${quantity})`;
-    } else {
-      await merchantActor.deleteEmbeddedDocuments("Item", [itemID]);
-    }
-
     ChatMessage.create({
       content: game.i18n.format("DB-IB.spendMoney", {
         actor: userActor.name,

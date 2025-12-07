@@ -6,7 +6,7 @@
 >
   <div class="selling-items">
     <div class="item-group">
-      <div class="selling-item-header">
+      <div class="selling-item-header {{#if isGM}}gm{{/if}}">
         <div class="dropdown">
           <button class="sort-btn" id="sort-btn" data-action="showSortOption">
             <span>{{localize "DB-IB.Sort"}}</span>
@@ -27,6 +27,13 @@
             </button>
           </div>
         </div>
+        {{#if isGM}}
+        <label>{{localize "DB_IB.ChangeQuantity"}}</label>
+        <div class="inputs">
+        <label>{{localize "DB_IB.InfinityQuantity"}}</label>
+        <label>{{localize "DB_IB.DoNotAddToBuyer"}}</label>
+        </div>
+        {{/if}}
         <label>{{localize "DB-IB.itemName"}}</label>
         <label>{{localize "DB-IB.itemPrice"}}</label>
         <button

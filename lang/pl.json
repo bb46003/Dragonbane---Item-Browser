@@ -83,5 +83,8 @@
     "title": "Przeglądarka przedmiotów",
     "increaseQuantity": "Zwiększ ilość artykułów",
     "decreseQuantity": "Zmniejsz ilość pozycji"
+  },
+  "DB_IB": {
+    "ChangeQuantity": "Zmień ilość"
   }
 }

@@ -89,6 +89,9 @@
     "buy": "Buy"
   },
   "DB_IB": {
-    "selectQuantity": "Select quantity"
+    "selectQuantity": "Select quantity",
+    "ChangeQuantity": "Change quantity",
+    "InfinityQuantity": "Infinite quantity",
+    "DoNotAddToBuyer": "Do not add to buyer"
   }
 }

@@ -207,14 +207,15 @@ select.supply-selection {
 }
 .buying-item,
 .selling-item {
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr;
-  margin-left: 20%;
+    display: grid;
+    grid-template-columns: 3fr 2fr 0.5fr;
+    margin-left: 20%;
+    gap: 10px;
 }
 .selling-item-gm {
   display: grid;
   margin-left: 20%;
-  grid-template-columns: 0.3fr 0.6fr 2fr 2fr 1fr;
+  grid-template-columns: 0.5fr 1fr 3fr 2fr 1fr;
   align-items: center;
 }
 .buing-items {
@@ -273,6 +274,14 @@ a.fa-solid.fa-magnifying-glass {
   gap: 6px;
   font-size: 14px;
 }
+.selling-item-header.gm {
+  display: grid;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  grid-template-columns: 3fr 1fr 1fr 5fr 5fr 1fr;
+}
 .selling-item-header {
   display: grid;
   justify-content: space-around;
@@ -281,7 +290,6 @@ a.fa-solid.fa-magnifying-glass {
   margin-bottom: 10px;
   grid-template-columns: 3fr 5fr 5fr 1fr;
 }
-
 .dropdown-list {
   display: none;
   position: absolute;
@@ -328,4 +336,29 @@ a.fa-solid.fa-magnifying-glass {
 
 .tooltip:hover .tooltiptext {
   visibility: visible;
+}
+.item-group input{
+    display: flex;
+    justify-content: space-around;
+}
+.inputs{
+      display: flex;
+    justify-content: space-around;
+    width: 120px;
+}
+.inputs{ 
+  label{
+  width: 60px;
+  }
+  input{
+    width: 60px;
+    padding: 0px;
+    margin: 5px;
+    
+  }
+}
+.selling-item-header label{
+  height: 100%;
+      align-items: center;
+    justify-content: center;
 }
