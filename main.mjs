@@ -173,7 +173,7 @@ Hooks.on("hoverToken", async (token, ev) => {
     actor.type === "dragonbane-item-browser.merchant" &&
     !temporaryOwner
   ) {
-    actor.setflagToItem("dragonbane-item-browser", "temporary", false);
+    actor.setFlag("dragonbane-item-browser", "temporary", false);
   }
 
   if (actor.type === "dragonbane-item-browser.merchant" && temporaryOwner) {
@@ -331,9 +331,9 @@ Hooks.on("renderDocumentOwnershipConfig", (app, html, data) => {
       select.addEventListener("change", async (event) => {
         const selectedValue = event.target.value;
         if (selectedValue === "3") {
-          await actor.setflagToItem("dragonbane-item-browser", "temporary", false);
+          await actor.setFlag("dragonbane-item-browser", "temporary", false);
         } else {
-          await actor.setflagToItem("dragonbane-item-browser", "temporary", true);
+          await actor.setFlag("dragonbane-item-browser", "temporary", true);
         }
       });
     });
@@ -342,7 +342,7 @@ Hooks.on("renderDocumentOwnershipConfig", (app, html, data) => {
 Hooks.on("createActor", async (actor) => {
   if (actor.type === "dragonbane-item-browser.merchant" && game.user.isGM) {
     await actor.updateSource({ "prototypeToken.actorLink": true });
-    await actor.setflagToItem("dragonbane-item-browser", "temporary", true);
+    await actor.setFlag("dragonbane-item-browser", "temporary", true);
   }
 });
 Hooks.on("renderDoDCharacterSheet", async (html) => {
@@ -586,7 +586,10 @@ function registerHandlebarsHelpers() {
     return new Handlebars.SafeString(html);
   });
   Handlebars.registerHelper("removeUUID", (description) => {
-    const containUUID = description.includes("@");
+    // Dragonbane v3 may store description as an object {value,...}
+    const desc = (description && typeof description === "object") ? (description.value ?? "") : (description ?? "");
+    const safeDesc = String(desc);
+    const containUUID = safeDesc.includes("@");
     let descriptionWithoutHTML = "";
     if (containUUID) {
       const descriptionWithRemovedUUID = description.replace(
@@ -598,7 +601,7 @@ function registerHandlebarsHelpers() {
         "",
       );
     } else {
-      descriptionWithoutHTML = description.replace(/<[^>]*>/g, "");
+      descriptionWithoutHTML = safeDesc.replace(/<[^>]*>/g, "");
     }
 
     return descriptionWithoutHTML;
@@ -741,42 +744,29 @@ function registerHandlebarsHelpers() {
         }
         const isGM = game.user.isGM;
         const finalPrice = `${roundedCost} ${currency2}`;
-        const description = item.system.description;
-        const containUUID = description.includes("@");
+        // Dragonbane v3 may store description as an object {value,...}
+        const description = (item.system?.description && typeof item.system.description === "object")
+          ? (item.system.description.value ?? "")
+          : (item.system?.description ?? "");
+        const safeDescription = String(description);
+        const containUUID = safeDescription.includes("@");
         let descriptionWithoutHTML = "";
-        const infinityQunatity = item?.flags["dragonbane-item-browser"]?.infinity;
-        const doNotAddToBouyer = item?.flags["dragonbane-item-browser"]?.notaddtobuyer;
-        let selected1 = "";
-        let selected2 = "";
-        if(infinityQunatity){
-          selected1 = "checked"
-        }
-        if(doNotAddToBouyer){
-          selected2 = "checked"
-        }
-        console.log(selected1, selected2)
         if (containUUID) {
-          descriptionWithoutHTML = description.replace(/@.*?\{(.*?)\}/, "$1");
+          descriptionWithoutHTML = safeDescription.replace(/@.*?\{(.*?)\}/, "$1");
           //descriptionWithoutHTML = descriptionWithRemovedUUID.replace(
           ///   /<[^>]*>/g,
           //     "",
           // );
         } else {
-          descriptionWithoutHTML = description;
+          descriptionWithoutHTML = safeDescription;
         }
         if (game.user.isGM) {
+          console.log(item.system.quantity);
           if (item.system.quantity > 1) {
             result += `
              <div class="selling-item-gm" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
                 <span><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
-                <div class="inputs">  
-                    <input type="checkbox" data-action="setflagToItem" id="infinity" data-tooltip="${game.i18n.localize("DB-IB.InfinityQunatity")}" ${selected1}>
-                    <input type="checkbox" data-action="setflagToItem" id="notaddtobuyer" data-tooltip="${game.i18n.localize("DB-IB.DoNotAddToBouer")}" ${selected2}>
-                </div>
-                <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display: flex;align-items: center;padding-left: 5px;">
-                  <img class="borderless-item" src="${item.img}" height="20" width="20" style="margin-right: 5px">
-                  ${item.name}(${item.system.quantity})
-                </label>
+                <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
                 <label class="price-label">${finalPrice}</label>
                 <div class="merchant-icon">
                   <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
@@ -787,14 +777,7 @@ function registerHandlebarsHelpers() {
             result += `
              <div class="selling-item-gm" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
             <span><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
-            <div class="inputs">  
-                <input type="checkbox" data-action="setflagToItem" id="infinity" data-tooltip="${game.i18n.localize("DB-IB.InfinityQunatity")}" ${selected1}>
-                <input type="checkbox" data-action="setflagToItem" id="notaddtobuyer" data-tooltip="${game.i18n.localize("DB-IB.DoNotAddToBouer")}" ${selected2}>
-            </div>
-            <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display: flex;align-items: center;padding-left: 5px;">
-              <img class="borderless-item" src="${item.img}" height="20" width="20" style="margin-right: 5px">
-              ${item.name}
-            </label>
+             <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
             <label class="price-label">${finalPrice}</label>
             <div class="merchant-icon">
               <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
@@ -806,10 +789,7 @@ function registerHandlebarsHelpers() {
           if (item.system.quantity > 1) {
             result += `
              <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
-                <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display: flex; align-items: center;">
-                <img class="borderless-item" src="${item.img}" height="20" width="20" style="margin-right: 5px">
-                ${item.name}(${item.system.quantity})
-                </label>
+                <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}(${item.system.quantity})</label>
                 <label class="price-label">${finalPrice}</label>
                 <div class="merchant-icon">
                   <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
@@ -819,10 +799,7 @@ function registerHandlebarsHelpers() {
           } else {
             result += `
              <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
-             <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display: flex; align-items: center;">
-             <img class="borderless-item" src="${item.img}" height="20" width="20" style="margin-right: 5px">
-             ${item.name}
-             </label>
+             <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'>${item.name}</label>
             <label class="price-label">${finalPrice}</label>
             <div class="merchant-icon">
               <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
