@@ -440,10 +440,15 @@ export class merchant extends api.HandlebarsApplicationMixin(
       let allItemName = "";
       const sellingActor = game.actors.get(headerID);
       const user = game.user.id;
-      result[headerID].forEach(async (item) => {
+     await  result[headerID].forEach(async (item) => {
         const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
         if (priceMatch) {
-          const price = Math.round(Number(priceMatch[1]) * 10) / 10;
+          const sellingItem = await this.actor.items.find(
+            (element) => element.id === item.id,
+          );
+          const qunatity = Number(sellingItem.system.quantity);
+          
+          const price =(Math.round(Number(priceMatch[1]) * 10) / 10)*qunatity;
           const coninType = priceMatch[2];
           let currencyType = coinsType.indexOf(coninType);
           switch (currencyType) {
@@ -464,9 +469,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
             allItemName += ", ";
           }
           allItemName += item.name;
-          const sellingItem = await this.actor.items.find(
-            (element) => element.id === item.id,
-          );
+
           if (sellingActor.ownership[user] === 3) {
             this.actor.deleteEmbeddedDocuments("Item", [item.id]);
             const removerdItem = await sellingActor.items.find(
@@ -476,17 +479,18 @@ export class merchant extends api.HandlebarsApplicationMixin(
             );
 
             if (sellingItem.system.quantity === removerdItem.system.quantity) {
-              sellingActor.deleteEmbeddedDocuments("Item", [removerdItem._id]);
+              await sellingActor.deleteEmbeddedDocuments("Item", [removerdItem._id]);
             } else {
-              removerdItem.update({
+             await removerdItem.update({
                 ["system.quantity"]:
                   removerdItem.system.quantity - sellingItem.system.quantity,
               });
             }
           }
         }
+        console.log(totalPrice)
       });
-      const sellingPrice = totalPrice;
+      const sellingPrice = totalPrice * this.actor.system.buing_rate;
       const goldPart = Math.floor(sellingPrice / 100);
       const silverPart = Math.floor((sellingPrice % 100) / 10);
       const copperPart = Math.round(sellingPrice % 10);
@@ -1296,11 +1300,11 @@ async function combinePrice(items) {
   ];
   const totalPrice = items.reduce((cost, item) => {
     const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
-    if (!priceMatch) return cost;
+    if (!priceMatch) return Number(item.system.quantity)*Number(cost);
 
     const coinType = priceMatch[2];
     let currencyType = coinsType.indexOf(coinType);
-    let buyingCost = Number(priceMatch[1]);
+    let buyingCost = Number(item.system.quantity)*Number(priceMatch[1]);
 
     switch (currencyType) {
       case 0:
