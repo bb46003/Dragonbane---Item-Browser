@@ -1,3 +1,17 @@
+# Version 2
+<h3>Bug Fix</h3>
+<ul>
+    <li>Fix sorting item in Merchant for Player</li>
+    <li> Fix selling by Actor itemswith quantity grater than 1</li>
+</ul>
+<h3>New Features</h3>
+    <ul>
+        <li>Adapt module to Dragonbane system v 3.0</li>
+        <li> In Merchant Actor add option fo infinite quantity of item and option to not add item to Actor wich buys given item - fot items like night in inn</li>
+        <li> Remvoe stash feature - it is system core now</li>
+    </ul>
+
+
 # Version 1.7
 
 <h3>Bug Fix</h3>
@@ -14,7 +28,7 @@
 
 # Version 1.5
 
-<h3>New` Features</h3>
+<h3>New Features</h3>
 <ul>
     <li>Items sold by the Merchant now have buttons for quickly changing quantity  only for GM.</li>
     <li>Items sold by the Merchant can be opened by clicking on the item name  only for GM.</li>
