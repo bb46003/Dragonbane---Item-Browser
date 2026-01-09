@@ -134,7 +134,7 @@ Hooks.on("hoverToken", async (token, ev) => {
     actor.type === "dragonbane-item-browser.merchant" &&
     !temporaryOwner
   ) {
-    actor.setflagToItem("dragonbane-item-browser", "temporary", false);
+    actor.setFlag("dragonbane-item-browser", "temporary", false);
   }
 
   if (actor.type === "dragonbane-item-browser.merchant" && temporaryOwner) {
@@ -292,9 +292,9 @@ Hooks.on("renderDocumentOwnershipConfig", (app, html, data) => {
       select.addEventListener("change", async (event) => {
         const selectedValue = event.target.value;
         if (selectedValue === "3") {
-          await actor.setflagToItem("dragonbane-item-browser", "temporary", false);
+          await actor.setFlag("dragonbane-item-browser", "temporary", false);
         } else {
-          await actor.setflagToItem("dragonbane-item-browser", "temporary", true);
+          await actor.setFlag("dragonbane-item-browser", "temporary", true);
         }
       });
     });
@@ -303,7 +303,7 @@ Hooks.on("renderDocumentOwnershipConfig", (app, html, data) => {
 Hooks.on("createActor", async (actor) => {
   if (actor.type === "dragonbane-item-browser.merchant" && game.user.isGM) {
     await actor.updateSource({ "prototypeToken.actorLink": true });
-    await actor.setflagToItem("dragonbane-item-browser", "temporary", true);
+    await actor.setFlag("dragonbane-item-browser", "temporary", true);
   }
 });
 Hooks.on("renderDoDCharacterSheet", async (html) => {
@@ -516,9 +516,10 @@ function registerHandlebarsHelpers() {
     const html = `  <input   id="percentage"   type="text"  value="${sellingRatePercentage}">`;
     return html;
   });
-  Handlebars.registerHelper("groupByActor", function (items, actor) {
+  Handlebars.registerHelper("groupByActor",  function (items, actor) {
     const grouped = {};
-    const itemsMerchant = actor.data.root.actor.items;
+    const merchantActor = game.actors.get(actor);
+    const itemsMerchant = merchantActor.items;
     if (itemsMerchant !== undefined) {
       itemsMerchant.forEach((item) => {
         if (item.flags["dragonbane-item-browser"]?.actor) {
@@ -552,7 +553,7 @@ function registerHandlebarsHelpers() {
 
         for (const item of items) {
           const itemCost = item.system.cost;
-          const buyingRate = this.actor.system?.buing_rate || 1;
+          const buyingRate = merchantActor.system?.buing_rate || 0.5;
 
           let [costValue, currency2] = itemCost.split(" ");
           const finalCost = Number(costValue) * buyingRate;
@@ -593,7 +594,7 @@ function registerHandlebarsHelpers() {
               currency2 = coinTypeEn[coin2 + 1];
             }
           }
-          const finalSellingPrice = `${roundedCost} ${currency2}`;
+          const finalSellingPrice = `${Number(roundedCost)} ${currency2}`;
 
           result += `
                   <div class="buying-item" id="${item._id}">

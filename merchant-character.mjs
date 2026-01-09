@@ -322,14 +322,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
                             ".quantity-selector",
                           ).value;
                         const newName = itemData.name + `(${selectedQuantity})`;
-                        const oldCost =
-                          itemData.system.cost.match(/(\d+)\s*(\w+)/);
-                        const newPrice =
-                          String(
-                            Number(oldCost[1]) * Number(selectedQuantity),
-                          ) +
-                          " " +
-                          oldCost[2];
+
                         await this.actor.createEmbeddedDocuments("Item", [
                           itemData,
                         ]);
@@ -339,7 +332,6 @@ export class merchant extends api.HandlebarsApplicationMixin(
                               actorID && item.name === itemData.name,
                         );
                         await merchantItem.update({
-                          ["system.cost"]: newPrice,
                           ["name"]: newName,
                           ["system.quantity"]: selectedQuantity,
                         });
@@ -490,7 +482,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
         }
         console.log(totalPrice)
       });
-      const sellingPrice = totalPrice * this.actor.system.buing_rate;
+      const sellingPrice = totalPrice;
       const goldPart = Math.floor(sellingPrice / 100);
       const silverPart = Math.floor((sellingPrice % 100) / 10);
       const copperPart = Math.round(sellingPrice % 10);
@@ -1238,7 +1230,7 @@ async function addSellButton(
   let flavor = existingMessage.flavor;
   let newFlavor = "";
   const sellsItem = items[userActor._id].map((item) => item.name).join(", ");
-  const priceLabel = combinePrice(items[userActor._id]);
+  const priceLabel = await combinePrice(items[userActor._id], merchantActor);
   if (sucess && !isDragon) {
     const tekst = game.i18n.format("DB-IB.Chat.increasPrice", {
       item: sellsItem,
@@ -1287,7 +1279,7 @@ async function addSellButton(
     });
   }
 }
-async function combinePrice(items) {
+async function combinePrice(items, merchantActor) {
   let cost = 0;
   let finalCost = "";
   const coinsType = [
@@ -1300,11 +1292,12 @@ async function combinePrice(items) {
   ];
   const totalPrice = items.reduce((cost, item) => {
     const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
+    const sellItem = merchantActor.items.get(item.id);
     if (!priceMatch) return Number(item.system.quantity)*Number(cost);
 
     const coinType = priceMatch[2];
     let currencyType = coinsType.indexOf(coinType);
-    let buyingCost = Number(item.system.quantity)*Number(priceMatch[1]);
+    let buyingCost = Number(sellItem.system.quantity)*Number(priceMatch[1]);
 
     switch (currencyType) {
       case 0:
@@ -1813,7 +1806,9 @@ export class sellingItemMerchat {
           names += ", ";
         }
         const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
-        const itemCost = priceMatch[1];
+        const sellItem = merchantActor.items.get(item.id);
+        const quantity = Number(sellItem.system.quantity);
+        const itemCost = priceMatch[1]*quantity;
         const coinType = priceMatch[2];
         if (rollResults === false) {
           cost = itemCost;
@@ -1855,7 +1850,7 @@ export class sellingItemMerchat {
 
         if (itemToDeletActor.system.quantity > 1) {
           await itemToDeletActor.update({
-            "system.quantity": itemToDeletActor.system.quantity - 1,
+            "system.quantity": itemToDeletActor.system.quantity - quantity,
           });
         } else {
           await userActor.deleteEmbeddedDocuments("Item", [
@@ -1924,7 +1919,7 @@ export class sellingItemMerchat {
         "system.currency.cc": actorCC + copperPart,
       });
       ChatMessage.create({
-        content: game.i18n.format("DB-IB.spendMoney", {
+        content: game.i18n.format("DB-IB.gainMoney", {
           actor: userActor.name,
           item: names,
           itemPrice: priceLabel,
