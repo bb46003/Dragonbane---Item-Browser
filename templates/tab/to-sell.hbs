@@ -1,5 +1,5 @@
 <section
-  class="tab sellingStuff flexcol {{tabs.sellingStuff.cssClass}}"
+  class="tab sellingStuff flexcol active"
   action-data="tab"
   data-group="sheet"
   data-tab="sellingStuff"
@@ -36,6 +36,7 @@
         {{/if}}
         <label>{{localize "DB-IB.itemName"}}</label>
         <label>{{localize "DB-IB.itemPrice"}}</label>
+        {{#if isGM}}
         <button
           class="item-browser"
           id="{{actorID}}"
@@ -45,6 +46,7 @@
         >
           <a class="fa-solid fa-magnifying-glass"></a>
         </button>
+        {{/if}}
       </div>
       {{#itemToBuy actorID}}{{/itemToBuy}}
     </div>

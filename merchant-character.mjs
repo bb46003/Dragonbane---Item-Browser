@@ -82,72 +82,38 @@ export class merchant extends api.HandlebarsApplicationMixin(
       template: "modules/dragonbane-item-browser/templates/tab/to-buy.hbs",
     },
   };
-  static TABS = {
-    sheet: [
-      { id: "settings", group: "sheet", label: "DB-IB.merchant.setting" },
-      { id: "buingStuff", group: "sheet", label: "DB-IB.merchant.buing" },
-      { id: "sellingStuff", group: "sheet", label: "DB-IB.merchant.selling" },
-    ],
+  _tabs  = {
+
+     settings: { id: "settings", group: "sheet", label: "DB-IB.merchant.setting" },
+    buingStuff: { id: "buingStuff", group: "sheet", label: "DB-IB.merchant.buing" },
+     sellingStuff: { id: "sellingStuff", group: "sheet", label: "DB-IB.merchant.selling" },
+    
   };
 
-  #getTabs() {
-    const element = this?.element;
-    let activeTab = "";
-    if (element !== undefined && element !== null) {
-      const tabsElements = element.querySelector(".tab.active");
-      if (tabsElements !== null) {
-        activeTab = tabsElements.dataset.tab;
-      }
-    }
-
-    const tabs = {};
-    for (const [groupId, config] of Object.entries(this.constructor.TABS)) {
-      const group = {};
-      for (const t of config) {
-        const isGM = game.user.isGM;
-        let active = false;
-        if (isGM && t.id === "settings" && activeTab === "") {
-          active = true;
-        }
-        if (!isGM && t.id === "buingStuff" && activeTab === "") {
-          active = true;
-        }
-        if (activeTab !== "" && t.id === activeTab) {
-          active = true;
-        }
-        group[t.id] = Object.assign(
-          { active, cssClass: active ? "active" : "" },
-          t,
-        );
-      }
-      tabs[groupId] = group;
-    }
-    return tabs;
-  }
+		_getTabs() {
+			for (const tab of Object.values(this._tabs)) {
+				tab.active = this.tabGroups[tab.group] === tab.id;
+				tab.cssClass = tab.active ? "active" : "";
+			}
+			return this._tabs;
+		}
   /** @override */
-  async _prepareContext(options) {
-    const actorData = await this.getData();
-    return actorData;
-  }
-
-  async getData() {
-    //const source = super.getData();
+	async _prepareContext(options) {
+		const context = await super._prepareContext(options);
     const actorData = this.actor.toObject(false);
     const updateActoprData = await deleteSkill(actorData);
-    const tabGroups = this.#getTabs();
-    const context = {
-      tabs: tabGroups.sheet,
-      actor: updateActoprData,
-      system: updateActoprData.system,
-      fields: this.document.system.schema.fields,
-      isEditable: this.isEditable,
-      source: this.document.toObject(),
-      tabGroups,
-      tabs: tabGroups.sheet,
-      items: updateActoprData.items,
-      actorID: this.actor._id,
-      dataType: "item",
-    };
+ Object.assign(context, {
+    tabs: this._getTabs(),
+    actor: updateActoprData,
+    system: updateActoprData.system,
+    fields: this.document.system.schema.fields,
+    isEditable: this.isEditable,
+    source: this.document.toObject(),
+    items: updateActoprData.items,
+    actorID: this.actor.id,
+    dataType: "item",
+    isGM: game.user.isGM,
+  });
     async function enrich(html) {
       if (html) {
         return await TextEditor.enrichHTML(html, {
@@ -216,8 +182,8 @@ export class merchant extends api.HandlebarsApplicationMixin(
       });
     }
   }
-  async render(force = false, options = {}) {
-    await super.render(force, options);
+  async render(force = true, options = {}) {
+       await super.render(force, options);
     const el = this.element;
     this.activateListeners(el);
   }
@@ -331,7 +297,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
             if (itemSuply <= index) {
               if (itemData.system.quantity > 1) {
                 const quantity = Array.from(
-                  { length: Number(item.system.quantity) },
+                  { length: Number(itemData.system.quantity) },
                   (_, i) => i + 1,
                 );
                 const html = await DoD_Utility.renderTemplate(
@@ -369,7 +335,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
                         ]);
                         const merchantItem = this.actor.items.find(
                           (item) =>
-                            item.flags["dragonbane-item-browser"].actor ===
+                            item.flags["dragonbane-item-browser"]?.actor ===
                               actorID && item.name === itemData.name,
                         );
                         await merchantItem.update({
@@ -1781,7 +1747,7 @@ export class sellingItemMerchat {
       "system.currency.cc": actorCC - copperPart,
     });
      const merchantItem = await this.actor.items.get(itemID);
-     const doNotAddToBouyer = merchantItem?.flags["dragonbane-item-browser"]?.notaddtobuyer;
+     const doNotAddToBouyer = merchantItem?.flags["dragonbane-item-browser"]?.notaddtobuyer;s
      if(!doNotAddToBouyer){
     const created = await userActor.createEmbeddedDocuments("Item", [item]);
     const newItem = created[0];

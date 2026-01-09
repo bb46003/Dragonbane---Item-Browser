@@ -90,7 +90,7 @@
                 {{#each data.chosenItems as |item|}}
                 <div class="item-in-browser {{item.type}}" id='{{item.id}}'>
                     <img class="borderless-item" src="{{item.img}}" height="20" width="20">
-                    <a class="item-name-browser" data-tooltip='{{removeUUID item.system.description}}' id="{{item.id}}">{{item.name}}</a>
+                    <a class="item-name-browser" data-tooltip='{{removeUUID item.system}}' id="{{item.id}}">{{item.name}}</a>
                     {{#havePrice item ../data.actorType}}
                     {{/havePrice}}
                 </div>

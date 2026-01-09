@@ -43,14 +43,7 @@ Hooks.once("init", function () {
     config: true,
   });
 
-  game.settings.register("dragonbane-item-browser", "stash-items", {
-    name: game.i18n.localize("DB-IB.settings.stash"),
-    hint: game.i18n.localize("DB-IB.settings.hintStash"),
-    scope: "world",
-    type: Boolean,
-    default: false,
-    config: true,
-  });
+
   game.settings.register(
     "dragonbane-item-browser",
     "skip-folders-for-browser",
@@ -95,38 +88,6 @@ Hooks.once("init", function () {
     return;
   }
 
-  const originalTotalWeightGetter = Object.getOwnPropertyDescriptor(
-    DoDItemClass.prototype,
-    "totalWeight",
-  ).get;
-  Object.defineProperty(DoDItemClass.prototype, "totalWeight", {
-    get: function () {
-      if (this.system.isStash) {
-        return 0;
-      } else {
-        return originalTotalWeightGetter.call(this);
-      }
-    },
-  });
-
-  const { fields } = foundry.data;
-  const itemTypes = ["item", "helmet", "armor", "weapon"];
-
-  itemTypes.forEach((itemType) => {
-    const originalDefineSchema = CONFIG.Item.dataModels[itemType]?.defineSchema;
-
-    if (!originalDefineSchema) {
-      console.warn(`No defineSchema method found for item type: ${itemType}`);
-      return;
-    }
-
-    CONFIG.Item.dataModels[itemType].defineSchema = function () {
-      const originalSchema = originalDefineSchema.call(this);
-      return this.mergeSchema(originalSchema, {
-        isStash: new fields.BooleanField({ required: false, initial: false }),
-      });
-    };
-  });
   preloadHandlebarsTemplates();
   if (game.release.generation < 13) {
     Hooks.on("renderChatLog", addChatListeners);
@@ -347,7 +308,8 @@ Hooks.on("createActor", async (actor) => {
 });
 Hooks.on("renderDoDCharacterSheet", async (html) => {
   const title = game.i18n.localize("DB-IB.openItemBrowser");
-  const actorID = html.object._id;
+ const actorID = html.object?._id ?? html.document.id;
+
   const buttonAbilitiesHTML = `
     <button class="item-browser" id="${actorID}" data-type="ability" title="${title}">
       <a class="fa-solid fa-magnifying-glass"></a>
@@ -363,7 +325,7 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
   const creatItemButton = document.querySelectorAll(".item-create");
 
   const actor = await game.actors.get(actorID);
-  const actorSheet = actor?.sheet?._element?.[0] || html?._element?.[0];
+  const actorSheet = actor?.sheet?._element?.[0] || html?._element?.[0] || html.element;
   const headers = actorSheet.querySelectorAll("th.text-header");
 
   let targetHeader = null;
@@ -409,7 +371,9 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
       }
     }
   });
-  const buttonsBrowser = html._element[0].querySelectorAll(
+  const buttonsBrowser = html?._element?.[0].querySelectorAll(
+    "button.item-browser",
+  ) || html.element.querySelectorAll(
     "button.item-browser",
   );
 
@@ -426,59 +390,17 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
     "dragonbane-item-browser",
     "sell-items",
   );
-  const stashSetting = game.settings.get(
-    "dragonbane-item-browser",
-    "stash-items",
-  );
+
   const items = document.querySelectorAll(
     ".sheet-table-data.item.draggable-item",
   );
-  if (stashSetting) {
-    const title = game.i18n.localize("DB-IB.stash");
-    const worn = document.querySelectorAll(".fa-shirt");
-    const closestThElements = Array.from(worn).map((element) =>
-      element.closest("th"),
-    );
-    const stashIcon = `<th class="checkbox-header-stash">
-                                    <label title="${title}">
-                                        <a class="fa-solid fa-box"></a>
-                                    </label>
-                                </th>`;
 
-    closestThElements.forEach((icon) => {
-      icon.insertAdjacentHTML("beforebegin", stashIcon);
-    });
-  }
-
-  if (sellsSetting || stashSetting) {
+  if (sellsSetting) {
     items.forEach((item) => {
       const dataType = item.getAttribute("data-item-id");
       const binIcon = item.querySelector(".item-delete");
       const iconData = item.querySelector(".icon-data");
-      if (stashSetting) {
-        const wornCheckbox = item
-          .querySelector('input[data-field="system.worn"]')
-          ?.closest("td");
-        const templateStash = `
-        <td class="checkbox-data">
-          <input class="inline-edit" data-field="system.isStash" type="checkbox" id="{{id}}" data-tooltip="{{hint}}" {{#if system.isStash}}checked{{/if}}>
-        </td>
-      `;
-        const compiledTemplate = Handlebars.compile(templateStash);
-        const actor1 = game.actors.get(actorID);
-        const itemData = actor1.items.filter(
-          (item) => item._id === dataType,
-        )[0];
-        const data = {
-          id: dataType,
-          system: {
-            isStash: itemData.system.isStash,
-          },
-          hint: game.i18n.localize("DB-IB.stashItem"),
-        };
-        const stashCheckBox = compiledTemplate(data);
-        $(stashCheckBox).insertBefore(wornCheckbox);
-      }
+
       if (sellsSetting) {
         const title = game.i18n.localize("DB-IB.sellItem");
         const actor = game.actors.get(actorID);
@@ -510,19 +432,7 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
         }
       });
     }
-    if (stashSetting) {
-      const stash = document.querySelectorAll(
-        'input[data-field="system.isStash"]',
-      );
-      stash.forEach((checkbox) => {
-        if (!checkbox.dataset.eventAttached) {
-          checkbox.addEventListener("change", (event) => {
-            stashItem(event, actorID);
-          });
-          checkbox.dataset.eventAttached = "true";
-        }
-      });
-    }
+
   }
 });
 
@@ -542,18 +452,7 @@ async function selliItem(event, actorID) {
   sell.selling(itemID, actorID);
 }
 
-async function stashItem(event, actorID) {
-  event.preventDefault();
-  const itemID = event.target.id;
-  const isStash = event.target.checked;
-  const actor = game.actors.get(actorID);
-  const item = actor.items.filter((item) => item._id === itemID)[0];
-  if (item.system.worn) {
-    await item.update({ "system.worn": false });
-  }
 
-  await item.update({ "system.isStash": isStash });
-}
 
 function registerHandlebarsHelpers() {
   Handlebars.registerHelper({
@@ -585,7 +484,8 @@ function registerHandlebarsHelpers() {
     }
     return new Handlebars.SafeString(html);
   });
-  Handlebars.registerHelper("removeUUID", (description) => {
+  Handlebars.registerHelper("removeUUID", (item) => {
+    const description = String(item?.itemDescription || item.description);
     const containUUID = description.includes("@");
     let descriptionWithoutHTML = "";
     if (containUUID) {
@@ -741,7 +641,7 @@ function registerHandlebarsHelpers() {
         }
         const isGM = game.user.isGM;
         const finalPrice = `${roundedCost} ${currency2}`;
-        const description = item.system.description;
+        const description = String(item?.system?.itemDescription || item.description);
         const containUUID = description.includes("@");
         let descriptionWithoutHTML = "";
         const infinityQunatity = item?.flags["dragonbane-item-browser"]?.infinity;
@@ -754,7 +654,6 @@ function registerHandlebarsHelpers() {
         if(doNotAddToBouyer){
           selected2 = "checked"
         }
-        console.log(selected1, selected2)
         if (containUUID) {
           descriptionWithoutHTML = description.replace(/@.*?\{(.*?)\}/, "$1");
           //descriptionWithoutHTML = descriptionWithRemovedUUID.replace(
@@ -768,37 +667,43 @@ function registerHandlebarsHelpers() {
           if (item.system.quantity > 1) {
             result += `
              <div class="selling-item-gm" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
-                <span><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
-                <div class="inputs">  
-                    <input type="checkbox" data-action="setflagToItem" id="infinity" data-tooltip="${game.i18n.localize("DB-IB.InfinityQunatity")}" ${selected1}>
+             <div></div>   
+             <span class="arrow"><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
+             <div class="inputs">   
+             <input type="checkbox" data-action="setflagToItem" id="infinity" data-tooltip="${game.i18n.localize("DB-IB.InfinityQunatity")}" ${selected1}>
                     <input type="checkbox" data-action="setflagToItem" id="notaddtobuyer" data-tooltip="${game.i18n.localize("DB-IB.DoNotAddToBouer")}" ${selected2}>
                 </div>
-                <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display: flex;align-items: center;padding-left: 5px;">
+                <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display:flex; justify-content: center;align-items: center;padding-left: 5px;">
                   <img class="borderless-item" src="${item.img}" height="20" width="20" style="margin-right: 5px">
                   ${item.name}(${item.system.quantity})
                 </label>
+                <div class="price-label">
                 <label class="price-label">${finalPrice}</label>
                 <div class="merchant-icon">
                   <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
                   ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
                 </div>
+                </div>
              </div>`;
           } else {
             result += `
              <div class="selling-item-gm" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
-            <span><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
-            <div class="inputs">  
+             <div></div>
+             <span class="arrow"><i class="fa-solid fa-arrow-up" data-tooltip="${game.i18n.localize("DB-IB.increaseQuantity")}" data-action="changeQunatity" data-type="up"></i> <i class="fa-solid fa-arrow-down" data-tooltip="${game.i18n.localize("DB-IB.decreseQuantity")}" data-action="changeQunatity" data-type="down"></i></span>
+               <div class="inputs"> 
                 <input type="checkbox" data-action="setflagToItem" id="infinity" data-tooltip="${game.i18n.localize("DB-IB.InfinityQunatity")}" ${selected1}>
                 <input type="checkbox" data-action="setflagToItem" id="notaddtobuyer" data-tooltip="${game.i18n.localize("DB-IB.DoNotAddToBouer")}" ${selected2}>
-            </div>
-            <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display: flex;align-items: center;padding-left: 5px;">
+         </div>
+            <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}' style="display:flex; justify-content: center; align-items: center;padding-left: 5px;">
               <img class="borderless-item" src="${item.img}" height="20" width="20" style="margin-right: 5px">
               ${item.name}
             </label>
+                  <div class="price-label">
             <label class="price-label">${finalPrice}</label>
             <div class="merchant-icon">
               <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
               ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
+            </div>
             </div>
           </div>`;
           }
@@ -806,28 +711,32 @@ function registerHandlebarsHelpers() {
           if (item.system.quantity > 1) {
             result += `
              <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
-                <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display: flex; align-items: center;">
+                <div></div>
+             <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}' style="display:flex; justify-content: center; align-items: center;">
                 <img class="borderless-item" src="${item.img}" height="20" width="20" style="margin-right: 5px">
                 ${item.name}(${item.system.quantity})
                 </label>
-                <label class="price-label">${finalPrice}</label>
+                <label class="price-label">${finalPrice}
                 <div class="merchant-icon">
                   <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
-                  ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}s
+                  ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
                 </div>
+                </label>
              </div>`;
           } else {
             result += `
              <div class="selling-item" id="${item._id}" data-name ="${item.name}" data-type ="${item.type}" data-price ="${finalPrice}">
-             <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}'style="display: flex; align-items: center;">
+               <div></div>
+             <label data-action="openItem" data-tooltip='${descriptionWithoutHTML}' style="display:flex; justify-content: center; align-items: center;">
              <img class="borderless-item" src="${item.img}" height="20" width="20" style="margin-right: 5px">
              ${item.name}
              </label>
-            <label class="price-label">${finalPrice}</label>
+            <label class="price-label">${finalPrice}
             <div class="merchant-icon">
               <i class="fas fa-coins" id="${item._id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>
               ${isGM ? `<label><i class="fa fa-trash" id="${item._id}"></i></label>` : ""}
             </div>
+            </label>
           </div>`;
           }
         }
