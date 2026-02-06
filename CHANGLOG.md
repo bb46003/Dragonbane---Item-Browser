@@ -1,3 +1,9 @@
+# Version 2.1
+<h3>Bug Fix</h3>
+<ul>
+    <li>Fixed a bug that caused the sell icon to not be displayed.</li>
+</ul>
+
 # Version 2
 <h3>Bug Fix</h3>
 <ul>
