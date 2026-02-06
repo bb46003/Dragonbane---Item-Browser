@@ -392,35 +392,65 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
   );
 
   const items = document.querySelectorAll(
-    ".sheet-table-data.item.draggable-item",
+    ".sheet-table-data.item.draggable",
   );
+ const itemsHeaders = document.querySelectorAll(
+  '[data-tab="inventory"] .sheet-table-header'
+);
+
 
   if (sellsSetting) {
-    items.forEach((item) => {
-      const dataType = item.getAttribute("data-item-id");
-      const binIcon = item.querySelector(".item-delete");
-      const iconData = item.querySelector(".icon-data");
+itemsHeaders.forEach((header) => {
+  const ths = header.querySelectorAll("th");
+  const lastTh = ths[ths.length - 1];
 
-      if (sellsSetting) {
-        const title = game.i18n.localize("DB-IB.sellItem");
-        const actor = game.actors.get(actorID);
-        const singleItem = actor.items.filter(
-          (element) => element.id === dataType,
-        )[0];
-        const singleItemHaveCost = /\d/.test(singleItem.system.cost);
-        if (singleItemHaveCost) {
-          const addSellingIcon = `
-          <button class="item-browser-sold" actor-data ="${actorID}" id="${dataType}" title="${title}">
-            <i  for="item-browser-sold" class="fa-solid fa-piggy-bank" id="${dataType}" ></i>
-          </button>`;
-          const hasSellingButton =
-            iconData.querySelector(".item-browser-sold") === null;
-          if (hasSellingButton) {
-            binIcon.insertAdjacentHTML("beforebegin", addSellingIcon);
-          }
-        }
-      }
-    });
+  if (lastTh && !lastTh.nextElementSibling) {
+    lastTh.insertAdjacentHTML("afterend", "<th></th>");
+  }
+});
+items.forEach((item) => {
+  const dataType = item.getAttribute("data-item-id");
+
+  // Find the td that contains the itemControls button
+  const controlsTd = item.querySelector(
+    'button[data-action="itemControls"]'
+  )?.closest("td");
+
+  if (!controlsTd) return;
+
+  if (!sellsSetting) return;
+
+  const title = game.i18n.localize("DB-IB.sellItem");
+  const actor = game.actors.get(actorID);
+
+  const singleItem = actor.items.get(dataType);
+  if (!singleItem) return;
+
+  const singleItemHaveCost = /\d/.test(singleItem.system.cost);
+  if (!singleItemHaveCost) return;
+
+  // Prevent duplicate column
+  const hasSellingButton = item.querySelector(".item-browser-sold");
+  if (hasSellingButton) return;
+
+  const addSellingIcon = `
+    <td class="sell-column">
+      <button
+        type="button"
+        class="item-browser-sold"
+        actor-data="${actorID}"
+        data-item-id="${dataType}"
+        title="${title}"
+      >
+        <i class="fa-solid fa-piggy-bank"></i>
+      </button>
+    </td>
+  `;
+
+  // Insert the new column BEFORE the controls column
+  controlsTd.insertAdjacentHTML("beforebegin", addSellingIcon);
+});
+;
     if (sellsSetting) {
       const buttonsSell = document.querySelectorAll("button.item-browser-sold");
       buttonsSell.forEach((button) => {
@@ -447,7 +477,8 @@ async function openItemsBrowser(event, actorID) {
 
 async function selliItem(event, actorID) {
   event.preventDefault();
-  const itemID = event.target.id;
+  const itemID = event.target.dataset.itemId;
+  console.log(itemID)
   const sell = new sellingItem(itemID, actorID);
   sell.selling(itemID, actorID);
 }
