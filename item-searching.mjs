@@ -548,6 +548,32 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
     if (skill === undefined && skillName !== "Bartering") {
       skill = actor.findSkill("Bartering");
     }
+        if(skill === undefined){
+      const skillsList = userActor.items.filter(item => item.type === "skill")
+              const content = await DoD_Utility.renderTemplate(
+          "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
+          { skills: skillsList },
+        );
+     skill = await new Promise((resolve) => {
+        new api.DialogV2({
+            window: { title: game.i18n.localize("DB-IB.dialog.selectSkill") },
+            content: content,
+            buttons: [
+              {
+                action: "select",
+                label: game.i18n.localize("DB-IB.dialog.useSelectedSkill"),
+                callback: async (event) => {
+                  const selectedSkillID =
+                    event.currentTarget.querySelector("select").value;
+                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  resolve(selectedSkill);
+                },
+              },
+            ],
+          }).render(true);
+        });
+
+    }
     const options = {};
     const test = new DoDSkillTest(actor, skill, options);
 
@@ -1279,7 +1305,32 @@ export class sellingItem {
     if (skill === undefined && skill !== "Bartering") {
       skill = actor.findSkill("Bartering");
     }
+    if(skill === undefined){
+      const skillsList = userActor.items.filter(item => item.type === "skill")
+              const content = await DoD_Utility.renderTemplate(
+          "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
+          { skills: skillsList },
+        );
+     skill = await new Promise((resolve) => {
+        new api.DialogV2({
+            window: { title: game.i18n.localize("DB-IB.dialog.selectSkill") },
+            content: content,
+            buttons: [
+              {
+                action: "select",
+                label: game.i18n.localize("DB-IB.dialog.useSelectedSkill"),
+                callback: async (event) => {
+                  const selectedSkillID =
+                    event.currentTarget.querySelector("select").value;
+                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  resolve(selectedSkill);
+                },
+              },
+            ],
+          }).render(true);
+        });
 
+    }
     let options = { canPush: false, skipDialog: true, formula: formula };
     const test = new DoDSkillTest(actor, skill, options);
     const barterSkillRoll = await test.roll();

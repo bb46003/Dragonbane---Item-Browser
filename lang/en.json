@@ -77,7 +77,9 @@
       "buy": "Buy for selected actor",
       "sell": "Pass item to merchant",
       "openMerchantSheet": "Open merchant character sheet",
-      "youAttempToOpenMerchantSheet": "Do you want to open merchant character sheet?"
+      "youAttempToOpenMerchantSheet": "Do you want to open merchant character sheet?",
+      "selectSkill": "Select Skill for Bartering",
+      "useSelectedSkill": "Use selected Skill"
     },
     "title": "Item Browser",
     "Sort": "Sort by:",
@@ -86,7 +88,8 @@
     "SortByCost": "By item Cost",
     "increaseQuantity": "Increase item quantity",
     "decreseQuantity": "Decrese item quantity",
-    "buy": "Buy"
+    "buy": "Buy",
+    "onlyGMCanMove": "Only GMs can move this Merchant."
   },
   "DB_IB": {
     "selectQuantity": "Select quantity",

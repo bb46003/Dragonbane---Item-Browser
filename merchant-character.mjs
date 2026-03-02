@@ -26,6 +26,22 @@ export class merchantData extends DragonbaneDataModel {
           min: 0,
         }),
       }),
+                  movement: new fields.SchemaField({
+                base: new fields.NumberField({ 
+                    required: true,
+                    nullable: false,
+                    integer: true,
+                    initial: 10,
+                    min: 0,
+                    }),
+                value: new fields.NumberField({
+                    required: true,
+                    nullable: false,
+                    integer: true,
+                    initial: 10,
+                    min: 0,
+                })
+            }),
     });
   }
 }
@@ -433,7 +449,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
       const sellingActor = game.actors.get(headerID);
       const user = game.user.id;
      await  result[headerID].forEach(async (item) => {
-        const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
+        const priceMatch = item.price.match(/^([\d.]+)\s*([\p{L}]+)$/u);
         if (priceMatch) {
           const sellingItem = await this.actor.items.find(
             (element) => element.id === item.id,
@@ -530,7 +546,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
       game.i18n.translations.DoD.currency.copper.toLowerCase(),
       "copper",
     ];
-    const priceMatch = priceLabel.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
+    const priceMatch = priceLabel.match(/^([\d.]+)\s*([\p{L}]+)$/u);
     const coinType = priceMatch[2];
     let sellingPrice;
     let currencyType;
@@ -897,6 +913,32 @@ export class merchant extends api.HandlebarsApplicationMixin(
     let skill = userActor.findSkill(skillName);
     if (skill === undefined && skillName !== "Bartering") {
       skill = userActor.findSkill("Bartering");
+    }
+    if(skill === undefined){
+      const skillsList = userActor.items.filter(item => item.type === "skill")
+              const content = await DoD_Utility.renderTemplate(
+          "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
+          { skills: skillsList },
+        );
+     skill = await new Promise((resolve) => {
+        new api.DialogV2({
+            window: { title: game.i18n.localize("DB-IB.dialog.selectSkill") },
+            content: content,
+            buttons: [
+              {
+                action: "select",
+                label: game.i18n.localize("DB-IB.dialog.useSelectedSkill"),
+                callback: async (event) => {
+                  const selectedSkillID =
+                    event.currentTarget.querySelector("select").value;
+                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  resolve(selectedSkill);
+                },
+              },
+            ],
+          }).render(true);
+        });
+
     }
     let items = {};
     const actorGroups = document.querySelectorAll(".actor-group");
@@ -1291,9 +1333,9 @@ async function combinePrice(items, merchantActor) {
     "copper",
   ];
   const totalPrice = items.reduce((cost, item) => {
-    const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
+    const priceMatch = item.price.match(/^([\d.]+)\s*([\p{L}]+)$/u);
     const sellItem = merchantActor.items.get(item.id);
-    if (!priceMatch) return Number(item.system.quantity)*Number(cost);
+    if (!priceMatch) return Number(sellItem.system.quantity)*Number(cost);
 
     const coinType = priceMatch[2];
     let currencyType = coinsType.indexOf(coinType);
@@ -1507,6 +1549,32 @@ export class sellingItemMerchat {
     let skill = userActor.findSkill(skillName);
     if (skill === undefined && skill !== "Bartering") {
       skill = userActor.findSkill("Bartering");
+    }
+        if(skill === undefined){
+      const skillsList = userActor.items.filter(item => item.type === "skill")
+              const content = await DoD_Utility.renderTemplate(
+          "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
+          { skills: skillsList },
+        );
+     skill = await new Promise((resolve) => {
+        new api.DialogV2({
+            window: { title: game.i18n.localize("DB-IB.dialog.selectSkill") },
+            content: content,
+            buttons: [
+              {
+                action: "select",
+                label: game.i18n.localize("DB-IB.dialog.useSelectedSkill"),
+                callback: async (event) => {
+                  const selectedSkillID =
+                    event.currentTarget.querySelector("select").value;
+                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  resolve(selectedSkill);
+                },
+              },
+            ],
+          }).render(true);
+        });
+
     }
     if (options.boons) {
       options.boons = options.boons.filter((boon) => boon.value !== false);
@@ -1805,7 +1873,7 @@ export class sellingItemMerchat {
         if (names !== "") {
           names += ", ";
         }
-        const priceMatch = item.price.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
+        const priceMatch = item.price.match(/^([\d.]+)\s*([\p{L}]+)$/u);
         const sellItem = merchantActor.items.get(item.id);
         const quantity = Number(sellItem.system.quantity);
         const itemCost = priceMatch[1]*quantity;

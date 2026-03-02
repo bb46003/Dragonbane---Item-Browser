@@ -78,11 +78,14 @@
       "buy": "Kup jako wybrany Aktor",
       "sell": "Przekarz przedmiot do kupca",
       "openMerchantSheet": "Otwórz kartę postaci Kupca",
-      "youAttempToOpenMerchantSheet": "Czy chcesz otworzyć kartę Kupca?"
+      "youAttempToOpenMerchantSheet": "Czy chcesz otworzyć kartę Kupca?",
+      "selectSkill": "Wybierz Umiejętność do Targowania się",
+      "useSelectedSkill": "Uzyj wybranej Umiejętności"
     },
     "title": "Przeglądarka przedmiotów",
     "increaseQuantity": "Zwiększ ilość artykułów",
-    "decreseQuantity": "Zmniejsz ilość pozycji"
+    "decreseQuantity": "Zmniejsz ilość pozycji",
+    "onlyGMCanMove": "Tylko Gm może porzuszać Kupcem"
   },
   "DB_IB": {
     "ChangeQuantity": "Zmień ilość"

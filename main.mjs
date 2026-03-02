@@ -115,12 +115,39 @@ Hooks.once("init", function () {
     });
   }
 });
+// Prevent non-GM users from moving/dragging merchant tokens
+Hooks.on("preUpdateToken", (scene, tokenData, updateData, options, userId) => {
+  const token = canvas.tokens.get(tokenData._id);
+  if (!token) return true;
+
+  const actor = token.actor;
+  
+  // Only block movement for merchant tokens
+  if (
+    actor?.type === "dragonbane-item-browser.merchant" &&
+    !game.user.isGM
+  ) {
+    // If the update attempts to change position, block it
+    if (updateData.movement) {
+      ui.notifications.warn(game.i18n.localize("DB-IB.onlyGMCanMove"));
+      return false; // Block the update
+    }
+  }
+  
+  return true; // Allow other updates
+});
+
 Hooks.on("hoverToken", async (token, ev) => {
+
   const actor = token.actor;
   if (
     actor.ownership[game.user._id] !== 3 &&
     actor.type === "dragonbane-item-browser.merchant"
   ) {
+      let selectoedToken = canvas.tokens.controlled[0];
+
+   if(selectoedToken)await selectoedToken.release();
+
     game.modules.get("dragonbane-item-browser").socketHandler.emit({
       type: "setTemporaryOwner",
       userId: game.user.id,
@@ -165,6 +192,7 @@ Hooks.on("hoverToken", async (token, ev) => {
       });
     }
   }
+
 });
 Hooks.on("renderSettingsConfig", (app, html, data) => {
   const barterRollEnabled = game.settings.get(
