@@ -969,11 +969,13 @@ async function barterPushRoll(event) {
     ?.getAttribute("data-message-id");
   const currentMessage = game.messages.get(ChatMessageID);
   const formula = currentMessage.rolls[0]._formula;
-  const actor = game.actors.get(currentMessage.system.actor._id);
+  const actorUUID = currentMessage.system?.actor?._id || currentMessage.system.actorUuid.split(".")[1];
+  const actor = game.actors.get(actorUUID);
   const item = currentMessage.system.item;
   const element = event.currentTarget;
   const parent = element.parentElement;
   const pushChoices = parent.getElementsByTagName("input");
+  if(element.getElementsByTagName("input")){
   const choice = Array.from(pushChoices).find(
     (e) => e.name === "pushRollChoice" && e.checked,
   );
@@ -1013,7 +1015,142 @@ async function barterPushRoll(event) {
     existingMessage,
     ChatMessage,
     barterSkillRoll,
-  );
+  );}
+  else{
+    const context = currentMessage.system.toContext();
+    const pushRollChoices = {};
+
+    for (const attribute in actor.system.attributes) {
+        const condition = actor.system.conditions[attribute];
+        if (condition) {
+            if (!condition.value) {
+                pushRollChoices[attribute] =
+                    game.i18n.localize("DoD.conditions." + attribute) + " (" +
+                    game.i18n.localize("DoD.attributes." + attribute) + ")";
+            }
+        } else {
+            DoD_Utility.ERROR("Missing condition for attribute " + attribute);
+        }
+    }
+
+    if (Object.keys(pushRollChoices).length === 0) {
+        DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+        return;
+    }
+
+    // Create dialog content
+    const content = `
+    <form>
+        <fieldset>
+        <legend>${game.i18n.localize("DoD.roll.pushChoiceLabel")}</legend>
+
+        ${Object.entries(pushRollChoices).map(([attribute, label], i) => `
+            <label>
+            <input
+                type="radio"
+                name="pushChoice"
+                value="${attribute}"
+                ${i === 0 ? "checked" : ""}
+            >
+            ${label}
+            </label>
+        `).join("")}
+
+        </fieldset>
+    </form>
+    `;
+    
+    // Determine dialog title
+    let rollTitle = "";
+    switch (message.type) {
+        case "attributeTest":
+            rollTitle =  context.attribute.toUpperCase();
+            break;
+        case "skillTest":
+        case "weaponTest":
+        case "spellTest":
+            rollTitle = context.skill.name || context.weapon?.name || context.spell?.name;
+            break;
+        default:
+            return;
+    }    
+
+     // Show dialog
+    const choice = await foundry.applications.api.DialogV2.prompt({
+        window: { title: game.i18n.localize("DoD.roll.pushButtonLabel") + ": " + rollTitle },
+        content,
+        ok: {
+            icon: "fa-solid fa-arrow-rotate-right",
+            label: game.i18n.localize("DoD.roll.pushButtonLabel"),
+            callback: (event, button) => button.form.elements.pushChoice.value
+    },
+    });
+    if (choice === null) return; // dialog was closed
+    
+    // Take condition
+    if (!actor.hasCondition(choice)) {
+        actor.updateCondition(choice, true);
+        const msg = game.i18n.format("DoD.ui.chat.takeCondition",
+            {
+                actor: actor.name,
+                condition: game.i18n.localize("DoD.conditions." + choice)
+            });
+        ChatMessage.create({
+            content: msg,
+            user: game.user.id,
+            speaker: ChatMessage.getSpeaker({ actor: actor })
+        });
+    } else {
+        DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+        return;
+    }
+
+    // Re-roll
+    const rerollOptions = message?.rolls[0].options;
+
+    const options = {
+        actorId: message.system.actorUuid,
+        attribute: message.system.attribute,
+        formula: message.system.formula,
+        canPush: false,
+        skipDialog: true,
+        isReroll: true,
+        rerollOptions,
+    };
+
+    if (context.targetActor) {
+        const targetToken = canvas.scene?.tokens?.find(t => t.actor?.uuid === context.targetActor.uuid);
+        if (targetToken) {
+            options.targets = [targetToken];
+        }
+    }
+
+    let test = null;
+    switch (message.type) {
+        case "attributeTest":
+            test = new DoDAttributeTest(actor, options.attribute, options);
+            break;
+        case "skillTest":
+            options.skill = context.skill
+            test = new DoDSkillTest(actor, options.skill, options);
+            break;
+        case "weaponTest":
+            options.action = context.action;
+            options.extraDamage = context.extraDamage;
+            options.weapon = context.weapon;
+            test = new DoDWeaponTest(actor, options.weapon, options);
+            break;
+        case "spellTest":
+            options.spell = context.spell;
+            options.powerLevel = context.powerLevel;
+            options.wpCost = Number(context.wpOld - context.wpNew);
+            test = new DoDSpellTest(actor, options.spell, options);
+            break;
+        default:
+            return;
+    }
+    test?.roll();
+  }
 }
 async function creatConditionMagade(actor, choice) {
   const msg = game.i18n.format("DoD.ui.chat.takeCondition", {
@@ -1279,11 +1416,15 @@ export class sellingItem {
       ?.getAttribute("data-message-id");
     const currentMessage = game.messages.get(ChatMessageID);
     const formula = currentMessage.rolls[0]._formula;
-    const actor = game.actors.get(currentMessage.system.actor._id);
-    const item = currentMessage.system.item;
+      const actorUUID = currentMessage.system?.actor?._id || currentMessage.system.actorUuid.split(".")[1];
+
+    const actor = game.actors.get(actorUUID);
+    const item = currentMessage?.system?.item || currentMessage.getFlag("dragonbane-item-browser", "sellItem");
     const element = event.currentTarget;
     const parent = element.parentElement;
     const pushChoices = parent.getElementsByTagName("input");
+    const odlCondition = element.getElementsByTagName("input");
+      if(odlCondition.length !== 0){
     const choice = Array.from(pushChoices).find(
       (e) => e.name === "pushRollChoice" && e.checked,
     );
@@ -1349,6 +1490,151 @@ export class sellingItem {
       ChatMessage,
       barterSkillRoll,
     );
+  }else{
+    const pushRollChoices = {};
+    const context = currentMessage.system.toContext();
+    const message = currentMessage;
+
+    for (const attribute in actor.system.attributes) {
+        const condition = actor.system.conditions[attribute];
+        if (condition) {
+            if (!condition.value) {
+                pushRollChoices[attribute] =
+                    game.i18n.localize("DoD.conditions." + attribute) + " (" +
+                    game.i18n.localize("DoD.attributes." + attribute) + ")";
+            }
+        } else {
+            DoD_Utility.ERROR("Missing condition for attribute " + attribute);
+        }
+    }
+
+    if (Object.keys(pushRollChoices).length === 0) {
+        DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+        return;
+    }
+
+    // Create dialog content
+    const content = `
+    <form>
+        <fieldset>
+        <legend>${game.i18n.localize("DoD.roll.pushChoiceLabel")}</legend>
+
+        ${Object.entries(pushRollChoices).map(([attribute, label], i) => `
+            <label>
+            <input
+                type="radio"
+                name="pushChoice"
+                value="${attribute}"
+                ${i === 0 ? "checked" : ""}
+            >
+            ${label}
+            </label>
+        `).join("")}
+
+        </fieldset>
+    </form>
+    `;
+    
+    // Determine dialog title
+    let rollTitle = "";
+    switch (message.type) {
+        case "attributeTest":
+            rollTitle =  context.attribute.toUpperCase();
+            break;
+        case "skillTest":
+        case "weaponTest":
+        case "spellTest":
+            rollTitle = context.skill.name || context.weapon?.name || context.spell?.name;
+            break;
+        default:
+            return;
+    }    
+
+     // Show dialog
+    const choice = await foundry.applications.api.DialogV2.prompt({
+        window: { title: game.i18n.localize("DoD.roll.pushButtonLabel") + ": " + rollTitle },
+        content,
+        ok: {
+            icon: "fa-solid fa-arrow-rotate-right",
+            label: game.i18n.localize("DoD.roll.pushButtonLabel"),
+            callback: (event, button) => button.form.elements.pushChoice.value
+    },
+    });
+    if (choice === null) return; // dialog was closed
+    
+    // Take condition
+    if (!actor.hasCondition(choice)) {
+        actor.updateCondition(choice, true);
+        const msg = game.i18n.format("DoD.ui.chat.takeCondition",
+            {
+                actor: actor.name,
+                condition: game.i18n.localize("DoD.conditions." + choice)
+            });
+        ChatMessage.create({
+            content: msg,
+            user: game.user.id,
+            speaker: ChatMessage.getSpeaker({ actor: actor })
+        });
+    } else {
+        DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+        return;
+    }
+let skillName = game.settings.get(
+      "dragonbane-item-browser",
+      "custom-barter-skill",
+    );
+    if (skillName === "") {
+      skillName = "Bartering";
+    }
+    let skill = actor.findSkill(skillName);
+    if (skill === undefined && skill !== "Bartering") {
+      skill = actor.findSkill("Bartering");
+    }
+    if(skill === undefined){
+      const skillsList = userActor.items.filter(item => item.type === "skill")
+              const content = await DoD_Utility.renderTemplate(
+          "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
+          { skills: skillsList },
+        );
+     skill = await new Promise((resolve) => {
+        new api.DialogV2({
+            window: { title: game.i18n.localize("DB-IB.dialog.selectSkill") },
+            content: content,
+            buttons: [
+              {
+                action: "select",
+                label: game.i18n.localize("DB-IB.dialog.useSelectedSkill"),
+                callback: async (event) => {
+                  const selectedSkillID =
+                    event.currentTarget.querySelector("select").value;
+                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  resolve(selectedSkill);
+                },
+              },
+            ],
+          }).render(true);
+        });
+
+    }
+    let options = { canPush: false, skipDialog: true, formula: formula };
+    const test = new DoDSkillTest(actor, skill, options);
+    const barterSkillRoll = await test.roll();
+    const sucess = barterSkillRoll.postRollData.success;
+    const isDemon = barterSkillRoll.postRollData.isDemon;
+    const isDragon = barterSkillRoll.postRollData.isDragon;
+    const ChatMessage = barterSkillRoll.rollMessage._id;
+    let existingMessage = game.messages.get(ChatMessage);
+    await this.addSellButton(
+      item,
+      actor,
+      sucess,
+      isDemon,
+      isDragon,
+      existingMessage,
+      ChatMessage,
+      barterSkillRoll,
+    );
+  }
   }
   async addSellButton(
     item,
@@ -1361,6 +1647,9 @@ export class sellingItem {
     barterSkillRoll,
   ) {
     let flavor = existingMessage.flavor;
+    if(!item){
+      item = existingMessage.getFlag("dragonbane-item-browser", "sellItem");
+    }
     let newFlavor = "";
     if (success) {
       const tekst = game.i18n.format("DB-IB.Chat.increasPrice", {
@@ -1397,6 +1686,7 @@ export class sellingItem {
              </button>
             `;
       let updatedContent = `${existingMessage.content} <div>${newButton}</div>`;
+      existingMessage.setFlag("dragonbane-item-browser", "sellItem", item);
       existingMessage.update({
         content: updatedContent,
         flavor: newFlavor,
@@ -1412,23 +1702,28 @@ export class sellingItem {
         flavor: newFlavor,
         system: { actor, item, barterSkillRoll },
       });
+            existingMessage.setFlag("dragonbane-item-browser", "sellItem", item);
+
       barterSkillRoll.rollMessage.update({
         flavor: newFlavor,
         system: { actor, item, barterSkillRoll },
       });
+
     }
   }
   async sellFromChat(event) {
     const mesageID = event.target.dataset.messageId;
     const data = game.messages.get(mesageID).system;
-    const roll = data.barterSkillRoll;
-    const actor = game.actors.get(data.actor._id);
-    const item = actor.items.get(data.item._id);
+    const roll = data?.barterSkillRoll;
+    const actorUUID = data?.actor?._id || data.actorUuid.split(".")[1];
+    const actor = game.actors.get(actorUUID);
+    const itemID = data?.item?._id || data.parent.flags["dragonbane-item-browser"].sellItem._id;
+    const item = actor.items.get(itemID);
     let actorGC = actor.system.currency.gc;
     let actorSC = actor.system.currency.sc;
     let actorCC = actor.system.currency.cc;
-    const sucess = roll.postRollData.success;
-    const isDragon = roll.postRollData.isDragon;
+    const sucess = roll?.postRollData?.success || data.success;
+    const isDragon = roll?.postRollData?.isDragon || data.isDragon;
     let itemPrice = item.system.cost;
     const coinsType = [
       game.i18n.translations.DoD.currency.gold.toLowerCase(),
