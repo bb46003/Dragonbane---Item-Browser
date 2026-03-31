@@ -506,7 +506,6 @@ async function openItemsBrowser(event, actorID) {
 async function selliItem(event, actorID) {
   event.preventDefault();
   const itemID = event.target.dataset.itemId;
-  console.log(itemID)
   const sell = new sellingItem(itemID, actorID);
   sell.selling(itemID, actorID);
 }

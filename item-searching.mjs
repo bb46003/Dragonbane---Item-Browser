@@ -592,9 +592,9 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
               const isDemon = barterSkillRoll.postRollData.isDemon;
               const isDragon = barterSkillRoll.postRollData.isDragon;
               const canPush = barterSkillRoll.postRollData.canPush;
-              const ChatMessage = barterSkillRoll.rollMessage._id;
-              let existingMessage = game.messages.get(ChatMessage);
-
+              const ChatMessages = barterSkillRoll.rollMessage._id;
+              let existingMessage = game.messages.get(ChatMessages);
+              existingMessage.setFlag("dragonbane-item-browser", "buyItem", item);
               if (canPush) {
                 await barterPushButton(existingMessage);
                 existingMessage = game.messages.get(ChatMessage);
@@ -606,7 +606,7 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
                 isDemon,
                 isDragon,
                 existingMessage,
-                ChatMessage,
+                ChatMessages,
                 barterSkillRoll,
               );
             }
@@ -674,10 +674,11 @@ async function buyFromChat(event) {
   const ChatMessage = game.messages.get(
     event.target.getAttribute("data-message-id"),
   );
-  const actor = game.actors.get(ChatMessage.system.actor._id);
-  const item = ChatMessage.system.item;
-  const rollResults = ChatMessage.system.barterSkillRoll.postRollData.success;
-  const isDragon = ChatMessage.system.barterSkillRoll.postRollData.isDragon;
+  const actorUuid = ChatMessage.system?.actor?._id || ChatMessage.system.actorUuid.split(".")[1];
+  const actor = game.actors.get(actorUuid);
+  const item = ChatMessage.system?.item || ChatMessage.getFlag("dragonbane-item-browser", "buyItem");
+  const rollResults = ChatMessage.system?.barterSkillRoll?.postRollData?.success || ChatMessage.system.success;
+  const isDragon = ChatMessage.system?.barterSkillRoll?.postRollData?.isDragon || ChatMessage.system.isDragon;
 
   const buyIitem = await spendMoneyWithBarter(
     item,
@@ -894,10 +895,11 @@ async function addBuyButton(
   isDemon,
   isDragon,
   existingMessage,
-  ChatMessage,
+  ChatMessages,
   barterSkillRoll,
 ) {
   let flavor = existingMessage.flavor;
+
   let newFlavor = "";
   let newButton = "";
   if (sucess && !isDragon) {
@@ -924,9 +926,10 @@ async function addBuyButton(
     newFlavor = flavor + regularPrice;
   }
   if (isDemon === false) {
+    const buttonText = await game.i18n.localize("DB-IB.Chat.buyItem");
     newButton = `
-        <button type="button" class="chat-button buy-item" data-message-id="${ChatMessage}">
-        ${game.i18n.format("DB-IB.Chat.buyItem")}
+        <button type="button" class="chat-button buy-item" data-message-id="${ChatMessages}">
+        ${buttonText}
          </button>
         `;
     let updatedContent = `${existingMessage.content} <div>${newButton}</div>`;
@@ -935,6 +938,7 @@ async function addBuyButton(
       flavor: newFlavor,
       system: { actor, item, barterSkillRoll },
     });
+    existingMessage.setFlag("dragonbane-item-browser", "buyItem", item);
     await barterSkillRoll.rollMessage.update({
       content: updatedContent,
       flavor: newFlavor,
@@ -945,6 +949,8 @@ async function addBuyButton(
       flavor: newFlavor,
       system: { actor, item, barterSkillRoll },
     });
+    existingMessage.setFlag("dragonbane-item-browser", "buyItem", item);
+
     await barterSkillRoll.rollMessage.update({
       flavor: newFlavor,
       system: { actor, item, barterSkillRoll },
@@ -971,11 +977,11 @@ async function barterPushRoll(event) {
   const formula = currentMessage.rolls[0]._formula;
   const actorUUID = currentMessage.system?.actor?._id || currentMessage.system.actorUuid.split(".")[1];
   const actor = game.actors.get(actorUUID);
-  const item = currentMessage.system.item;
+  const item = currentMessage?.system?.item || currentMessage.getFlag("dragonbane-item-browser", "buyItem");
   const element = event.currentTarget;
   const parent = element.parentElement;
   const pushChoices = parent.getElementsByTagName("input");
-  if(element.getElementsByTagName("input")){
+  if(element.getElementsByTagName("input").length !== 0){
   const choice = Array.from(pushChoices).find(
     (e) => e.name === "pushRollChoice" && e.checked,
   );
@@ -997,15 +1003,46 @@ async function barterPushRoll(event) {
   if (skill === undefined && skill !== "Bartering") {
     skill = actor.findSkill("Bartering");
   }
+        if(skill === undefined){
+      const skillsList = userActor.items.filter(item => item.type === "skill")
+              const content = await DoD_Utility.renderTemplate(
+          "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
+          { skills: skillsList },
+        );
+     skill = await new Promise((resolve) => {
+        new api.DialogV2({
+            window: { title: game.i18n.localize("DB-IB.dialog.selectSkill") },
+            content: content,
+            buttons: [
+              {
+                action: "select",
+                label: game.i18n.localize("DB-IB.dialog.useSelectedSkill"),
+                callback: async (event) => {
+                  const selectedSkillID =
+                    event.currentTarget.querySelector("select").value;
+                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  resolve(selectedSkill);
+                },
+              },
+            ],
+          }).render(true);
+        });
 
+    }
+    if (options.boons) {
+      options.boons = options.boons.filter((boon) => boon.value !== false);
+    }
+    if (options.banes) {
+      options.banes = options.banes.filter((bane) => bane.value !== false);
+    }
   let options = { canPush: false, skipDialog: true, formula: formula };
   const test = new DoDSkillTest(actor, skill, options);
   const barterSkillRoll = await test.roll();
   const sucess = barterSkillRoll.postRollData.success;
   const isDemon = barterSkillRoll.postRollData.isDemon;
   const isDragon = barterSkillRoll.postRollData.isDragon;
-  const ChatMessage = barterSkillRoll.rollMessage._id;
-  let existingMessage = game.messages.get(ChatMessage);
+  const ChatMessages = barterSkillRoll.rollMessage._id;
+  let existingMessage = game.messages.get(ChatMessages);
   await addBuyButton(
     item,
     actor,
@@ -1013,12 +1050,13 @@ async function barterPushRoll(event) {
     isDemon,
     isDragon,
     existingMessage,
-    ChatMessage,
+    ChatMessages,
     barterSkillRoll,
   );}
-  else{
-    const context = currentMessage.system.toContext();
+else{
     const pushRollChoices = {};
+    const context = currentMessage.system.toContext();
+    const message = currentMessage;
 
     for (const attribute in actor.system.attributes) {
         const condition = actor.system.conditions[attribute];
@@ -1095,61 +1133,69 @@ async function barterPushRoll(event) {
                 actor: actor.name,
                 condition: game.i18n.localize("DoD.conditions." + choice)
             });
-        ChatMessage.create({
+      ChatMessage.create({
             content: msg,
-            user: game.user.id,
-            speaker: ChatMessage.getSpeaker({ actor: actor })
+            user: game.user.id
         });
     } else {
         DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
         return;
     }
-
-    // Re-roll
-    const rerollOptions = message?.rolls[0].options;
-
-    const options = {
-        actorId: message.system.actorUuid,
-        attribute: message.system.attribute,
-        formula: message.system.formula,
-        canPush: false,
-        skipDialog: true,
-        isReroll: true,
-        rerollOptions,
-    };
-
-    if (context.targetActor) {
-        const targetToken = canvas.scene?.tokens?.find(t => t.actor?.uuid === context.targetActor.uuid);
-        if (targetToken) {
-            options.targets = [targetToken];
-        }
+let skillName = game.settings.get(
+      "dragonbane-item-browser",
+      "custom-barter-skill",
+    );
+    if (skillName === "") {
+      skillName = "Bartering";
     }
-
-    let test = null;
-    switch (message.type) {
-        case "attributeTest":
-            test = new DoDAttributeTest(actor, options.attribute, options);
-            break;
-        case "skillTest":
-            options.skill = context.skill
-            test = new DoDSkillTest(actor, options.skill, options);
-            break;
-        case "weaponTest":
-            options.action = context.action;
-            options.extraDamage = context.extraDamage;
-            options.weapon = context.weapon;
-            test = new DoDWeaponTest(actor, options.weapon, options);
-            break;
-        case "spellTest":
-            options.spell = context.spell;
-            options.powerLevel = context.powerLevel;
-            options.wpCost = Number(context.wpOld - context.wpNew);
-            test = new DoDSpellTest(actor, options.spell, options);
-            break;
-        default:
-            return;
+    let skill = actor.findSkill(skillName);
+    if (skill === undefined && skill !== "Bartering") {
+      skill = actor.findSkill("Bartering");
     }
-    test?.roll();
+    if(skill === undefined){
+      const skillsList = userActor.items.filter(item => item.type === "skill")
+              const content = await DoD_Utility.renderTemplate(
+          "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
+          { skills: skillsList },
+        );
+     skill = await new Promise((resolve) => {
+        new api.DialogV2({
+            window: { title: game.i18n.localize("DB-IB.dialog.selectSkill") },
+            content: content,
+            buttons: [
+              {
+                action: "select",
+                label: game.i18n.localize("DB-IB.dialog.useSelectedSkill"),
+                callback: async (event) => {
+                  const selectedSkillID =
+                    event.currentTarget.querySelector("select").value;
+                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  resolve(selectedSkill);
+                },
+              },
+            ],
+          }).render(true);
+        });
+
+    }
+    let options = { canPush: false, skipDialog: true, formula: formula };
+    const test = new DoDSkillTest(actor, skill, options);
+    const barterSkillRoll = await test.roll();
+    const sucess = barterSkillRoll.postRollData.success;
+    const isDemon = barterSkillRoll.postRollData.isDemon;
+    const isDragon = barterSkillRoll.postRollData.isDragon;
+    const ChatMessages = barterSkillRoll.rollMessage._id;
+    let existingMessage = game.messages.get(ChatMessages);
+  await addBuyButton(
+    item,
+    actor,
+    sucess,
+    isDemon,
+    isDragon,
+    existingMessage,
+    ChatMessages,
+    barterSkillRoll,
+  );
   }
 }
 async function creatConditionMagade(actor, choice) {
@@ -1478,8 +1524,8 @@ export class sellingItem {
     const sucess = barterSkillRoll.postRollData.success;
     const isDemon = barterSkillRoll.postRollData.isDemon;
     const isDragon = barterSkillRoll.postRollData.isDragon;
-    const ChatMessage = barterSkillRoll.rollMessage._id;
-    let existingMessage = game.messages.get(ChatMessage);
+    const ChatMessages = barterSkillRoll.rollMessage._id;
+    let existingMessage = game.messages.get(ChatMessages);
     await this.addSellButton(
       item,
       actor,
@@ -1487,7 +1533,7 @@ export class sellingItem {
       isDemon,
       isDragon,
       existingMessage,
-      ChatMessage,
+      ChatMessages,
       barterSkillRoll,
     );
   }else{
@@ -1570,10 +1616,9 @@ export class sellingItem {
                 actor: actor.name,
                 condition: game.i18n.localize("DoD.conditions." + choice)
             });
-        ChatMessage.create({
+      ChatMessage.create({
             content: msg,
-            user: game.user.id,
-            speaker: ChatMessage.getSpeaker({ actor: actor })
+            user: game.user.id
         });
     } else {
         DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
@@ -1622,8 +1667,8 @@ let skillName = game.settings.get(
     const sucess = barterSkillRoll.postRollData.success;
     const isDemon = barterSkillRoll.postRollData.isDemon;
     const isDragon = barterSkillRoll.postRollData.isDragon;
-    const ChatMessage = barterSkillRoll.rollMessage._id;
-    let existingMessage = game.messages.get(ChatMessage);
+    const ChatMessages = barterSkillRoll.rollMessage._id;
+    let existingMessage = game.messages.get(ChatMessages);
     await this.addSellButton(
       item,
       actor,
@@ -1631,7 +1676,7 @@ let skillName = game.settings.get(
       isDemon,
       isDragon,
       existingMessage,
-      ChatMessage,
+      ChatMessages,
       barterSkillRoll,
     );
   }

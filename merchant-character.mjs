@@ -496,7 +496,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
             }
           }
         }
-        console.log(totalPrice)
+
       });
       const sellingPrice = totalPrice;
       const goldPart = Math.floor(sellingPrice / 100);
@@ -641,6 +641,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
                   await barterPushButton(existingMessage);
                   existingMessage = game.messages.get(ChatMessage);
                 }
+                
                 await addBuyButton(
                   item,
                   userActor,
@@ -975,6 +976,8 @@ export class merchant extends api.HandlebarsApplicationMixin(
           await barterSellPushButton(existingMessage);
           existingMessage = game.messages.get(ChatMessage);
         }
+        existingMessage.setFlag("dragonbane-item-browser", "sellItem", items)
+
         const merchantActor = this.actor;
         await addSellButton(
           items,
@@ -1198,6 +1201,11 @@ async function addBuyButton(
       system: { actor, item, barterSkillRoll, priceLabel, selluQantity },
     });
   }
+  existingMessage.setFlag("dragonbane-item-browser", "merchantActor", merchantActor?._id || merchantActor);
+  existingMessage.setFlag("dragonbane-item-browser", "sellItem", item)
+       existingMessage.setFlag("dragonbane-item-browser", "priceLabel", priceLabel)
+       existingMessage.setFlag("dragonbane-item-browser", "userActor", actor._id);
+       existingMessage.setFlag("dragonbane-item-browser", "selluQantity", selluQantity);
 }
 /*
 async function barterPushRoll(event) {
@@ -1285,7 +1293,7 @@ async function addSellButton(
     });
     const cannotBuy = `<br><p> ${tekst}</p>`;
     newFlavor = flavor + cannotBuy;
-    const merchant = await game.actors.get(merchantActor._id);
+    const merchant = await game.actors.get(merchantActor?._id || merchantActor);
     items[userActor._id].forEach(async (item) => {
       await merchant.deleteEmbeddedDocuments("Item", [item.id]);
     });
@@ -1314,6 +1322,11 @@ async function addSellButton(
       flavor: newFlavor,
       system: { userActor, items, barterSkillRoll, priceLabel, merchantActor },
     });
+    existingMessage.setFlag("dragonbane-item-browser", "merchantActor", merchantActor?._id || merchantActor);
+    existingMessage.setFlag("dragonbane-item-browser", "sellItem", items)
+    existingMessage.setFlag("dragonbane-item-browser", "priceLabel", priceLabel);
+existingMessage.setFlag("dragonbane-item-browser", "userActor", userActor._id);
+
   } else {
     existingMessage.update({
       flavor: newFlavor,
@@ -1334,7 +1347,11 @@ async function combinePrice(items, merchantActor) {
   ];
   const totalPrice = items.reduce((cost, item) => {
     const priceMatch = item.price.match(/^([\d.]+)\s*([\p{L}]+)$/u);
-    const sellItem = merchantActor.items.get(item.id);
+    let merchantActorData = merchantActor;
+      if(typeof merchantActor === "string"){
+      merchantActorData = game.actors.get(merchantActor)
+    } 
+    const sellItem = merchantActorData.items.get(item.id);
     if (!priceMatch) return Number(sellItem.system.quantity)*Number(cost);
 
     const coinType = priceMatch[2];
@@ -1516,6 +1533,9 @@ export class sellingItemMerchat {
         system: { actor, item, barterSkillRoll, priceLabel, selluQantity },
       });
     }
+    existingMessage.setFlag("dragonbane-item-browser", "sellItem", item)
+     existingMessage.setFlag("dragonbane-item-browser", "priceLabel", priceLabel)
+
   }
   async barterPushRoll(event) {
     const ChatMessageID = event.target
@@ -1524,11 +1544,13 @@ export class sellingItemMerchat {
     const currentMessage = game.messages.get(ChatMessageID);
     const formula = currentMessage.rolls[0]._formula;
     let options = currentMessage.rolls[0].options;
-    const userActor = game.actors.get(currentMessage.system.actor._id);
-    const priceLabel = currentMessage.system.priceLabel;
+    const actorUUID = currentMessage.system?.actor?._id || currentMessage.system.actorUuid.split(".")[1];
+    const userActor = game.actors.get(actorUUID);
     const element = event.currentTarget;
     const parent = element.parentElement;
     const pushChoices = parent.getElementsByTagName("input");
+    if(element.getElementsByTagName("input").length !== 0){
+
     const choice = Array.from(pushChoices).find(
       (e) => e.name === "pushRollChoice" && e.checked,
     );
@@ -1593,12 +1615,12 @@ export class sellingItemMerchat {
     const sucess = barterSkillRoll.postRollData.success;
     const isDemon = barterSkillRoll.postRollData.isDemon;
     const isDragon = barterSkillRoll.postRollData.isDragon;
-    const ChatMessage = barterSkillRoll.rollMessage._id;
+    const ChatMessages = barterSkillRoll.rollMessage._id;
     const merchantActor = game.actors.get(
       currentMessage.system.merchantActor._id,
     );
-    const items = currentMessage.system.item;
-    let existingMessage = game.messages.get(ChatMessage);
+    const items = currentMessage.system?.item || currentMessage.flags.dragonbane-item-browser.sellItem;
+    let existingMessage = game.messages.get(ChatMessages);
     await addSellButton(
       items,
       userActor,
@@ -1606,10 +1628,178 @@ export class sellingItemMerchat {
       isDemon,
       isDragon,
       existingMessage,
-      ChatMessage,
+      ChatMessages,
       barterSkillRoll,
       merchantActor,
     );
+    }else{
+const pushRollChoices = {};
+    const context = currentMessage.system.toContext();
+    const message = currentMessage;
+      const actor = userActor;
+    for (const attribute in actor.system.attributes) {
+        const condition = actor.system.conditions[attribute];
+        if (condition) {
+            if (!condition.value) {
+                pushRollChoices[attribute] =
+                    game.i18n.localize("DoD.conditions." + attribute) + " (" +
+                    game.i18n.localize("DoD.attributes." + attribute) + ")";
+            }
+        } else {
+            DoD_Utility.ERROR("Missing condition for attribute " + attribute);
+        }
+    }
+
+    if (Object.keys(pushRollChoices).length === 0) {
+        DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+        return;
+    }
+
+    // Create dialog content
+    const content = `
+    <form>
+        <fieldset>
+        <legend>${game.i18n.localize("DoD.roll.pushChoiceLabel")}</legend>
+
+        ${Object.entries(pushRollChoices).map(([attribute, label], i) => `
+            <label>
+            <input
+                type="radio"
+                name="pushChoice"
+                value="${attribute}"
+                ${i === 0 ? "checked" : ""}
+            >
+            ${label}
+            </label>
+        `).join("")}
+
+        </fieldset>
+    </form>
+    `;
+    
+    // Determine dialog title
+    let rollTitle = "";
+    switch (message.type) {
+        case "attributeTest":
+            rollTitle =  context.attribute.toUpperCase();
+            break;
+        case "skillTest":
+        case "weaponTest":
+        case "spellTest":
+            rollTitle = context.skill.name || context.weapon?.name || context.spell?.name;
+            break;
+        default:
+            return;
+    }    
+
+     // Show dialog
+    const choice = await foundry.applications.api.DialogV2.prompt({
+        window: { title: game.i18n.localize("DoD.roll.pushButtonLabel") + ": " + rollTitle },
+        content,
+        ok: {
+            icon: "fa-solid fa-arrow-rotate-right",
+            label: game.i18n.localize("DoD.roll.pushButtonLabel"),
+            callback: (event, button) => button.form.elements.pushChoice.value
+    },
+    });
+    if (choice === null) return; // dialog was closed
+    
+    // Take condition
+    if (!actor.hasCondition(choice)) {
+        actor.updateCondition(choice, true);
+        const msg = game.i18n.format("DoD.ui.chat.takeCondition",
+            {
+                actor: actor.name,
+                condition: game.i18n.localize("DoD.conditions." + choice)
+            });
+      ChatMessage.create({
+            content: msg,
+            user: game.user.id
+        });
+    } else {
+        DoD_Utility.WARNING("DoD.WARNING.conditionAlreadyTaken");
+        return;
+    }
+let skillName = game.settings.get(
+      "dragonbane-item-browser",
+      "custom-barter-skill",
+    );
+    if (skillName === "") {
+      skillName = "Bartering";
+    }
+    let skill = actor.findSkill(skillName);
+    if (skill === undefined && skill !== "Bartering") {
+      skill = actor.findSkill("Bartering");
+    }
+    if(skill === undefined){
+      const skillsList = userActor.items.filter(item => item.type === "skill")
+              const content = await DoD_Utility.renderTemplate(
+          "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
+          { skills: skillsList },
+        );
+     skill = await new Promise((resolve) => {
+        new api.DialogV2({
+            window: { title: game.i18n.localize("DB-IB.dialog.selectSkill") },
+            content: content,
+            buttons: [
+              {
+                action: "select",
+                label: game.i18n.localize("DB-IB.dialog.useSelectedSkill"),
+                callback: async (event) => {
+                  const selectedSkillID =
+                    event.currentTarget.querySelector("select").value;
+                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  resolve(selectedSkill);
+                },
+              },
+            ],
+          }).render(true);
+        });
+
+    }
+    let options = { canPush: false, skipDialog: true, formula: formula };
+    const test = new DoDSkillTest(actor, skill, options);
+    const barterSkillRoll = await test.roll();
+    const sucess = barterSkillRoll.postRollData.success;
+    const isDemon = barterSkillRoll.postRollData.isDemon;
+    const isDragon = barterSkillRoll.postRollData.isDragon;
+    const ChatMessages = barterSkillRoll.rollMessage._id;
+    let existingMessage = game.messages.get(ChatMessages);
+    const items = currentMessage.flags["dragonbane-item-browser"]?.sellItem;
+   
+    const merchantActor = currentMessage.flags["dragonbane-item-browser"]?.merchantActor;
+    if(Array.isArray(items)){
+  await addSellButton(
+      items,
+      userActor,
+      sucess,
+      isDemon,
+      isDragon,
+      existingMessage,
+      ChatMessages,
+      barterSkillRoll,
+      merchantActor,
+    );
+    }else{
+      const priceLabel =  currentMessage.flags["dragonbane-item-browser"]["priceLabel"];
+      const sellQuantity = currentMessage.flags["dragonbane-item-browser"]["selluQantity"];
+      const item = currentMessage.flags["dragonbane-item-browser"]["sellItem"];
+       existingMessage.setFlag("dragonbane-item-browser", "priceLabel", priceLabel)
+        await addBuyButton(
+                  item,
+                  userActor,
+                  sucess,
+                  isDemon,
+                  isDragon,
+                  existingMessage,
+                  ChatMessages,
+                  barterSkillRoll,
+                  priceLabel,
+                  merchantActor,
+                  sellQuantity,
+                );
+    }
+    }
   }
   async creatConditionMagade(actor, choice) {
     const msg = game.i18n.format("DoD.ui.chat.takeCondition", {
@@ -1626,11 +1816,11 @@ export class sellingItemMerchat {
     const ChatMessage = game.messages.get(
       event.target.getAttribute("data-message-id"),
     );
-    const priceLabel = ChatMessage.system.priceLabel;
+    const priceLabel = ChatMessage.system?.priceLabel || ChatMessage.flags["dragonbane-item-browser"]?.priceLabel;
     const priceMatch = priceLabel.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
     const coinType = priceMatch[2];
-    const rollResults = ChatMessage.system.barterSkillRoll.postRollData.success;
-    const isDragon = ChatMessage.system.barterSkillRoll.postRollData.isDragon;
+    const rollResults = ChatMessage.system?.barterSkillRoll?.postRollData?.success || ChatMessage.system.success;
+    const isDragon = ChatMessage.system?.barterSkillRoll?.postRollData?.isDragon || ChatMessage.system.isDragon;
     let cost = priceMatch[1];
     if (rollResults === false) {
       cost = cost;
@@ -1651,10 +1841,13 @@ export class sellingItemMerchat {
     ];
 
     const currencyType = coinsType.indexOf(coinType);
-    const userActor = game.actors.get(ChatMessage.system.actor._id);
-    const merchantActor = game.actors.get(ChatMessage.system.merchantActor._id);
-    const item = merchantActor.items.get(ChatMessage.system.item._id);
-    const selluQantity = ChatMessage.system.selluQantity;
+    const actorID = ChatMessage.system?.actor?._id  || ChatMessage.flags["dragonbane-item-browser"]?.userActor;
+    const userActor = game.actors.get(actorID);
+    const merchantID = ChatMessage.system?.merchantActor?._id || ChatMessage.flags["dragonbane-item-browser"]?.merchantActor;
+    const merchantActor = game.actors.get(merchantID);
+    const itemId = ChatMessage.system?.item?._id || ChatMessage.flags["dragonbane-item-browser"]?.sellItem?._id;
+    const item = merchantActor.items.get(itemId);
+    const selluQantity = ChatMessage.system?.selluQantity || ChatMessage.flags["dragonbane-item-browser"]?.selluQantity;
     if (item === undefined) {
       DoD_Utility.WARNING(
         game.i18n.format("DB-IB.warrning.merchantDoNotHaveMoreItem", {
@@ -1811,8 +2004,8 @@ export class sellingItemMerchat {
       "system.currency.sc": actorSC - silverPart,
       "system.currency.cc": actorCC - copperPart,
     });
-     const merchantItem = await this.actor.items.get(itemID);
-     const doNotAddToBouyer = merchantItem?.flags["dragonbane-item-browser"]?.notaddtobuyer;s
+     const merchantItem = await merchantActor.items.get(itemID);
+     const doNotAddToBouyer = merchantItem?.flags["dragonbane-item-browser"]?.notaddtobuyer;
      if(!doNotAddToBouyer){
     const created = await userActor.createEmbeddedDocuments("Item", [item]);
     const newItem = created[0];
@@ -1849,20 +2042,20 @@ export class sellingItemMerchat {
       }),
       speaker: ChatMessage.getSpeaker({ actor: userActor }),
     });
+    
   }
   async sellFromChat(event) {
     const ChatMessageRoll = game.messages.get(
       event.target.getAttribute("data-message-id"),
     );
-    const allitemsToSell = ChatMessageRoll.system.items;
+    const allitemsToSell = ChatMessageRoll.system?.items || ChatMessageRoll.flags?.["dragonbane-item-browser"]?.sellItem;  
     const actorsItems = Object.keys(allitemsToSell);
     const rollResults =
-      ChatMessageRoll.system.barterSkillRoll.postRollData.success;
+      ChatMessageRoll.system?.barterSkillRoll?.postRollData?.success || ChatMessageRoll.system.success;
     const isDragon =
-      ChatMessageRoll.system.barterSkillRoll.postRollData.isDragon;
-    const merchantActor = game.actors.get(
-      ChatMessageRoll.system.merchantActor._id,
-    );
+      ChatMessageRoll.system?.barterSkillRoll?.postRollData?.isDragon || ChatMessageRoll.system.isDragon;
+    const merchantID = ChatMessageRoll.system?.merchantActor?._id || ChatMessageRoll.flags["dragonbane-item-browser"]?.merchantActor;
+    const merchantActor = game.actors.get(merchantID);
     let allcost = 0;
     let cost = 0;
     actorsItems.forEach(async (actorID) => {
