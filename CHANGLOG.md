@@ -1,3 +1,13 @@
+# Version 2.2
+<h3>Bug Fix</h3>
+<ul>
+    <li>Adopt module to Dragonbane system V 3.1.4</li>
+    <li>Fix issue with Merchant Actor price, now works with localize or english</li>
+    <li>Block movement of Merchant Token by non GM</li>
+</ul>
+
+
+
 # Version 2.1
 <h3>Bug Fix</h3>
 <ul>
