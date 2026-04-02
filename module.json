@@ -5,14 +5,16 @@
 
   "compatibility": {
     "minimum": "12",
-    "verified": "13.350"
+    "verified": "14.359"
   },
   "relationships": {
     "systems": [
       {
         "id": "dragonbane",
         "type": "system",
-        "compatibility": "3.0"
+        "compatibility": {
+          "minimum": "3.0",
+          "verified": "4.0"}
       }
     ]
   },

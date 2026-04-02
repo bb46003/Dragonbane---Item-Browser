@@ -597,7 +597,7 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
               existingMessage.setFlag("dragonbane-item-browser", "buyItem", item);
               if (canPush) {
                 await barterPushButton(existingMessage);
-                existingMessage = game.messages.get(ChatMessage);
+                existingMessage = game.messages.get(ChatMessages);
               }
               await addBuyButton(
                 item,
