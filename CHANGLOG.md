@@ -1,3 +1,10 @@
+# Version 2.3
+<h3>New Feature</h3>
+<ul>
+    <li>Module compatibility with Foundry V14 is confirmed</li>
+</ul>
+
+
 # Version 2.2
 <h3>Bug Fix</h3>
 <ul>
@@ -29,7 +36,7 @@
 
 
 # Version 1.7
-
+/
 <h3>Bug Fix</h3>
 <ul>
     <li>Now, when a player buys items from a merchant, if the quantity is greater than 1, the user can select how many items they want to buy. The cost is calculated correctly, and the chosen number of items is deducted from the merchant and added to the player's character.</li>
