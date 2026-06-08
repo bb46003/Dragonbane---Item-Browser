@@ -4,7 +4,7 @@
   "version": "vDev",
 
   "compatibility": {
-    "minimum": "12",
+    "minimum": "14",
     "verified": "14.359"
   },
   "relationships": {
@@ -13,8 +13,8 @@
         "id": "dragonbane",
         "type": "system",
         "compatibility": {
-          "minimum": "3.0",
-          "verified": "4.0"}
+          "minimum": "4.0",
+          "verified": "4.0.1"}
       }
     ]
   },

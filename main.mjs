@@ -350,7 +350,7 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
     game.i18n.translations.DoD.ui["character-sheet"].heroicAbilities;
   const magicTrick = game.i18n.translations.DoD.ui["character-sheet"].trick;
   const spell = game.i18n.translations.DoD.ui["character-sheet"].spell;
-  const creatItemButton = document.querySelectorAll(".item-create");
+ const createItemButton = document.querySelectorAll('[data-action="createItem"]');
 
   const actor = await game.actors.get(actorID);
   const actorSheet = actor?.sheet?._element?.[0] || html?._element?.[0] || html.element;
@@ -383,7 +383,7 @@ Hooks.on("renderDoDCharacterSheet", async (html) => {
     }
   });
 
-  creatItemButton.forEach((button) => {
+  createItemButton.forEach((button) => {
     const dataType = button.getAttribute("data-type");
     if (dataType !== "effect") {
       const existingButton =
