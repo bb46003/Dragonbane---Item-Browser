@@ -1,6 +1,6 @@
 import DoDSkillTest from "/systems/dragonbane/modules/tests/skill-test.js";
 import DoD_Utility from "/systems/dragonbane/modules/utility.js";
-
+const { api, sheets } = foundry.applications;
 export class itemsSearch extends foundry.applications.api.ApplicationV2 {
   constructor({ title, content, buttons, filterData, actorID }) {
     super({
@@ -132,10 +132,15 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
   }
 
   async _prepareWorldsItems(chosenType, actorID, actorType) {
-    let types = ["ability", "armor", "helmet", "item", "spell", "weapon"];
-    if (actorType === "merchant") {
-      types = ["armor", "helmet", "item", "weapon"];
-    }
+   
+   const excludedItem = ["kin", "profession", "skill"];
+
+  if (actorType === "merchant") {
+    excludedItem.push("ability", "spell", "recipe");
+  }
+
+    let types = Object.keys(CONFIG.Item.typeLabels)
+    .filter(key => !excludedItem.includes(key));
     const supplyTypes = ["common", "uncommon", "rare"];
     const skipFoldersEnabled = game.settings.get(
       "dragonbane-item-browser",
@@ -233,6 +238,7 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
         helmet: game.i18n.translations.TYPES.Item.helmet,
         item: game.i18n.translations.TYPES.Item.item,
         weapon: game.i18n.translations.TYPES.Item.weapon,
+        material: game.i18n.translations.TYPES.Item.material,
       };
     } else {
       types = {
@@ -242,6 +248,9 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
         item: game.i18n.translations.TYPES.Item.item,
         spell: game.i18n.translations.TYPES.Item.spell,
         weapon: game.i18n.translations.TYPES.Item.weapon,
+        material: game.i18n.translations.TYPES.Item.material,
+        recipe: game.i18n.translations.TYPES.Item.recipe
+
       };
     }
     const data = {
@@ -326,6 +335,17 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
             (data.filters.rank === "any" ||
               item.system.rank === Number(data.filters.rank)),
         );
+        break;
+      case "recipe":
+        chosenItems = data.items.filter(
+          (item) =>
+            item.type === "recipe" )
+        break;
+      case "material":
+                chosenItems = data.items.filter(
+          (item) =>
+            item.type === "material" && (data.filters.supply === "any" ||
+              item.system.supply === data.filters.supply),)
         break;
     }
     return chosenItems;
@@ -549,7 +569,7 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
       skill = actor.findSkill("Bartering");
     }
         if(skill === undefined){
-      const skillsList = userActor.items.filter(item => item.type === "skill")
+      const skillsList = actor.items.filter(item => item.type === "skill")
               const content = await DoD_Utility.renderTemplate(
           "modules/dragonbane-item-browser/templates/dialog/chose-skill.hbs",
           { skills: skillsList },
@@ -565,7 +585,7 @@ export class itemsSearch extends foundry.applications.api.ApplicationV2 {
                 callback: async (event) => {
                   const selectedSkillID =
                     event.currentTarget.querySelector("select").value;
-                  const selectedSkill = userActor.items.get(selectedSkillID);
+                  const selectedSkill = actor.items.get(selectedSkillID);
                   resolve(selectedSkill);
                 },
               },

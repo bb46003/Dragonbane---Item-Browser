@@ -71,7 +71,7 @@
                 </div>
 
             {{/if}}  
-            {{#if (eq data.chosenType  "item") }}
+            {{#if (or (eq data.chosenType  "item") (eq data.chosenType  "material")) }}
             <div class="filter-element">
                 <label class="filter-label">{{localize "DoD.gear.supply"}}</label>
                 <select class="filter supply">

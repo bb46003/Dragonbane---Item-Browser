@@ -28,7 +28,8 @@
 .item-in-browser.weapon,
 .item-in-browser.item,
 .item-in-browser.helmet,
-.item-in-browser.armor {
+.item-in-browser.armor,
+.item-in-browser.material {
   display: grid;
   grid-template-columns: 0.3fr 2fr 1fr 0.5fr 0.5fr;
   /* flex-wrap: nowrap; */
@@ -37,7 +38,8 @@
   margin-top: 5px;
 }
 .item-in-browser.spell,
-.item-in-browser.ability {
+.item-in-browser.ability,
+.item-in-browser.recipe {
   display: grid;
   grid-template-columns: 0.3fr 2fr 0.5fr;
   /* flex-wrap: nowrap; */

@@ -530,11 +530,11 @@ function registerHandlebarsHelpers() {
   Handlebars.registerHelper("havePrice", (item, actorType) => {
     let html = ";";
     if (
-      item.system?.cost !== "" &&
       item.system?.cost !== undefined &&
       actorType === "character"
     ) {
-      html = `<i class="cost">${item.system.cost}</i>
+      const cost = item.system.cost === "" ? 0 : item.system.cost;
+      html = `<i class="cost">${cost}</i>
                 <i class="fas fa-plus" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.addItemToCharacter")}"></i>
                 <i class="fas fa-coins" id="${item.id}" data-tooltip="${game.i18n.localize("DB-IB.buyItem")}"></i>`;
     } else {
@@ -543,7 +543,7 @@ function registerHandlebarsHelpers() {
     return new Handlebars.SafeString(html);
   });
   Handlebars.registerHelper("removeUUID", (item) => {
-    const description = String(item?.itemDescription || item.description);
+    const description = String(item?.itemDescription ?? item.description);
     const containUUID = description.includes("@");
     let descriptionWithoutHTML = "";
     if (containUUID) {
