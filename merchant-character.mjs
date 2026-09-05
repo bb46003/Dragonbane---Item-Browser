@@ -26,7 +26,7 @@ export class merchantData extends DragonbaneDataModel {
           min: 0,
         }),
       }),
-                  movement: new fields.SchemaField({
+      movement: new fields.SchemaField({
                 base: new fields.NumberField({ 
                     required: true,
                     nullable: false,
@@ -41,7 +41,25 @@ export class merchantData extends DragonbaneDataModel {
                     initial: 10,
                     min: 0,
                 })
-            }),
+      }),
+      maxcoin: new fields.SchemaField({
+        gp: new fields.NumberField({
+          label: "DB-IB.merchant.maxGold",
+          initial: 0
+        }),
+        sp: new fields.NumberField({
+          label: "DB-IB.merchant.maxSilver",
+          initial: 0
+        }),
+        cp: new fields.NumberField({
+          label: "DB-IB.merchant.maxCopper",
+          initial: 0
+        })
+      }),
+      currentAmmount: new fields.NumberField({
+          initial: 0,
+          label: "DB-IB.merchant.currentAmmount"
+        })
     });
   }
 }
@@ -120,12 +138,12 @@ export class merchant extends api.HandlebarsApplicationMixin(
     const updateActoprData = await deleteSkill(actorData);
  Object.assign(context, {
     tabs: this._getTabs(),
-    actor: updateActoprData,
-    system: updateActoprData.system,
+    actor: this.actor,
+    system: this.actor.system,
     fields: this.document.system.schema.fields,
     isEditable: this.isEditable,
     source: this.document.toObject(),
-    items: updateActoprData.items,
+    items: this.actor.items,
     actorID: this.actor.id,
     dataType: "item",
     isGM: game.user.isGM,
@@ -338,7 +356,16 @@ export class merchant extends api.HandlebarsApplicationMixin(
                             ".quantity-selector",
                           ).value;
                         const newName = itemData.name + `(${selectedQuantity})`;
+                        const merchantHaveLimits = this.actor.system.maxcoin;
 
+                        const hasCoinLimit = ["gp", "sp", "cc"].some(
+                          coin => Number(merchantHaveLimits?.[coin] ?? 0) !== 0
+                        );
+                        let acceptItem = true;
+                        if(hasCoinLimit){
+                          acceptItem = await this.chekMetchantLimit(itemData, selectedQuantity);                 
+                        }
+                        if(acceptItem){
                         await this.actor.createEmbeddedDocuments("Item", [
                           itemData,
                         ]);
@@ -351,17 +378,41 @@ export class merchant extends api.HandlebarsApplicationMixin(
                           ["name"]: newName,
                           ["system.quantity"]: selectedQuantity,
                         });
-                      },
+                        
+                      }
+                      else{
+                        DoD_Utility.WARNING(
+                          game.i18n.localize("DB-IB.merchant.exeedCoinLimit"),
+                        );
+                        return
+                      }
+                    }
                     },
                   ],
                 }).render(true);
               } else {
-                await this.actor.createEmbeddedDocuments("Item", [itemData]);
+                const merchantHaveLimits = this.actor.system.maxcoin;
+                const hasCoinLimit = ["gp", "sp", "cc"].some(
+                  coin => Number(merchantHaveLimits?.[coin] ?? 0) !== 0
+                );
+                let acceptItem = true;
+                if(hasCoinLimit){
+                  acceptItem = await this.chekMetchantLimit(itemData, 1);                 
+                }
+                if(acceptItem){
+                  await this.actor.createEmbeddedDocuments("Item", [itemData]);
+                }else{
+                  DoD_Utility.WARNING(
+                    game.i18n.localize("DB-IB.merchant.exeedCoinLimit"),
+                  );
+                  return;
+                }
               }
             } else {
               DoD_Utility.WARNING(
                 game.i18n.localize("DB-IB.merchant.notAcceptSuply"),
               );
+              return
             }
           }
         } else {
@@ -385,6 +436,7 @@ export class merchant extends api.HandlebarsApplicationMixin(
             DoD_Utility.WARNING(
               game.i18n.localize("DB-IB.merchant.nonGMaddItemsToSell"),
             );
+            return
           }
         }
       }
@@ -1008,6 +1060,10 @@ export class merchant extends api.HandlebarsApplicationMixin(
     if (img !== "") {
       await this.actor.update({ img: img });
     }
+    if(target.name.includes("system.maxcoin")){
+      const newMax = Number(newValue);
+      await this.actor.update({[target.name]: newMax });
+    }
   }
   static async #openBrowser(ev) {
     const target = ev.target;
@@ -1124,6 +1180,45 @@ export class merchant extends api.HandlebarsApplicationMixin(
         await item.update({ ["system.quantity"]: quantity - 1 });
       }
     }
+  }
+  async chekMetchantLimit(itemData, selectedQuantity){
+    const itemPrice = itemData.system.cost;
+    const coinsType = [
+      game.i18n.translations.DoD.currency.gold.toLowerCase(),
+      "gold",
+      game.i18n.translations.DoD.currency.silver.toLowerCase(),
+      "silver",
+      game.i18n.translations.DoD.currency.copper.toLowerCase(),
+      "copper",
+    ];
+    const priceMatch = itemPrice.match(/^([\d.]+)\s*([\p{L}]+)$/u);
+    const coinType = priceMatch[2];
+    let sellingPrice = Number(priceMatch[1]);
+    const currencyType = coinsType.indexOf(coinType);
+        switch (currencyType) {
+      case 0:
+      case 1:
+        sellingPrice *= 100;
+        break;
+      case 2:
+      case 3:
+        sellingPrice *= 10;
+        break;
+      case 4:
+      case 5:
+        sellingPrice = sellingPrice;
+        break;
+    }
+    const maxAcceptedCoin = this.actor.system.maxcoin.cp + this.actor.system.maxcoin.sp * 10 + this.actor.system.maxcoin.gp * 100;
+    const finalPrice = sellingPrice * selectedQuantity;
+    const currentAmmount = this.actor.system.currentAmmount;
+    if((finalPrice + currentAmmount) <= maxAcceptedCoin){
+      this.actor.update({"system.currentAmmount": (finalPrice + currentAmmount)})
+      return true;
+    }else{
+      return false;
+    }
+
   }
 }
 async function barterPushButton(existingMessage) {

@@ -62,7 +62,12 @@
       "sells": "sprzedaje",
       "notAcceptSuply": "Ten Kupiec nie skupuje przedmiotów o tej dostępnoiści.",
       "nonGMaddItemsToSell": "Nie jesteś MG, nie możesz dodawać przdmiotów, które sprzedaje kupiec.",
-      "youCannotSellTheSameItemTwice": "Nie możesz sprzedaćtego samego przetmiotu więcej niż raz!"
+      "youCannotSellTheSameItemTwice": "Nie możesz sprzedaćtego samego przetmiotu więcej niż raz!",
+      "exeedCoinLimit": "Przekroczyłeś limit monet, które posiada Kupiec i nie kupi tego przedmiotu.",
+      "maxGold": "Limit złotych monet",
+      "maxSilver": "Limit srebrnych monet",
+      "maxCopper": "Limit miedzianych monet",
+      "defnieMaxCoinToSpend": "Limit monet Kupca, które może wydać na przedmioty Postaci. 0 oznacznie nieskończononą ilość monet. Całkowity limit to suma wszystkich typów monet. "
     },
     "warrning": {
       "incoretInput": "Wpisz liczbę lub liczbę z symbolem %",

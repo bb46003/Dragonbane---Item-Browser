@@ -61,7 +61,12 @@
       "sells": "is selling",
       "notAcceptSuply": "This merchant does not accept this type of supply.",
       "nonGMaddItemsToSell": "You are not a GM, you cannot add items which merchant sells.",
-      "youCannotSellTheSameItemTwice": "You cannot sell an item more than once!"
+      "youCannotSellTheSameItemTwice": "You cannot sell an item more than once!",
+      "exeedCoinLimit": "You eceed amount of coins that Merchant have, he cannot buy this item.",
+      "maxGold": "Limit of Gold Coin",
+      "maxSilver": "Limit of sliver coin",
+      "maxCopper": "Limit of copper coin",
+      "defnieMaxCoinToSpend": "Limits of Merchant coins to spend on Player items, 0 means unlimited amount of coins. total ammount is summ of all coint type."
     },
     "warrning": {
       "incoretInput": "Please input a number or number with % symbol",

@@ -384,3 +384,7 @@ a.fa-solid.fa-magnifying-glass {
     gap: 5px;
 
 }
+.tab.buingStuff.flexcol,
+.tab.sellingStuff.flexcol{
+  overflow-y: auto;
+}

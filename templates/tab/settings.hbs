@@ -23,5 +23,21 @@
             <option  value="any" {{#if (eq system.supply "any")}}selected{{/if}}>{{localize "DB-IB.Any"}}</option>
         </select>
     </div>
+    <div class="max-coin">
+        <label>{{localize "DB-IB.merchant.defnieMaxCoinToSpend"}}</label>
+        <div class="form-group">
+            {{#each fields.maxcoin as |coin|}}
+                <div class="flexrow">
+                    <label>{{localize coin.label}}</label>
+                    {{log (lookup ../system.maxcoin coin.name)}}
+                    {{log ../system.maxcoin}}
+                    {{formInput
+                        this
+                        value=(lookup ../system.maxcoin coin.name)
+                    }}
+                </div>
+            {{/each}}
+        </div>
+    </div>
 </div> 
 </section>
